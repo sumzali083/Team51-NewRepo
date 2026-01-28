@@ -254,4 +254,118 @@ export const PRODUCTS = [
     sizes: ["5-8", "9-12"],
     colors: ["Multi", "White"],
   },
+
+  // NEW ARRIVALS (Featured recent products)
+  {
+    id: "na-001",
+    cat: "newarrivals",
+    name: "Premium Tech Jacket",
+    price: 99.99,
+    images: [
+      "/assets/men/jacket-premium-1.jpg",
+      "/assets/men/jacket-premium-2.jpg",
+    ],
+    desc: "State-of-the-art moisture-wicking performance jacket.",
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Black", "Navy"],
+  },
+
+  {
+    id: "na-002",
+    cat: "newarrivals",
+    name: "Ultra Comfort Sports Bra",
+    price: 54.99,
+    images: [
+      "/assets/women/sportsbra-ultra-1.jpg",
+      "/assets/women/sportsbra-ultra-2.jpg",
+    ],
+    desc: "Maximum support with minimal bounce technology.",
+    sizes: ["XS", "S", "M", "L", "XL"],
+    colors: ["Black", "White", "Navy"],
+  },
+
+  {
+    id: "na-003",
+    cat: "newarrivals",
+    name: "Kids' Adventure Backpack",
+    price: 29.99,
+    images: [
+      "/assets/kids/backpack-adventure-1.jpg",
+      "/assets/kids/backpack-adventure-2.jpg",
+    ],
+    desc: "Ergonomic design with reflective details for safety.",
+    sizes: ["One Size"],
+    colors: ["Red", "Blue", "Green"],
+  },
+
+  {
+    id: "na-004",
+    cat: "newarrivals",
+    name: "Smart Fitness Leggings",
+    price: 64.99,
+    images: [
+      "/assets/women/leggings-smart-1.jpg",
+      "/assets/women/leggings-smart-2.jpg",
+    ],
+    desc: "Integrated pocket for phone and keys.",
+    sizes: ["XS", "S", "M", "L", "XL"],
+    colors: ["Black", "Graphite"],
+  },
+
+  // SALE (Discounted items)
+  {
+    id: "sale-001",
+    cat: "sale",
+    name: "Classic Cotton Tee - SALE",
+    price: 12.99,
+    images: [
+      "/assets/men/tee-classic-1.jpg",
+      "/assets/men/tee-classic-2.jpg",
+    ],
+    desc: "Timeless cotton tee. Was $24.99, now $12.99!",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["White", "Black", "Grey"],
+  },
+
+  {
+    id: "sale-002",
+    cat: "sale",
+    name: "Summer Shorts Pack - SALE",
+    price: 19.99,
+    images: [
+      "/assets/men/shorts-summer-1.jpg",
+      "/assets/men/shorts-summer-2.jpg",
+    ],
+    desc: "Lightweight shorts. Was $44.99, now $19.99!",
+    sizes: ["S", "M", "L", "XL"],
+    colors: ["Khaki", "Navy", "Black"],
+  },
+
+  {
+    id: "sale-003",
+    cat: "sale",
+    name: "Women's Training Tank - SALE",
+    price: 15.99,
+    images: [
+      "/assets/women/tank-training-1.jpg",
+      "/assets/women/tank-training-2.jpg",
+    ],
+    desc: "Perfect for gym or yoga. Was $34.99, now $15.99!",
+    sizes: ["XS", "S", "M", "L"],
+    colors: ["Black", "Pink", "White"],
+  },
+
+  {
+    id: "sale-004",
+    cat: "sale",
+    name: "Kids' Colorful Hoodie - SALE",
+    price: 17.99,
+    images: [
+      "/assets/kids/hoodie-colorful-1.jpg",
+      "/assets/kids/hoodie-colorful-2.jpg",
+    ],
+    desc: "Vibrant colors. Was $39.99, now $17.99!",
+    sizes: ["5-6", "7-8", "9-10", "11-12"],
+    colors: ["Purple", "Orange", "Teal"],
+  },
 ];

@@ -6,6 +6,8 @@ import { AboutPage } from "./pages/AboutPage";
 import { MensPage } from "./pages/MensPage";
 import { WomensPage } from "./pages/WomensPage";
 import { KidsPage } from "./pages/KidsPage";
+import { NewArrivalsPage } from "./pages/NewArrivalsPage";
+import { SalePage } from "./pages/SalePage";
 import { ProductPage } from "./ProductPage";
 import { SearchPage } from "./pages/SearchPage";
 import Contact from "./pages/Contact";
@@ -27,6 +29,8 @@ export default function App() {
             <Route path="/mens" element={<MensPage />} />
             <Route path="/womens" element={<WomensPage />} />
             <Route path="/kids" element={<KidsPage />} />
+            <Route path="/newarrivals" element={<NewArrivalsPage />} />
+            <Route path="/sale" element={<SalePage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />

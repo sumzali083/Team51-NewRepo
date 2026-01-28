@@ -7,8 +7,11 @@ import { PRODUCTS } from "./data";                    // ⬅ fallback to local d
 export function CategoryPage({ cat, pageTitle }) {
   const { addToCart } = useContext(CartContext);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState("featured");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +33,7 @@ export function CategoryPage({ cat, pageTitle }) {
         console.error("Error loading category products from API:", err);
         // Fallback to local data if API fails
         if (!cancelled) {
-          const catMap = { Mens: "men", Womens: "women", Kids: "kids" };
+          const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
           const catKey = catMap[pageTitle] || pageTitle.toLowerCase();
           const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
           setProducts(localProducts);
@@ -48,6 +51,32 @@ export function CategoryPage({ cat, pageTitle }) {
     };
   }, [pageTitle]);
 
+  // Apply sorting when products or sortBy changes
+  useEffect(() => {
+    let sorted = [...products];
+
+    if (sortBy === "price-low-high") {
+      sorted.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    } else if (sortBy === "price-high-low") {
+      sorted.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    } else if (sortBy === "newest") {
+      // Assumes products with IDs containing higher numbers are newer
+      sorted.sort((a, b) => {
+        const aId = a.id ? String(a.id).charCodeAt(String(a.id).length - 1) : 0;
+        const bId = b.id ? String(b.id).charCodeAt(String(b.id).length - 1) : 0;
+        return bId - aId;
+      });
+    }
+    // "featured" keeps original order
+
+    setFilteredProducts(sorted);
+  }, [products, sortBy]);
+
+  const handleSortSelect = (option) => {
+    setSortBy(option);
+    setIsDropdownOpen(false);
+  };
+
   if (loading) {
     return <div className="container mt-5">Loading products…</div>;
   }
@@ -62,10 +91,119 @@ export function CategoryPage({ cat, pageTitle }) {
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4">{pageTitle}</h2>
+      {/* Title and Filter on same row */}
+      <div className="d-flex justify-content-between align-items-center mb-5">
+        <h2 className="mb-0 fw-bold">{pageTitle}</h2>
+
+        {/* Filter Section with Dropdown */}
+        <div className="d-flex align-items-center gap-2 position-relative">
+          <i className="bi bi-funnel text-secondary" style={{ fontSize: '1.2rem' }}></i>
+
+          <div className="dropdown">
+            <button
+              className="btn btn-outline-dark dropdown-toggle"
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-expanded={isDropdownOpen}
+              style={{
+                textDecoration: 'none',
+                padding: '8px 16px',
+                fontSize: '0.95rem',
+                fontWeight: '500',
+                border: '1px solid #dee2e6'
+              }}
+            >
+              Sort By
+            </button>
+
+            {isDropdownOpen && (
+              <div
+                className="dropdown-menu show"
+                style={{
+                  display: 'block',
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  minWidth: '200px',
+                  zIndex: 1000,
+                  borderRadius: '8px',
+                  border: '1px solid #dee2e6',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  padding: '8px 0'
+                }}
+              >
+                <button
+                  className="dropdown-item"
+                  onClick={() => handleSortSelect('featured')}
+                  style={{
+                    textAlign: 'left',
+                    background: sortBy === 'featured' ? '#f8f9fa' : 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    color: '#111',
+                    fontWeight: sortBy === 'featured' ? '600' : '400',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Featured
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => handleSortSelect('newest')}
+                  style={{
+                    textAlign: 'left',
+                    background: sortBy === 'newest' ? '#f8f9fa' : 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    color: '#111',
+                    fontWeight: sortBy === 'newest' ? '600' : '400',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Newest
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => handleSortSelect('price-high-low')}
+                  style={{
+                    textAlign: 'left',
+                    background: sortBy === 'price-high-low' ? '#f8f9fa' : 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    color: '#111',
+                    fontWeight: sortBy === 'price-high-low' ? '600' : '400',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Price: High-Low
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => handleSortSelect('price-low-high')}
+                  style={{
+                    textAlign: 'left',
+                    background: sortBy === 'price-low-high' ? '#f8f9fa' : 'white',
+                    border: 'none',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    color: '#111',
+                    fontWeight: sortBy === 'price-low-high' ? '600' : '400',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  Price: Low-High
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="row g-4">
-        {products.map((product) => {
+        {filteredProducts.map((product) => {
           // Handle both API format (image/image_url) and local format (images array)
           const img = product.image || product.image_url || (product.images && product.images[0]);
           const price = Number(product.price || 0);
@@ -103,7 +241,7 @@ export function CategoryPage({ cat, pageTitle }) {
           );
         })}
 
-        {!products.length && (
+        {!filteredProducts.length && (
           <p>No products found in this category.</p>
         )}
       </div>
