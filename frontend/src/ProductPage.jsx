@@ -2,7 +2,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { CartContext } from "./context/CartContext";
-import { PRODUCTS } from "./data";
+import { PRODUCTS, Fallback } from "./data";
 
 // Fix: Ensure all JSX is properly closed
 
@@ -100,19 +100,21 @@ export function ProductPage() {
       <div className="row">
         <div className="col-md-6">
           <img
-            src={images[activeImg]}
+            src={images[activeImg] || Fallback}
             alt={product.name}
             className="img-fluid rounded mb-3"
+            onError={(e) => { e.target.src = Fallback; }}
           />
           <div className="d-flex gap-2">
             {images.map((img, i) => (
               <img
                 key={i}
-                src={img}
+                src={img || Fallback}
                 alt={`${product.name} ${i + 1}`}
                 className={`img-thumbnail ${i === activeImg ? 'border-primary' : ''}`}
                 style={{ width: '80px', cursor: 'pointer' }}
                 onClick={() => setActiveImg(i)}
+                onError={(e) => { e.target.src = Fallback; }}
               />
             ))}
           </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { CartContext } from "./context/CartContext"; // ⬅ note the "./"
 import api from "./api";                              // ⬅ and "./api"
-import { PRODUCTS } from "./data";                    // ⬅ fallback to local data
+import { PRODUCTS, Fallback } from "./data";                    // ⬅ fallback to local data
 
 export function CategoryPage({ cat, pageTitle }) {
   const { addToCart } = useContext(CartContext);
@@ -205,21 +205,20 @@ export function CategoryPage({ cat, pageTitle }) {
       <div className="row g-4">
         {filteredProducts.map((product) => {
           // Handle both API format (image/image_url) and local format (images array)
-          const img = product.image || product.image_url || (product.images && product.images[0]);
+          const img = product.image || product.image_url || (product.images && product.images[0]) || Fallback;
           const price = Number(product.price || 0);
 
           return (
             <div key={product.id} className="col-md-4">
               <div className="card h-100 shadow-sm">
                 <Link to={`/product/${product.id}`} className="text-decoration-none">
-                  {img && (
-                    <img
-                      src={img}
-                      className="card-img-top"
-                      alt={product.name}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  )}
+                  <img
+                    src={img}
+                    className="card-img-top"
+                    alt={product.name}
+                    style={{ cursor: 'pointer' }}
+                    onError={(e) => { e.target.src = Fallback; }}
+                  />
                 </Link>
 
                 <div className="card-body d-flex flex-column">
