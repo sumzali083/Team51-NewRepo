@@ -27,15 +27,17 @@ export function CategoryPage({ cat, pageTitle }) {
         });
 
         if (!cancelled) {
+          console.log("Products loaded from API:", (res.data || []).length);
           setProducts(res.data || []);
         }
       } catch (err) {
-        console.error("Error loading category products from API:", err);
+        console.error("API failed — using local PRODUCTS fallback", err);
         // Fallback to local data if API fails
         if (!cancelled) {
           const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
           const catKey = catMap[pageTitle] || pageTitle.toLowerCase();
           const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
+          console.log("Products loaded from fallback:", localProducts.length);
           setProducts(localProducts);
         }
       } finally {
