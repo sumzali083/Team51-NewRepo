@@ -44,12 +44,25 @@ export function ProductPage() {
     );
   }
 
+  const images = product.images || [product.image];
+
+  const handleColorSelect = (selectedColor) => {
+    setColor(selectedColor);
+    if (product?.colors?.length && images.length) {
+      const colorIndex = product.colors.indexOf(selectedColor);
+      if (colorIndex >= 0) {
+        const safeIndex = Math.min(colorIndex, images.length - 1);
+        setActiveImg(safeIndex);
+      }
+    }
+  };
+
   const handleAddToCart = () => {
     addToCart({
       ...product,
       size,
       color,
-      image: product.images?.[0] || product.image,
+      image: images[activeImg] || product.image,
     });
     setMsg(`Added "${product.name}" to basket!`);
     setTimeout(() => setMsg(""), 3000);
@@ -84,8 +97,6 @@ export function ProductPage() {
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : 0;
-
-  const images = product.images || [product.image];
 
   return (
     <div className="container mt-5">
@@ -150,7 +161,7 @@ export function ProductPage() {
                   <button
                     key={c}
                     className={`btn ${color === c ? 'btn-dark' : 'btn-outline-dark'}`}
-                    onClick={() => setColor(c)}
+                    onClick={() => handleColorSelect(c)}
                   >
                     {c}
                   </button>
