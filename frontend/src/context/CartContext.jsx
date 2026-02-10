@@ -1,61 +1,150 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
+import api from "../api";
+import { AuthContext } from "./AuthContext";
 
 export var CartContext = createContext();
 
 export function CartProvider(props) {
   var children = props.children;
+  const { user } = useContext(AuthContext);
 
-  var [cart, setCart] = useState(function() {
-    var saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
-  });
+  var [cart, setCart] = useState([]);
+  var [loading, setLoading] = useState(true);
 
+  // Load cart on mount and when user changes
   useEffect(function() {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    if (user) {
+      // User is logged in - load from backend
+      loadCartFromBackend();
+    } else {
+      // Not logged in - load from localStorage
+      var saved = localStorage.getItem("cart");
+      setCart(saved ? JSON.parse(saved) : []);
+      setLoading(false);
+    }
+  }, [user]);
 
-  function addToCart(product) {
-    setCart(function(prev) {
-      var exists = prev.find(function(item) {
-        return item.id === product.id;
+  // Save to localStorage when cart changes (only if not logged in)
+  useEffect(function() {
+    if (!user) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart, user]);
+
+  async function loadCartFromBackend() {
+    try {
+      setLoading(true);
+      const res = await api.get("/api/cart");
+      // Transform backend format to frontend format
+      const formattedCart = res.data.map(item => ({
+        id: item.product_id,
+        name: item.name,
+        price: parseFloat(item.price),
+        image: item.image_url,
+        quantity: item.quantity
+      }));
+      setCart(formattedCart);
+    } catch (err) {
+      console.error("Error loading cart:", err);
+      setCart([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function addToCart(product) {
+    if (user) {
+      // Logged in - sync to backend
+      try {
+        await api.post("/api/cart", {
+          productId: product.id,
+          quantity: 1
+        });
+        // Reload cart from backend
+        await loadCartFromBackend();
+      } catch (err) {
+        console.error("Error adding to cart:", err);
+      }
+    } else {
+      // Not logged in - use local state
+      setCart(function(prev) {
+        var exists = prev.find(function(item) {
+          return item.id === product.id;
+        });
+
+        if (exists) {
+          return prev.map(function(item) {
+            if (item.id === product.id) {
+              return Object.assign({}, item, { quantity: item.quantity + 1 });
+            } else {
+              return item;
+            }
+          });
+        }
+
+        return prev.concat(Object.assign({}, product, { quantity: 1 }));
       });
+    }
+  }
 
-      if (exists) {
+  async function removeFromCart(id) {
+    if (user) {
+      // Logged in - find the cart item ID from backend
+      try {
+        const res = await api.get("/api/cart");
+        const item = res.data.find(i => i.product_id === id);
+        if (item) {
+          await api.delete(`/api/cart/${item.id}`);
+          await loadCartFromBackend();
+        }
+      } catch (err) {
+        console.error("Error removing from cart:", err);
+      }
+    } else {
+      // Not logged in - use local state
+      setCart(function(prev) {
+        return prev.filter(function(item) {
+          return item.id !== id;
+        });
+      });
+    }
+  }
+
+  async function changeQuantity(id, qty) {
+    if (user) {
+      // Logged in - update via backend
+      try {
+        const res = await api.get("/api/cart");
+        const item = res.data.find(i => i.product_id === id);
+        if (item) {
+          if (qty <= 0) {
+            // Remove if quantity is 0 or less
+            await api.delete(`/api/cart/${item.id}`);
+          } else {
+            // Update quantity using PUT
+            await api.put(`/api/cart/${item.id}`, { quantity: qty });
+          }
+          await loadCartFromBackend();
+        }
+      } catch (err) {
+        console.error("Error updating cart:", err);
+      }
+    } else {
+      // Not logged in - use local state
+      setCart(function(prev) {
         return prev.map(function(item) {
-          if (item.id === product.id) {
-            return Object.assign({}, item, { quantity: item.quantity + 1 });
+          if (item.id === id) {
+            return Object.assign({}, item, { quantity: qty });
           } else {
             return item;
           }
         });
-      }
-
-      return prev.concat(Object.assign({}, product, { quantity: 1 }));
-    });
-  }
-
-  function removeFromCart(id) {
-    setCart(function(prev) {
-      return prev.filter(function(item) {
-        return item.id !== id;
       });
-    });
-  }
-
-  function changeQuantity(id, qty) {
-    setCart(function(prev) {
-      return prev.map(function(item) {
-        if (item.id === id) {
-          return Object.assign({}, item, { quantity: qty });
-        } else {
-          return item;
-        }
-      });
-    });
+    }
   }
 
   return (
-    <CartContext.Provider value={{ cart: cart, addToCart: addToCart, removeFromCart: removeFromCart, changeQuantity: changeQuantity }}>
+    <CartContext.Provider value={{ cart: cart, addToCart: addToCart, removeFromCart: removeFromCart, changeQuantity: changeQuantity, loading: loading }}>
       {children}
     </CartContext.Provider>
   );

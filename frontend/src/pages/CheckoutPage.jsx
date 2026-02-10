@@ -195,7 +195,7 @@ const CheckoutPage = () => {
               </div>
             ) : (
               cart.map((item) => {
-                const img = item.image_url || "/images/placeholder.jpg";
+                const img = item.image || item.image_url || "/images/placeholder.jpg";
                 const priceNum = Number(item.price || 0);
                 const qtyNum = Number(item.quantity || 0);
                 const itemTotal = priceNum * qtyNum;

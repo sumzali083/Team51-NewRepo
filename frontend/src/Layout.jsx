@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CartContext } from "./context/CartContext";
+import { AuthContext } from "./context/AuthContext";
 import Chatbot from "./components/Chatbot";
 
 export function Layout() {
@@ -20,6 +21,14 @@ export function Layout() {
   // cart context — show total items in navbar
   const cartCtx = useContext(CartContext);
   const totalItems = cartCtx?.cart?.reduce((s, i) => s + (i.quantity || 0), 0) || 0;
+  
+  // auth context — show user info or login button
+  const { user, logout } = useContext(AuthContext);
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   return (
     <>
@@ -98,9 +107,21 @@ export function Layout() {
               </form>
 
               <div className="d-flex align-items-center gap-3">
-                <NavLink to="/login" className="btn btn-outline-light profile-btn">
-                  <i className="bi bi-person-circle" /> Login / Profile
-                </NavLink>
+                {user ? (
+                  <>
+                    <span className="text-light me-2">Hello, {user.name}!</span>
+                    <button 
+                      onClick={handleLogout}
+                      className="btn btn-outline-light profile-btn"
+                    >
+                      <i className="bi bi-box-arrow-right" /> Logout
+                    </button>
+                  </>
+                ) : (
+                  <NavLink to="/login" className="btn btn-outline-light profile-btn">
+                    <i className="bi bi-person-circle" /> Login / Profile
+                  </NavLink>
+                )}
                 <NavLink to="/cart" className="btn btn-outline-light cart-btn position-relative">
                   <i className="bi bi-cart3" />
                   <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -134,7 +155,7 @@ export function Layout() {
         </p>
       </footer>
 
-      {/* Chatbot Widget - Floating box in corner */}
+      {/* AI chatbot - small corner widget on every page */}
       <Chatbot />
     </>
   );

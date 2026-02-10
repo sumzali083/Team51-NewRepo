@@ -1,13 +1,17 @@
 // frontend/src/components/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { CiUser } from "react-icons/ci";
 import { RiLockPasswordLine } from "react-icons/ri";
 import api from "../api"; // axios instance pointing at your backend
+import { AuthContext } from "../context/AuthContext";
 
 // ✅ Named export (what LoginPage and App import)
 export function Login({ initialEmail = "" }) {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,9 +38,12 @@ export function Login({ initialEmail = "" }) {
       setMessage(res.data?.message || "Login successful");
 
       if (user) {
-        // store user so you can show “Hello, Summer” etc later
-        localStorage.setItem("osaiUser", JSON.stringify(user));
-        console.log("Logged in user:", user);
+        // Update AuthContext (session is stored on backend)
+        login(user);
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       }
     } catch (err) {
       console.error("LOGIN ERROR:", err);

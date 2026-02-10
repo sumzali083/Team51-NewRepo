@@ -107,7 +107,8 @@ router.get("/", async (req, res) => {
     res.json(rows.map(buildProductRow));
   } catch (err) {
     console.error("PRODUCTS DB error:", err.code || err.message);
-    res.status(500).json({ message: "Failed to load products." });
+    // Return empty array so frontend can use fallback data
+    res.json([]);
   }
 });
 
@@ -137,7 +138,8 @@ router.get("/:id", async (req, res) => {
     res.json(buildProductRow(rows[0]));
   } catch (err) {
     console.error("SINGLE PRODUCT DB error:", err.code || err.message);
-    res.status(500).json({ message: "Failed to load product." });
+    // Return 404 so frontend can handle gracefully
+    res.status(404).json({ message: "Product not found" });
   }
 });
 

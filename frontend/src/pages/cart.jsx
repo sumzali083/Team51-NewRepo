@@ -1,4 +1,3 @@
-
 // frontend/src/pages/Cart.jsx
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +34,7 @@ export default function Cart() {
             </thead>
             <tbody>
               {cart.map((item) => {
-                const img = item.image_url || "/images/placeholder.jpg";
+                const img = item.image || item.image_url || "/images/placeholder.jpg";
                 const priceNum = Number(item.price || 0);
                 const qtyNum = Number(item.quantity || 0);
                 const lineTotal = priceNum * qtyNum;

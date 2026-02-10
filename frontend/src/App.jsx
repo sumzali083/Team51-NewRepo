@@ -12,20 +12,21 @@ import { SalePage } from "./pages/SalePage";
 import { ProductPage } from "./ProductPage";
 import { SearchPage } from "./pages/SearchPage";
 import Contact from "./pages/Contact";
-//import { Login } from "./components/Login";   // <- we use this
 import LoginPage from "./pages/LoginPage";
 
 import FeedbackPage from "./pages/FeedbackPage";
 
 import { CartProvider } from "./context/CartContext";
+import { AuthProvider } from "./context/AuthContext";
 import Cart from "./pages/cart";
 import CheckoutPage from "./pages/CheckoutPage";
 
 export default function App() {
   console.log("DEBUG: App.jsx is rendering");
   return (
-    <CartProvider>
-      <BrowserRouter>
+    <AuthProvider>
+      <CartProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -47,6 +48,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </CartProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }

@@ -93,6 +93,14 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Create session
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
+
     return res.json({
       message: "Login successful",
       user: {
@@ -105,6 +113,13 @@ router.post("/login", async (req, res) => {
     console.error("Error logging in:", err);
 
     if (err.code === "ETIMEDOUT") {
+      // Create session even for simulated login
+      req.session.userId = 1;
+      req.session.user = {
+        id: 1,
+        name: "Test User",
+        email,
+      };
       return res.status(200).json({
         message:
           "Login simulated (DB not available in local setup, but it will work on the uni server).",
@@ -122,6 +137,30 @@ router.post("/login", async (req, res) => {
 });
 
   }
+});
+
+/**
+ * GET /api/users/me
+ * Returns current logged-in user from session
+ */
+router.get("/me", (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json({ user: req.session.user });
+  }
+  return res.status(401).json({ message: "Not authenticated" });
+});
+
+/**
+ * POST /api/users/logout
+ * Destroys session
+ */
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Error logging out" });
+    }
+    res.json({ message: "Logged out successfully" });
+  });
 });
 
 module.exports = router;

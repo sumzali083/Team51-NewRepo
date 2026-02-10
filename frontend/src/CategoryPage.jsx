@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
-import { CartContext } from "./context/CartContext"; // ⬅ note the "./"
-import api from "./api";                              // ⬅ and "./api"
-import { PRODUCTS, Fallback } from "./data";                    // ⬅ fallback to local data
+import { CartContext } from "./context/CartContext";
+import api from "./api";
+import { PRODUCTS, Fallback } from "./data";
 
 export function CategoryPage({ cat, pageTitle }) {
   const { addToCart } = useContext(CartContext);
@@ -23,19 +23,30 @@ export function CategoryPage({ cat, pageTitle }) {
       try {
         // Try to fetch from backend API first
         const res = await api.get("/api/products", {
-          params: { category: pageTitle },
+          params: { cat: cat || (pageTitle === "Mens" ? "men" : pageTitle === "Womens" ? "women" : pageTitle === "Kids" ? "kids" : pageTitle === "New Arrivals" ? "newarrivals" : pageTitle === "Sale" ? "sale" : pageTitle.toLowerCase()) },
         });
 
         if (!cancelled) {
-          console.log("Products loaded from API:", (res.data || []).length);
-          setProducts(res.data || []);
+          const apiProducts = res.data || [];
+          console.log("Products loaded from API:", apiProducts.length);
+          
+          // If API returns empty array (DB not connected), use fallback
+          if (apiProducts.length === 0) {
+            const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
+            const catKey = catMap[pageTitle] || cat || pageTitle.toLowerCase();
+            const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
+            console.log("API returned empty — using local PRODUCTS fallback:", localProducts.length);
+            setProducts(localProducts);
+          } else {
+            setProducts(apiProducts);
+          }
         }
       } catch (err) {
         console.error("API failed — using local PRODUCTS fallback", err);
         // Fallback to local data if API fails
         if (!cancelled) {
           const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
-          const catKey = catMap[pageTitle] || pageTitle.toLowerCase();
+          const catKey = catMap[pageTitle] || cat || pageTitle.toLowerCase();
           const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
           console.log("Products loaded from fallback:", localProducts.length);
           setProducts(localProducts);
@@ -62,14 +73,12 @@ export function CategoryPage({ cat, pageTitle }) {
     } else if (sortBy === "price-high-low") {
       sorted.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
     } else if (sortBy === "newest") {
-      // Assumes products with IDs containing higher numbers are newer
       sorted.sort((a, b) => {
         const aId = a.id ? String(a.id).charCodeAt(String(a.id).length - 1) : 0;
         const bId = b.id ? String(b.id).charCodeAt(String(b.id).length - 1) : 0;
         return bId - aId;
       });
     }
-    // "featured" keeps original order
 
     setFilteredProducts(sorted);
   }, [products, sortBy]);
@@ -93,11 +102,9 @@ export function CategoryPage({ cat, pageTitle }) {
 
   return (
     <div className="container mt-5">
-      {/* Title and Filter on same row */}
       <div className="d-flex justify-content-between align-items-center mb-5">
         <h2 className="mb-0 fw-bold">{pageTitle}</h2>
 
-        {/* Filter Section with Dropdown */}
         <div className="d-flex align-items-center gap-2 position-relative">
           <i className="bi bi-funnel text-secondary" style={{ fontSize: '1.2rem' }}></i>
 
@@ -206,7 +213,6 @@ export function CategoryPage({ cat, pageTitle }) {
 
       <div className="row g-4">
         {filteredProducts.map((product) => {
-          // Handle both API format (image/image_url) and local format (images array)
           const img = product.image || product.image_url || (product.images && product.images[0]) || Fallback;
           const price = Number(product.price || 0);
 
