@@ -35,8 +35,27 @@ export function CategoryPage({ cat, pageTitle }) {
         if (!cancelled) {
           const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
           const catKey = catMap[pageTitle] || pageTitle.toLowerCase();
-          const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
-          setProducts(localProducts);
+
+          if (catKey === "newarrivals" || catKey === "sale") {
+            const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+            const menProducts = shuffle(PRODUCTS.filter((p) => p.cat === "men"));
+            const womenProducts = shuffle(PRODUCTS.filter((p) => p.cat === "women"));
+            const kidsProducts = shuffle(PRODUCTS.filter((p) => p.cat === "kids"));
+
+            const mixed = [
+              womenProducts[0],
+              menProducts[0],
+              kidsProducts[0],
+              womenProducts[1],
+              kidsProducts[1],
+              menProducts[1],
+            ].filter(Boolean);
+
+            setProducts(mixed);
+          } else {
+            const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
+            setProducts(localProducts);
+          }
         }
       } finally {
         if (!cancelled) {
