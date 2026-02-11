@@ -1,77 +1,10 @@
 import React from "react";
+import HeroCarouselNew from '../components/HeroCarouselNew';
 
 export function HomePage() {
   return (
     <>
-      <div
-        id="osaiCarousel"
-        className="carousel slide mt-4 mb-5"
-        data-bs-ride="carousel"
-        data-bs-interval="2250"
-      >
-        <div className="carousel-indicators">
-          <button
-            type="button"
-            data-bs-target="#osaiCarousel"
-            data-bs-slide-to="0"
-            className="active"
-          ></button>
-          <button
-            type="button"
-            data-bs-target="#osaiCarousel"
-            data-bs-slide-to="1"
-          ></button>
-          <button
-            type="button"
-            data-bs-target="#osaiCarousel"
-            data-bs-slide-to="2"
-          ></button>
-        </div>
-
-        <div className="carousel-inner rounded shadow">
-          <div className="carousel-item active">
-            <img
-              src="/images/Slider1.png"
-              className="d-block w-100"
-              alt="sale slide 1"
-            />
-          </div>
-
-          <div className="carousel-item">
-            <img
-              src="/images/Slider2.jpeg"
-              className="d-block w-100"
-              alt="sale slide 2"
-            />
-          </div>
-
-          <div className="carousel-item">
-            <img
-              src="/images/Slider3.jpeg"
-              className="d-block w-100"
-              alt="Kids style 1"
-            />
-          </div>
-        </div>
-
-        <button
-          className="carousel-control-prev"
-          type="button"
-          data-bs-target="#osaiCarousel"
-          data-bs-slide="prev"
-        >
-          <span className="carousel-control-prev-icon"></span>
-        </button>
-
-        <button
-          className="carousel-control-next"
-          type="button"
-          data-bs-target="#osaiCarousel"
-          data-bs-slide="next"
-        >
-          <span className="carousel-control-next-icon"></span>
-        </button>
-      </div>
+      <HeroCarouselNew />
 
       <section id="welcome" className="text-center">
         <div className="container d-flex justify-content-center">
@@ -83,13 +16,13 @@ export function HomePage() {
             <p id="description" className="mb-4">
               OSAI&apos;s is one of the leading companies in the fashion industry.
               Pure fashion created from the finest Japanese fibers. Hand-woven
-              and tailor-made for every body type — from kids to adults, daily
+              and tailor-made for every body type -- from kids to adults, daily
               wear to timeless pieces, we have it all and you will always find
               something for everyone with us.
             </p>
 
             <a href="/about" className="btn btn-primary">
-              More →
+              More &gt;
             </a>
           </div>
         </div>

@@ -69,6 +69,15 @@ select:focus, .btn:focus { box-shadow:var(--focus) }
   display:inline-grid; place-items:center; padding:0 6px; transform:translate(30%, -30%);
 }
 
+/* Wishlist button styling */
+.wishlist-btn{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.95); padding:8px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:8px }
+.wishlist-btn:hover{ background:#fff; color:#111 }
+.wishlist-badge{ transform:translate(25%, -35%); border:2px solid #111 !important }
+
+/* Outline danger button for favourites */
+.btn-outline-danger{ border-color:#dc3545; color:#dc3545 }
+.btn-outline-danger:hover{ background:#dc3545; color:#fff }
+
 /* Nav search: smaller input and search button styled like profile button */
 .nav-search{ max-width:260px; display:flex; gap:8px; align-items:center }
 .nav-search .form-control{

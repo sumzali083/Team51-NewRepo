@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { CartContext } from "./context/CartContext";
+import { WishlistContext } from "./context/WishlistContext";
 
 export function Layout() {
   const [search, setSearch] = React.useState("");
@@ -19,6 +20,10 @@ export function Layout() {
   // cart context — show total items in navbar
   const cartCtx = useContext(CartContext);
   const totalItems = cartCtx?.cart?.reduce((s, i) => s + (i.quantity || 0), 0) || 0;
+
+  // wishlist context — show total favourites in navbar
+  const wishlistCtx = useContext(WishlistContext);
+  const totalFav = wishlistCtx?.wishlist?.length || 0;
 
   return (
     <>
@@ -99,6 +104,15 @@ export function Layout() {
               <div className="d-flex align-items-center gap-3">
                 <NavLink to="/login" className="btn btn-outline-light profile-btn">
                   <i className="bi bi-person-circle" /> Login / Profile
+                </NavLink>
+                <NavLink to="/wishlist" className="btn btn-outline-light position-relative wishlist-btn me-2" title="View your wishlist" aria-label="View your wishlist">
+                  <span className="sr-only">Wishlist</span>
+                  <span aria-hidden>❤️</span>
+                  {totalFav > 0 && (
+                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger wishlist-badge">
+                      {totalFav}
+                    </span>
+                  )}
                 </NavLink>
                 <NavLink to="/cart" className="btn btn-outline-light cart-btn position-relative">
                   <i className="bi bi-cart3" />
