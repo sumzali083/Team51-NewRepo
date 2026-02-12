@@ -1,21 +1,27 @@
+// backend/app.js
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const path = require("path");
-require("dotenv").config(); 
+require("dotenv").config();
 
 const app = express();
 
-// === PROXY SETTING ===
-// Required for sessions to work over HTTPS on your university VM
-app.set('trust proxy', 1);
+/**
+ * Trust Proxy is CRITICAL for Aston University VMs.
+ * It allows Express to see the 'https' header from the university's load balancer.
+ */
+app.set("trust proxy", 1);
+
+// Set this to true for the university VM to enable secure cookies
+const isProduction = true; 
 
 // === MIDDLEWARE ===
 app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://cs2team51.cs2410-web01pvm.aston.ac.uk",
-    "http://cs2team51.cs2410-web01pvm.aston.ac.uk"
+    "http://cs2team51.cs2410-web01pvm.aston.ac.uk",
   ],
   credentials: true
 }));
@@ -23,15 +29,17 @@ app.use(cors({
 app.use(express.json());
 
 // === SESSION MIDDLEWARE ===
+// This configuration fixes the "401 Unauthorized" basket error
 app.use(session({
-  secret: process.env.SESSION_SECRET || "osai-fashion-secret-key",
+  name: "osai.sid", 
+  secret: process.env.SESSION_SECRET || "osai-fashion-secret-key-summer",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true,      // Required for HTTPS
-    httpOnly: true,    // Extra security
-    sameSite: 'none',  // Allows cookies to work across subdomains
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProduction,           // Must be true for HTTPS
+    sameSite: "none",               // Required for cross-origin cookies
   }
 }));
 
@@ -54,20 +62,30 @@ app.use("/api/users", userRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 
 // === FRONTEND SERVING ===
+// Point to the built React files
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-// Fix for PathError: Serve index.html for non-API routes
+// Serve the frontend for the home page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-// Safe fallback for React routing (No '*' to avoid PathError)
+// Serve the frontend for any non-API route to allow React Router to work
 app.get("/index.html", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
+// === 404 HANDLER ===
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
+    requested: `${req.method} ${req.originalUrl}`
+  });
 });
 
 // === START SERVER ===
 const PORT = process.env.PORT || 21051;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Secure Sessions Enabled: ${isProduction}`);
 });
