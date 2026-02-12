@@ -9,21 +9,27 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://cs2team51.cs2410-web01pvm.aston.ac.uk",
-    "http://cs2team51.cs2410-web01pvm.aston.ac.uk"
+    "http://cs2team51.cs2410-web01pvm.aston.ac.uk",
+    "https://cs2team51.cs2410-web01pvm.aston.ac.uk:21051" // live backend origin with port
   ],
   credentials: true
 }));
 
 app.use(express.json()); // middleware to parse JSON request bodies
 
+// Trust proxy so secure cookies work when behind HTTPS proxy
+app.set("trust proxy", 1);
+
 // === SESSION MIDDLEWARE ===
+const isProd = process.env.NODE_ENV === "production";
 app.use(session({
   secret: process.env.SESSION_SECRET || "osai-fashion-secret-key-change-in-production",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // set to true if using HTTPS in production
+    secure: isProd, // only true on prod/https
     httpOnly: true,
+    sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   }
 }));
