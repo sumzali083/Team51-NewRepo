@@ -20,6 +20,9 @@ import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import Cart from "./pages/cart";
 import CheckoutPage from "./pages/CheckoutPage";
+import { ForgotPassword } from "./components/ForgotPassword";
+import { ResetPassword } from "./components/ResetPassword";
+import { ChangePassword } from "./components/ChangePassword";
 
 export default function App() {
   console.log("DEBUG: App.jsx is rendering");
@@ -43,6 +46,12 @@ export default function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/account/change-password"
+              element={<ChangePassword />}
+            />
 
             <Route path="/feedback" element={<FeedbackPage />} />
           </Route>
