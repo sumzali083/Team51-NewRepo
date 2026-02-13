@@ -55,7 +55,3 @@ app.use((req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
-const PORT = process.env.PORT || 21051;
-app.listen(PORT, () => {
-  console.log("Server online on port " + PORT);
-});
