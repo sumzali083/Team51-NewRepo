@@ -31,7 +31,7 @@ export function AboutPage() {
       <section className="container py-5">
         <div className="row align-items-center gy-4">
           <motion.div className="col-md-6" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow" />
+            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image" />
           </motion.div>
 
           <motion.div className="col-md-6" initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
@@ -47,7 +47,7 @@ export function AboutPage() {
       <section className="container py-5">
         <div className="row align-items-center gy-4">
           <motion.div className="col-md-6 order-md-2" initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow" />
+            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image" />
           </motion.div>
 
           <motion.div className="col-md-6 order-md-1" initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
