@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -44,7 +45,6 @@ app.get("/api", (req, res) => {
   });
 });
 
-
 // === API ROUTES ===
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -52,7 +52,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/users", userRoutes);
-
+app.use("/api/admin", adminRoutes); // ✅ Added admin routes
 
 // === 404 HANDLER ===
 app.use((req, res) => {
