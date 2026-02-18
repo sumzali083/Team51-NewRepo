@@ -113,7 +113,16 @@ router.get("/low-stock", adminMiddleware, async (req, res) => {
 router.get("/products", adminMiddleware, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT id, name, category, price, stock FROM products ORDER BY id DESC"
+      `SELECT
+         p.id,
+         p.sku,
+         p.name,
+         p.price,
+         p.stock,
+         c.name AS category
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       ORDER BY p.id DESC`
     );
     res.json(rows);
   } catch (err) {
