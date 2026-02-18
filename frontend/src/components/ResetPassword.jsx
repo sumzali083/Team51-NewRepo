@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "../api";
 
 export function ResetPassword() {
@@ -32,6 +32,10 @@ export function ResetPassword() {
       setError("Please fill in both password fields.");
       return;
     }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
@@ -59,44 +63,89 @@ export function ResetPassword() {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto", color: "#fff" }}>
-      <h2>Reset Password</h2>
+    <div style={{ maxWidth: 520, margin: "40px auto" }}>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+          color: "#fff",
+        }}
+      >
+        <h2 style={{ color: "#ff5a00", fontWeight: 800, marginBottom: 8 }}>
+          Reset Password
+        </h2>
+        <p style={{ color: "#bbb", marginBottom: 16 }}>
+          Enter and confirm your new password.
+        </p>
 
-      {error && (
-        <div style={{ background: "#5c1a1a", padding: 10, marginBottom: 10 }}>
-          {error}
-        </div>
-      )}
-      {message && (
-        <div style={{ background: "#1d3b21", padding: 10, marginBottom: 10 }}>
-          {message}
-        </div>
-      )}
+        {error && (
+          <div style={{ background: "#5c1a1a", padding: 10, marginBottom: 10 }}>
+            {error}
+          </div>
+        )}
+        {message && (
+          <div style={{ background: "#1d3b21", padding: 10, marginBottom: 10 }}>
+            {message}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="password"
+              placeholder="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 8,
+                border: "1px solid #333",
+                background: "#222",
+                color: "#fff",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="password"
+              placeholder="Confirm new password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 8,
+                border: "1px solid #333",
+                background: "#222",
+                color: "#fff",
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: loading ? "#aa4400" : "#ff5a00",
+              color: "#fff",
+              borderRadius: 8,
+              padding: "12px 18px",
+              fontWeight: 700,
+              border: "none",
+            }}
+          >
+            {loading ? "Saving..." : "Set new password"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: 12 }}>
+          <Link to="/login" style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600 }}>
+            Back to Login
+          </Link>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <input
-            type="password"
-            placeholder="Confirm new password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={{ padding: "10px 16px" }}>
-          {loading ? "Saving..." : "Set new password"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
-

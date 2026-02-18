@@ -1,6 +1,6 @@
 // frontend/src/components/Login.jsx
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { CiUser } from "react-icons/ci";
 import { RiLockPasswordLine } from "react-icons/ri";
 import api from "../api";
@@ -180,6 +180,21 @@ export function Login({ initialEmail = "" }) {
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          <Link
+            to="/forgot-password"
+            style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600, fontSize: 14 }}
+          >
+            Forgot Password?
+          </Link>
+          <Link
+            to="/account/change-password"
+            style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600, fontSize: 14 }}
+          >
+            Change Password
+          </Link>
+        </div>
       </form>
     </div>
   );

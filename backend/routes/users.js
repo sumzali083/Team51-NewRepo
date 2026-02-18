@@ -233,6 +233,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({
         message:
           "If an account with that email exists, you will receive a password reset link.",
+        resetUrl: null,
       });
     }
 
@@ -247,13 +248,17 @@ router.post("/forgot-password", async (req, res) => {
       [email.trim(), token, expiresAt]
     );
 
-    // Build reset URL for your frontend (update domain/path if needed)
-    const resetUrl = `https://your-frontend-domain.com/reset-password?token=${token}`;
+    // Build reset URL for your frontend
+    const baseUrl =
+      process.env.FRONTEND_URL ||
+      `${req.protocol}://${req.get("host")}`;
+    const resetUrl = `${String(baseUrl).replace(/\/$/, "")}/reset-password?token=${token}`;
     console.log("Password reset link for", email.trim(), "=>", resetUrl);
 
     return res.json({
       message:
         "If an account with that email exists, you will receive a password reset link.",
+      resetUrl,
     });
   } catch (err) {
     console.error("Forgot password error:", err);

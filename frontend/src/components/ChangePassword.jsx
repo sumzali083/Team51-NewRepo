@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
@@ -12,7 +13,18 @@ export function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   if (!user) {
-    return <p style={{ color: "#fff" }}>You need to be logged in.</p>;
+    return (
+      <div style={{ maxWidth: 520, margin: "40px auto" }}>
+        <div style={{ background: "#111", borderRadius: 16, padding: 24, color: "#fff" }}>
+          You need to be logged in.
+          <div style={{ marginTop: 12 }}>
+            <Link to="/login" style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600 }}>
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   async function handleSubmit(e) {
@@ -22,6 +34,10 @@ export function ChangePassword() {
 
     if (!currentPassword || !newPassword || !confirm) {
       setError("Please fill in all fields.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
       return;
     }
     if (newPassword !== confirm) {
@@ -50,53 +66,105 @@ export function ChangePassword() {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "40px auto", color: "#fff" }}>
-      <h2>Change Password</h2>
+    <div style={{ maxWidth: 560, margin: "40px auto" }}>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+          color: "#fff",
+        }}
+      >
+        <h2 style={{ color: "#ff5a00", fontWeight: 800, marginBottom: 6 }}>
+          Change Password
+        </h2>
+        <p style={{ color: "#bbb", marginBottom: 16 }}>
+          Email: <strong>{user.email}</strong>
+        </p>
 
-      {error && (
-        <div style={{ background: "#5c1a1a", padding: 10, marginBottom: 10 }}>
-          {error}
-        </div>
-      )}
-      {message && (
-        <div style={{ background: "#1d3b21", padding: 10, marginBottom: 10 }}>
-          {message}
-        </div>
-      )}
+        {error && (
+          <div style={{ background: "#5c1a1a", padding: 10, marginBottom: 10 }}>
+            {error}
+          </div>
+        )}
+        {message && (
+          <div style={{ background: "#1d3b21", padding: 10, marginBottom: 10 }}>
+            {message}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 12 }}>
-          <input
-            type="password"
-            placeholder="Current password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <input
-            type="password"
-            placeholder="New password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <input
-            type="password"
-            placeholder="Confirm new password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={{ padding: "10px 16px" }}>
-          {loading ? "Saving..." : "Change password"}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="password"
+              placeholder="Old password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 8,
+                border: "1px solid #333",
+                background: "#222",
+                color: "#fff",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="password"
+              placeholder="New password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 8,
+                border: "1px solid #333",
+                background: "#222",
+                color: "#fff",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="password"
+              placeholder="Confirm new password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: 12,
+                borderRadius: 8,
+                border: "1px solid #333",
+                background: "#222",
+                color: "#fff",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                background: loading ? "#aa4400" : "#ff5a00",
+                color: "#fff",
+                borderRadius: 8,
+                padding: "12px 18px",
+                fontWeight: 700,
+                border: "none",
+              }}
+            >
+              {loading ? "Saving..." : "Change Password"}
+            </button>
+            <Link to="/" style={{ color: "#bbb", textDecoration: "none" }}>
+              Cancel
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
-
