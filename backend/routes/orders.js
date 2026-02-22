@@ -116,3 +116,5 @@ router.post("/checkout", async (req, res) => {
     if (connection) connection.release();
   }
 });
+
+module.exports = router;

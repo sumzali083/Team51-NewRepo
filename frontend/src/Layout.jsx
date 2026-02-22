@@ -1,11 +1,22 @@
-import React, { useContext } from "react";
+import { useContext, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { CartContext } from "./context/CartContext";
 import { WishlistContext } from "./context/WishlistContext";
 
 export function Layout() {
-  const [search, setSearch] = React.useState("");
+  const [search, setSearch] = useState("");
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("osaiUser")); }
+    catch { return null; }
+  });
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("osaiUser");
+    sessionStorage.removeItem("user");
+    setUser(null);
+    navigate("/");
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -74,11 +85,36 @@ export function Layout() {
                 </button>
               </form>
 
-              {/* Login */}
-              <NavLink to="/login" className="osai-action-btn">
-                <i className="bi bi-person" />
-                <span className="d-none d-xl-inline">Login</span>
-              </NavLink>
+              {/* Login / User */}
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.8)",
+                    fontFamily: "var(--font-body)",
+                    maxWidth: 100,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {user.name}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="osai-action-btn"
+                    style={{ border: "none", cursor: "pointer", background: "transparent" }}
+                    aria-label="Logout"
+                    title="Logout"
+                  >
+                    <i className="bi bi-box-arrow-right" />
+                  </button>
+                </div>
+              ) : (
+                <NavLink to="/login" className="osai-action-btn">
+                  <i className="bi bi-person" />
+                  <span className="d-none d-xl-inline">Login</span>
+                </NavLink>
+              )}
 
               {/* Wishlist */}
               <NavLink

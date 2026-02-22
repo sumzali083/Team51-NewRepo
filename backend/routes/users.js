@@ -47,7 +47,7 @@ router.post("/register", async (req, res) => {
     console.error("Error registering user:", err);
 
     // local laptop: DB not reachable → friendly fallback
-    if (err.code === "ETIMEDOUT") {
+    if (err.code === "ETIMEDOUT" || err.code === "ECONNREFUSED") {
       return res.status(200).json({
         message:
           "Registered (DB not available in local setup, but it will work on the uni server).",
@@ -104,7 +104,7 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Error logging in:", err);
 
-    if (err.code === "ETIMEDOUT") {
+    if (err.code === "ETIMEDOUT" || err.code === "ECONNREFUSED") {
       return res.status(200).json({
         message:
           "Login simulated (DB not available in local setup, but it will work on the uni server).",
@@ -116,10 +116,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-   return res.status(200).json({
-  message:
-    "Simulated on local machine (DB not connected here, but it will work on the uni server).",
-});
+    return res.status(500).json({ message: "Server error" });
 
   }
 });
