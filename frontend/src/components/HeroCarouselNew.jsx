@@ -11,16 +11,28 @@ const slides = [
 
 export default function HeroCarouselNew() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const timerRef = React.useRef(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 4500);
-    return () => clearInterval(timer);
+  };
+
+  useEffect(() => {
+    startTimer();
+    return () => clearInterval(timerRef.current);
   }, []);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    startTimer();
+  };
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    startTimer();
+  };
 
   return (
     <div className="osai-hero-container">
@@ -60,7 +72,10 @@ export default function HeroCarouselNew() {
         {slides.map((_, index) => (
           <button
             key={index}
-            onClick={() => setCurrentSlide(index)}
+            onClick={() => {
+              setCurrentSlide(index);
+              startTimer();
+            }}
             className={index === currentSlide ? 'dot active' : 'dot'}
             aria-label={`Go to slide ${index + 1}`}
           />
