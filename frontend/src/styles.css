@@ -558,6 +558,167 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   color: var(--text) !important;
 }
 .card-body { background-color: transparent !important }
+
+/* ─── AUTH SCREENS ──────────────────────────────────────────────────────── */
+.osai-auth-page {
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+.osai-auth-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+.osai-auth-title {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.osai-auth-sub {
+  color: var(--sub);
+  margin: 0 0 18px;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: var(--font-body);
+}
+.osai-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.osai-auth-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+.osai-auth-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.osai-auth-input:focus {
+  border-color: var(--line-hover);
+  background: #0f0f0f;
+  box-shadow: var(--focus);
+}
+.osai-auth-footer {
+  margin-top: 14px;
+}
+.osai-auth-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 6px;
+}
+.osai-link-inline {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+.osai-link-muted {
+  color: var(--sub);
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.osai-break-all { word-break: break-all }
+.osai-auth-note { font-size: 12px; color: var(--sub); margin-bottom: 6px }
+
+/* Alerts */
+.osai-alert {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.osai-alert-error {
+  background: rgba(255,60,60,0.12);
+  border-color: rgba(255,60,60,0.25);
+  color: #f87171;
+}
+.osai-alert-success {
+  background: rgba(0,200,80,0.12);
+  border-color: rgba(0,200,80,0.25);
+  color: #4ade80;
+}
+.osai-alert-info {
+  background: rgba(120,180,255,0.08);
+  border-color: rgba(120,180,255,0.25);
+  color: #b7d8ff;
+}
+
+/* ─── ADMIN THEME OVERRIDES ─────────────────────────────────────────────── */
+.osai-admin {
+  min-height: 70vh;
+}
+.osai-admin-muted { color: var(--sub); font-size: 13px }
+.osai-admin .card {
+  background: var(--card);
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow);
+}
+.osai-admin .table { color: var(--text) }
+.osai-admin .table-light {
+  background: #0f0f0f !important;
+  color: var(--sub) !important;
+}
+.osai-admin .table td,
+.osai-admin .table th {
+  border-color: var(--line) !important;
+}
+.osai-admin .form-control,
+.osai-admin .form-select {
+  background: var(--bg-alt);
+  color: var(--text);
+  border-color: var(--line);
+}
+.osai-admin .btn-dark {
+  background: var(--text);
+  color: var(--bg);
+  border: 1px solid var(--text);
+}
+.osai-admin .btn-outline-secondary {
+  border-color: var(--line-hover);
+  color: var(--sub);
+}
+.osai-admin .btn-outline-secondary:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+.osai-admin .btn-outline-danger {
+  color: #f87171;
+  border-color: rgba(255,60,60,0.4);
+}
+.osai-admin .btn-outline-dark {
+  border-color: var(--line-hover);
+  color: var(--text);
+}
+.osai-admin .btn-outline-dark:hover {
+  border-color: var(--text);
+}
+.osai-admin .badge.text-bg-dark {
+  background: var(--text) !important;
+  color: var(--bg) !important;
+}
+.osai-admin .nav-pills .btn {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 .card-title { color: var(--text) !important }
 .card-text { color: var(--sub) !important }
 .card-img-top { border-bottom: 1px solid var(--line) }

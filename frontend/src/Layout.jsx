@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { CartContext } from "./context/CartContext";
 import { WishlistContext } from "./context/WishlistContext";
+import Chatbot from "./components/Chatbot";
 
 export function Layout() {
   const [search, setSearch] = useState("");
@@ -193,6 +194,8 @@ export function Layout() {
           <span>Birmingham, United Kingdom</span>
         </div>
       </footer>
+
+      <Chatbot />
     </>
   );
 }
