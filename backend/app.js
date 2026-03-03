@@ -14,6 +14,7 @@ const userRoutes = require("./routes/users");
 const reviewRoutes = require("./routes/reviews");
 const chatbotRoutes = require("./routes/chatbot");
 const adminRoutes = require("./routes/admin");
+const wishlistRoutes = require("./routes/wishlist");
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 // Serve static frontend if built
 const distPath = path.join(__dirname, "../frontend/dist");

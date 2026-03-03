@@ -39,6 +39,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       // Clear localStorage cart when logging out
       localStorage.removeItem("cart");
+      localStorage.removeItem("wishlist");
       localStorage.removeItem("osaiUser");
     }
   };
