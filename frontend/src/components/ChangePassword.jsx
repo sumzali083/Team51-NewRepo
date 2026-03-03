@@ -14,11 +14,12 @@ export function ChangePassword() {
 
   if (!user) {
     return (
-      <div style={{ maxWidth: 520, margin: "40px auto" }}>
-        <div style={{ background: "#111", borderRadius: 16, padding: 24, color: "#fff" }}>
-          You need to be logged in.
-          <div style={{ marginTop: 12 }}>
-            <Link to="/login" style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600 }}>
+      <div className="osai-auth-page">
+        <div className="osai-auth-card">
+          <h2 className="osai-auth-title">Change Password</h2>
+          <p className="osai-auth-sub">You need to be logged in.</p>
+          <div className="osai-auth-footer">
+            <Link to="/login" className="osai-link-inline">
               Go to Login
             </Link>
           </div>
@@ -66,100 +67,56 @@ export function ChangePassword() {
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: "40px auto" }}>
-      <div
-        style={{
-          background: "#111",
-          borderRadius: 16,
-          padding: 24,
-          boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
-          color: "#fff",
-        }}
-      >
-        <h2 style={{ color: "#ff5a00", fontWeight: 800, marginBottom: 6 }}>
-          Change Password
-        </h2>
-        <p style={{ color: "#bbb", marginBottom: 16 }}>
-          Email: <strong>{user.email}</strong>
-        </p>
+    <div className="osai-auth-page">
+      <div className="osai-auth-card">
+        <h2 className="osai-auth-title">Change Password</h2>
+        <p className="osai-auth-sub">Email: {user.email}</p>
 
-        {error && (
-          <div style={{ background: "#5c1a1a", padding: 10, marginBottom: 10 }}>
-            {error}
-          </div>
-        )}
-        {message && (
-          <div style={{ background: "#1d3b21", padding: 10, marginBottom: 10 }}>
-            {message}
-          </div>
-        )}
+        {error && <div className="osai-alert osai-alert-error">{error}</div>}
+        {message && <div className="osai-alert osai-alert-success">{message}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 12 }}>
-            <input
-              type="password"
-              placeholder="Old password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: 12,
-                borderRadius: 8,
-                border: "1px solid #333",
-                background: "#222",
-                color: "#fff",
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <input
-              type="password"
-              placeholder="New password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: 12,
-                borderRadius: 8,
-                border: "1px solid #333",
-                background: "#222",
-                color: "#fff",
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <input
-              type="password"
-              placeholder="Confirm new password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              style={{
-                width: "100%",
-                padding: 12,
-                borderRadius: 8,
-                border: "1px solid #333",
-                background: "#222",
-                color: "#fff",
-              }}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="osai-auth-form">
+          <label className="osai-auth-label" htmlFor="current-password">
+            Current password
+          </label>
+          <input
+            id="current-password"
+            className="osai-auth-input"
+            type="password"
+            placeholder="Old password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
 
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                background: loading ? "#aa4400" : "#ff5a00",
-                color: "#fff",
-                borderRadius: 8,
-                padding: "12px 18px",
-                fontWeight: 700,
-                border: "none",
-              }}
-            >
+          <label className="osai-auth-label" htmlFor="new-password">
+            New password
+          </label>
+          <input
+            id="new-password"
+            className="osai-auth-input"
+            type="password"
+            placeholder="New password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+
+          <label className="osai-auth-label" htmlFor="confirm-password">
+            Confirm new password
+          </label>
+          <input
+            id="confirm-password"
+            className="osai-auth-input"
+            type="password"
+            placeholder="Confirm new password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+
+          <div className="osai-auth-actions">
+            <button type="submit" disabled={loading} className="osai-cta-primary">
               {loading ? "Saving..." : "Change Password"}
             </button>
-            <Link to="/" style={{ color: "#bbb", textDecoration: "none" }}>
+            <Link to="/" className="osai-link-muted">
               Cancel
             </Link>
           </div>

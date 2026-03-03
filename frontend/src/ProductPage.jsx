@@ -194,7 +194,7 @@ export function ProductPage() {
 
         <div className="col-md-6">
           <h1>{product.name}</h1>
-          <h3 className="text-primary">£{product.price.toFixed(2)}</h3>
+          <h3 style={{ color: '#fff', fontWeight: 700 }}>£{product.price.toFixed(2)}</h3>
           <p className="mt-3">{product.desc || product.description}</p>
 
           {product.sizes && product.sizes.length > 0 && (
@@ -206,6 +206,7 @@ export function ProductPage() {
                     key={s}
                     className={`btn ${size === s ? 'btn-dark' : 'btn-outline-dark'}`}
                     onClick={() => setSize(s)}
+                    style={{ minWidth: 48 }}
                   >
                     {s}
                   </button>
@@ -269,14 +270,14 @@ export function ProductPage() {
             <div className={canReview ? "col-lg-8 mb-5" : "col-12 mb-5"}>
             {/* Average Rating */}
             {reviews.length > 0 && (
-              <div className="mb-4 p-4 bg-light rounded-3">
+              <div className="mb-4 p-4 rounded-3" style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="d-flex align-items-center gap-4">
                   <div>
-                    <div className="display-6 fw-bold mb-1">{averageRating}</div>
+                    <div className="display-6 fw-bold mb-1" style={{ color: '#fff' }}>{averageRating}</div>
                     <div className="fs-5 text-warning mb-2">
                       {"★".repeat(Math.round(averageRating))}{"☆".repeat(5 - Math.round(averageRating))}
                     </div>
-                    <small className="text-muted">Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}</small>
+                    <small style={{ color: '#888' }}>Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}</small>
                   </div>
                 </div>
               </div>
@@ -291,8 +292,8 @@ export function ProductPage() {
               <div>
                 <h4 className="mb-4 fw-bold">All Reviews</h4>
                 {reviews.map((review) => (
-                  <div key={review.id} className="card mb-3 border-0 shadow-sm rounded-3 overflow-hidden">
-                    <div className="card-body p-4">
+                  <div key={review.id} className="card mb-3 rounded-3 overflow-hidden" style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="card-body p-4" style={{ background: 'transparent' }}>
                       <div className="d-flex justify-content-between align-items-start mb-3">
                         <div>
                           <h5 className="card-title mb-2 fw-bold">{review.reviewer_name || review.name}</h5>
@@ -321,11 +322,11 @@ export function ProductPage() {
           {/* Review Form - Only show if user is logged in */}
           {canReview && (
             <div className="col-lg-4">
-              <div className="card border-0 shadow-sm rounded-3 p-4 position-sticky" style={{ top: '120px' }}>
-                <h5 className="mb-4 fw-bold">Leave a Review</h5>
+              <div className="card rounded-3 p-4 position-sticky" style={{ top: '120px', background: '#111', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <h5 className="mb-4 fw-bold" style={{ color: '#fff' }}>Leave a Review</h5>
 
-                <div className="alert alert-info mb-3 border-0 rounded-2" role="alert">
-                  <small>Logged in as: <strong>{user.name}</strong></small>
+                <div className="mb-3 p-2 rounded-2" style={{ background: 'rgba(255,255,255,0.05)', fontSize: 13, color: '#888' }}>
+                  Logged in as: <strong style={{ color: '#fff' }}>{user.name}</strong>
                 </div>
 
                 {successMsg && (
@@ -342,11 +343,10 @@ export function ProductPage() {
 
                 <form onSubmit={handleSubmitReview}>
                   <div className="mb-3">
-                    <label className="form-label fw-bold text-dark">Your Name</label>
+                    <label className="form-label fw-bold" style={{ color: '#aaa' }}>Your Name</label>
                     <input
                       type="text"
-                      className="form-control rounded-2 border-0"
-                      style={{ backgroundColor: '#f8f9fa' }}
+                      className="form-control rounded-2"
                       value={reviewerName}
                       onChange={(e) => setReviewerName(e.target.value)}
                       placeholder="Enter your name"
@@ -354,7 +354,7 @@ export function ProductPage() {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label fw-bold text-dark mb-2">Rating</label>
+                    <label className="form-label fw-bold mb-2" style={{ color: '#aaa' }}>Rating</label>
                     <div className="fs-5" style={{ letterSpacing: '8px', marginBottom: '10px' }}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span
@@ -364,7 +364,7 @@ export function ProductPage() {
                           onMouseLeave={() => setHoverRating(0)}
                           style={{
                             cursor: 'pointer',
-                            color: star <= (hoverRating || rating) ? '#ffc107' : '#dee2e6',
+                            color: star <= (hoverRating || rating) ? '#ffc107' : '#333',
                             fontSize: '2rem',
                             transition: 'color 0.2s',
                             display: 'inline-block',
@@ -377,10 +377,10 @@ export function ProductPage() {
                   </div>
 
                   <div className="mb-4">
-                    <label className="form-label fw-bold text-dark">Comment</label>
+                    <label className="form-label fw-bold" style={{ color: '#aaa' }}>Comment</label>
                     <textarea
-                      className="form-control rounded-2 border-0"
-                      style={{ backgroundColor: '#f8f9fa', minHeight: '100px' }}
+                      className="form-control rounded-2"
+                      style={{ minHeight: '100px' }}
                       rows="4"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}

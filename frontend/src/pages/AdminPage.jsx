@@ -132,18 +132,24 @@ export default function AdminPage() {
     { key: "users", label: "Users" },
   ];
 
-  if (loading) return <div className="container mt-5">Loading admin dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="osai-admin page-container">
+        <p className="osai-admin-muted">Loading admin dashboard...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger">{error}</div>
+      <div className="osai-admin page-container">
+        <div className="osai-alert osai-alert-error">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid py-4" style={{ background: "#f5f7fb", minHeight: "100vh" }}>
+    <div className="osai-admin page-container">
       <div className="row g-4">
         <aside className="col-lg-2 col-md-3">
           <div className="card border-0 shadow-sm">

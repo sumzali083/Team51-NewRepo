@@ -1,16 +1,37 @@
-import React, { useState, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { CiUser } from "react-icons/ci";
-import { RiLockPasswordLine } from "react-icons/ri";
+import React, { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
+
+const INPUT = {
+  width: "100%",
+  display: "block",
+  background: "#1a1a1a",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: 8,
+  padding: "13px 16px",
+  color: "#fff",
+  fontSize: 14,
+  outline: "none",
+  transition: "border-color 0.18s ease",
+  boxSizing: "border-box",
+};
+
+const LABEL = {
+  display: "block",
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "#888",
+  marginBottom: 8,
+};
 
 export function Login({ initialEmail = "" }) {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
@@ -38,7 +59,10 @@ export function Login({ initialEmail = "" }) {
       if (user) {
         login(user);
         localStorage.setItem("osaiUser", JSON.stringify(user));
-        setTimeout(() => navigate("/"), 1000);
+        sessionStorage.setItem("user", JSON.stringify(user));
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       }
     } catch (err) {
       const msg =
@@ -52,47 +76,94 @@ export function Login({ initialEmail = "" }) {
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ fontWeight: 800, fontSize: 26, marginBottom: 6, color: "#ff5a00" }}>
-          Login
-        </h1>
-        <p style={{ color: "#bbb", fontSize: 15 }}>
-          Please login to access our services!
-        </p>
-      </div>
+      <h2
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 22,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          color: "#fff",
+          margin: "0 0 6px",
+        }}
+      >
+        Login
+      </h2>
+      <p style={{ color: "#888", fontSize: 13, marginBottom: 28 }}>
+        Enter your details to access your account.
+      </p>
 
       {error && (
-        <div style={{ background: "#5c1a1a", color: "#ffe5e5", padding: "10px 14px", borderRadius: 8, marginBottom: 12, fontSize: 14 }}>
+        <div
+          style={{
+            marginBottom: 20,
+            padding: "12px 16px",
+            borderRadius: 6,
+            fontSize: 13,
+            background: "rgba(255,60,60,0.12)",
+            border: "1px solid rgba(255,60,60,0.25)",
+            color: "#f87171",
+          }}
+        >
           {error}
         </div>
       )}
 
       {message && (
-        <div style={{ background: "#1d3b21", color: "#e1ffe5", padding: "10px 14px", borderRadius: 8, marginBottom: 12, fontSize: 14 }}>
+        <div
+          style={{
+            marginBottom: 20,
+            padding: "12px 16px",
+            borderRadius: 6,
+            fontSize: 13,
+            background: "rgba(0,200,80,0.12)",
+            border: "1px solid rgba(0,200,80,0.25)",
+            color: "#4ade80",
+          }}
+        >
           {message}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", background: "#222", borderRadius: 8, padding: "12px 16px", border: "1px solid #333" }}>
-          <CiUser style={{ fontSize: 22, color: "#ff5a00", marginRight: 8 }} />
+      <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <label style={LABEL} htmlFor="login-email">Email</label>
           <input
-            style={{ background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: 16, flex: 1 }}
+            id="login-email"
             type="email"
-            placeholder="Email"
+            placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={INPUT}
+            onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.35)")}
+            onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", background: "#222", borderRadius: 8, padding: "12px 16px", border: "1px solid #333" }}>
-          <RiLockPasswordLine style={{ fontSize: 22, color: "#ff5a00", marginRight: 8 }} />
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={LABEL}>Password</span>
+            <Link
+              to="/forgot-password"
+              style={{
+                fontSize: 12,
+                color: "#888",
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+              }}
+            >
+              Forgot password?
+            </Link>
+          </div>
           <input
-            style={{ background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: 16, flex: 1 }}
+            id="login-password"
             type="password"
-            placeholder="Password"
+            placeholder="********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            style={INPUT}
+            onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.35)")}
+            onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
           />
         </div>
 
@@ -100,29 +171,42 @@ export function Login({ initialEmail = "" }) {
           type="submit"
           disabled={loading}
           style={{
-            background: loading ? "#aa4400" : "#ff5a00",
-            color: "#fff",
-            borderRadius: 8,
-            padding: "13px 0",
-            fontWeight: 700,
-            fontSize: 17,
+            width: "100%",
+            padding: "14px",
+            background: loading ? "#ccc" : "#fff",
+            color: "#000",
             border: "none",
-            cursor: loading ? "default" : "pointer",
+            borderRadius: 4,
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            cursor: loading ? "not-allowed" : "pointer",
             marginTop: 8,
-            boxShadow: "0 2px 8px rgba(0,0,0,.10)",
+            transition: "background 0.18s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!loading) e.target.style.background = "#e0e0e0";
+          }}
+          onMouseLeave={(e) => {
+            if (!loading) e.target.style.background = "#fff";
           }}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <Link to="/forgot-password" style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
-            Forgot Password?
-          </Link>
-          <Link to="/account/change-password" style={{ color: "#ff5a00", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
-            Change Password
-          </Link>
-        </div>
+        <Link
+          to="/account/change-password"
+          style={{
+            alignSelf: "flex-start",
+            fontSize: 12,
+            color: "#888",
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+          }}
+        >
+          Change password
+        </Link>
       </form>
     </div>
   );

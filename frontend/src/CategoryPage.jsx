@@ -1,15 +1,40 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { CartContext } from "./context/CartContext";
 import { WishlistContext } from "./context/WishlistContext";
 import api from "./api";
 import { PRODUCTS, Fallback } from "./data";
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+    },
+  },
+};
 
 export function CategoryPage({ cat, pageTitle }) {
   const { addToCart } = useContext(CartContext);
   const { addToWishlist } = useContext(WishlistContext);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [hoveredProductId, setHoveredProductId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("featured");
@@ -159,11 +184,14 @@ export function CategoryPage({ cat, pageTitle }) {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               aria-expanded={isDropdownOpen}
               style={{
-                textDecoration: 'none',
                 padding: '8px 16px',
-                fontSize: '0.95rem',
-                fontWeight: '500',
-                border: '1px solid #dee2e6'
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#fff',
+                background: 'transparent'
               }}
             >
               Sort By
@@ -179,105 +207,102 @@ export function CategoryPage({ cat, pageTitle }) {
                   right: 0,
                   minWidth: '200px',
                   zIndex: 1000,
-                  borderRadius: '8px',
-                  border: '1px solid #dee2e6',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  padding: '8px 0'
+                  borderRadius: '4px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                  padding: '6px 0',
+                  background: '#111'
                 }}
               >
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSortSelect('featured')}
-                  style={{
-                    textAlign: 'left',
-                    background: sortBy === 'featured' ? '#f8f9fa' : 'white',
-                    border: 'none',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    color: '#111',
-                    fontWeight: sortBy === 'featured' ? '600' : '400',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Featured
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSortSelect('newest')}
-                  style={{
-                    textAlign: 'left',
-                    background: sortBy === 'newest' ? '#f8f9fa' : 'white',
-                    border: 'none',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    color: '#111',
-                    fontWeight: sortBy === 'newest' ? '600' : '400',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Newest
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSortSelect('price-high-low')}
-                  style={{
-                    textAlign: 'left',
-                    background: sortBy === 'price-high-low' ? '#f8f9fa' : 'white',
-                    border: 'none',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    color: '#111',
-                    fontWeight: sortBy === 'price-high-low' ? '600' : '400',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Price: High-Low
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSortSelect('price-low-high')}
-                  style={{
-                    textAlign: 'left',
-                    background: sortBy === 'price-low-high' ? '#f8f9fa' : 'white',
-                    border: 'none',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    color: '#111',
-                    fontWeight: sortBy === 'price-low-high' ? '600' : '400',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Price: Low-High
-                </button>
+                {[
+                  { value: 'featured',       label: 'Featured' },
+                  { value: 'newest',         label: 'Newest' },
+                  { value: 'price-high-low', label: 'Price: High–Low' },
+                  { value: 'price-low-high', label: 'Price: Low–High' },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    className="dropdown-item"
+                    onClick={() => handleSortSelect(value)}
+                    style={{
+                      textAlign: 'left',
+                      background: sortBy === value ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      border: 'none',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      color: sortBy === value ? '#fff' : '#888',
+                      fontWeight: sortBy === value ? '600' : '400',
+                      fontSize: '12px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      width: '100%',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="row g-4">
+      <motion.div
+        className="row g-4"
+        variants={gridVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {filteredProducts.map((product) => {
           const img = product.image || product.image_url || (product.images && product.images[0]) || Fallback;
+          const hoverImg = (product.images && product.images[1]) || img;
+          const isHovered = hoveredProductId === product.id;
           const price = Number(product.price || 0);
 
           return (
-            <div key={product.id} className="col-md-4">
+            <motion.div key={product.id} className="col-md-4" variants={cardVariants}>
               <div className="card h-100 shadow-sm">
-                <Link to={`/product/${product.id}`} className="text-decoration-none">
-                  <img
-                    src={img}
-                    className="card-img-top"
-                    alt={product.name}
-                    style={{ cursor: 'pointer' }}
-                    onError={(e) => { e.target.src = Fallback; }}
-                  />
+                <Link
+                  to={`/product/${product.id}`}
+                  className="text-decoration-none"
+                  onMouseEnter={() => setHoveredProductId(product.id)}
+                  onMouseLeave={() => setHoveredProductId(null)}
+                >
+                  <div className="card-img-top" style={{ position: 'relative', overflow: 'hidden' }}>
+                    <img
+                      src={img}
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        display: 'block',
+                        opacity: isHovered ? 0 : 1,
+                        transition: 'opacity 0.45s ease',
+                      }}
+                      onError={(e) => { e.target.src = Fallback; }}
+                    />
+                    <img
+                      src={hoverImg}
+                      alt={`${product.name} alternate view`}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        opacity: isHovered ? 1 : 0,
+                        transition: 'opacity 0.45s ease',
+                      }}
+                      onError={(e) => { e.target.src = Fallback; }}
+                    />
+                  </div>
                 </Link>
 
                 <div className="card-body d-flex flex-column">
-                  <Link to={`/product/${product.id}`} className="text-decoration-none text-dark">
+                  <Link to={`/product/${product.id}`} className="text-decoration-none">
                     <h5 className="card-title">{product.name}</h5>
                   </Link>
-                  <p className="card-text fw-bold">
+                  <p className="card-text fw-bold" style={{ color: '#fff' }}>
                     £{price.toFixed(2)}
                   </p>
                   <div className="d-grid gap-2 mt-auto">
@@ -296,14 +321,14 @@ export function CategoryPage({ cat, pageTitle }) {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
 
         {!filteredProducts.length && (
           <p>No products found in this category.</p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
