@@ -290,6 +290,66 @@ export default function Contact() {
           </button>
         </form>
       </div>
+
+      {/* ── Map Section ── */}
+      <div style={{
+        width: "100%",
+        maxWidth: 620,
+        marginTop: 60,
+        ...formSlideFadeIn,
+      }}>
+        <h2 style={{
+          color: "#fff",
+          fontWeight: 600,
+          fontSize: 18,
+          marginBottom: 20,
+          textAlign: "center",
+        }}>
+          Our Location
+        </h2>
+        <div 
+          onClick={() => {
+            window.open(
+              "https://www.google.com/maps/dir/?api=1&destination=134a+Aston+Road,+Birmingham,+UK&travelmode=driving",
+              "_blank"
+            );
+          }}
+          style={{
+            background: "#111",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+            overflow: "hidden",
+            aspectRatio: "16 / 9",
+            cursor: "pointer",
+            transition: "border-color 0.18s ease",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)")}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+        >
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2428.6848396569256!2d-1.8945!3d52.5077!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48709b4b4b7b7b7b%3A0x7b7b7b7b7b7b7b7b!2s134a%20Aston%20Rd%2C%20Birmingham%20B6%204BY!5e0!3m2!1sen!2suk!4v1234567890"
+            width="100%"
+            height="100%"
+            style={{
+              border: "none",
+              borderRadius: 12,
+              pointerEvents: "none",
+            }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Our Location - 134a Aston Road, Birmingham, UK"
+          />
+        </div>
+        <p style={{
+          color: "#888",
+          fontSize: 13,
+          marginTop: 16,
+          textAlign: "center",
+        }}>
+          134a Aston Road, Birmingham, UK
+        </p>
+      </div>
     </div>
   );
 }
