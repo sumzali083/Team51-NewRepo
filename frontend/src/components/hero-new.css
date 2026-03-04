@@ -46,13 +46,16 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 28px;
   z-index: 10;
   padding: 40px 32px;
   text-align: left;
 }
 @media (min-width: 1200px) {
-  .osai-hero-content { padding: 56px calc((100vw - 1200px) / 2 + 24px) }
+  .osai-hero-content {
+    bottom: 52px;
+    padding: 56px calc((100vw - 1200px) / 2 + 24px);
+  }
 }
 
 .osai-hero-title {
@@ -105,13 +108,14 @@
 .osai-hero-indicators {
   position: absolute;
   bottom: 28px;
-  right: 32px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 6px;
   z-index: 20;
 }
 @media (min-width: 1200px) {
-  .osai-hero-indicators { right: calc((100vw - 1200px) / 2 + 24px) }
+  .osai-hero-indicators { left: 50%; transform: translateX(-50%) }
 }
 
 .dot {

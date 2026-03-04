@@ -4,9 +4,9 @@ import { AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 import './hero-new.css';
 
 const slides = [
-  { id: 1, image: "/images/Slider1.png", title: "New Season Arrivals", subtitle: "Discover the latest collection" },
-  { id: 2, image: "/images/Slider2.jpeg", title: "Sports Meets Style", subtitle: "Crafted for perfection" },
-  { id: 3, image: "/images/Slider3.jpeg", title: "Family Collection", subtitle: "Style for everyone" }
+  { id: 1, image: "/images/Slider1.jpg", title: "New Season Arrivals", subtitle: "Discover the latest collection" },
+  { id: 2, image: "/images/Slider2.jpg", title: "Sports Meets Style", subtitle: "Crafted for perfection" },
+  { id: 3, image: "/images/Slider3.png", title: "Family Collection", subtitle: "Style for everyone" }
 ];
 
 export default function HeroCarouselNew() {

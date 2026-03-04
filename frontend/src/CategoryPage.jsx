@@ -168,7 +168,7 @@ export function CategoryPage({ cat, pageTitle }) {
   }
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 mb-5">
       <div className="d-flex justify-content-between align-items-center mb-5">
         <h2 className="mb-0 fw-bold">{pageTitle}</h2>
 
