@@ -17,6 +17,13 @@ export default function AdminPage() {
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [stockDraft, setStockDraft] = useState({});
   const [orderStatusDraft, setOrderStatusDraft] = useState({});
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [submittingProduct, setSubmittingProduct] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState(null);
+  const [productDraft, setProductDraft] = useState({
+    sku: "", name: "", category_id: 11, price: "", stock: 0,
+    description: "", sizes: [], colors: ["", ""], images: ["", "", ""],
+  });
 
   const loadAll = async () => {
     setLoading(true);
@@ -112,6 +119,71 @@ export default function AdminPage() {
     }
   };
 
+  const toggleSize = (size) => {
+    setProductDraft((prev) => ({
+      ...prev,
+      sizes: prev.sizes.includes(size)
+        ? prev.sizes.filter((s) => s !== size)
+        : [...prev.sizes, size],
+    }));
+  };
+
+  const addProduct = async () => {
+    const { sku, name, category_id, price, stock, description, sizes, colors, images } = productDraft;
+    if (!sku.trim() || !name.trim() || !price) {
+      alert("SKU, Name, and Price are required.");
+      return;
+    }
+    if (Number(price) <= 0) {
+      alert("Price must be greater than 0.");
+      return;
+    }
+    setSubmittingProduct(true);
+    try {
+      await api.post("/api/admin/products", {
+        sku: sku.trim(),
+        name: name.trim(),
+        category_id: Number(category_id),
+        price: Number(price),
+        stock: Number(stock) || 0,
+        description: description.trim(),
+        sizes,
+        colors: colors.filter((c) => c.trim()),
+        images: images.filter((u) => u.trim()),
+      });
+      setProductDraft({
+        sku: "", name: "", category_id: 11, price: "", stock: 0,
+        description: "", sizes: [], colors: ["", ""], images: ["", "", ""],
+      });
+      setShowAddProduct(false);
+      const res = await api.get("/api/admin/products");
+      setProducts(res.data || []);
+      setStockDraft(Object.fromEntries((res.data || []).map((p) => [p.id, p.stock ?? 0])));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to create product");
+    } finally {
+      setSubmittingProduct(false);
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Permanently delete this product and all its images, sizes, and colors?")) return;
+    setDeletingProductId(id);
+    try {
+      await api.delete(`/api/admin/products/${id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      setStockDraft((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to delete product");
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
+
   const kpis = useMemo(() => {
     return [
       { label: "Products", value: reports?.totalProducts ?? products.length },
@@ -125,6 +197,7 @@ export default function AdminPage() {
 
   const tabs = [
     { key: "dashboard", label: "Dashboard" },
+    { key: "products",  label: "Products" },
     { key: "inventory", label: "Inventory" },
     { key: "orders", label: "Orders" },
     { key: "reviews", label: "Reviews" },
@@ -196,8 +269,238 @@ export default function AdminPage() {
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <h4 className="mb-3">Overview</h4>
-                <p className="mb-1">Use sidebar tabs to manage inventory, orders, reviews, contacts, and users.</p>
+                <p className="mb-1">Use sidebar tabs to manage products, inventory, orders, reviews, contacts, and users.</p>
                 <p className="mb-0 text-muted">All actions here are restricted to admin users only.</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "products" && (
+            <div className="card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h4 className="mb-0">Product Management</h4>
+                  <button
+                    className="btn btn-dark btn-sm"
+                    onClick={() => setShowAddProduct((prev) => !prev)}
+                  >
+                    {showAddProduct ? "Cancel" : "+ Add Product"}
+                  </button>
+                </div>
+
+                {showAddProduct && (
+                  <div className="border rounded p-3 mb-4 bg-light">
+                    <h5 className="mb-3">New Product</h5>
+                    <div className="row g-3">
+
+                      <div className="col-md-4">
+                        <label className="form-label">SKU *</label>
+                        <input
+                          className="form-control form-control-sm"
+                          placeholder="e.g. m-010"
+                          value={productDraft.sku}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, sku: e.target.value }))}
+                        />
+                      </div>
+                      <div className="col-md-8">
+                        <label className="form-label">Name *</label>
+                        <input
+                          className="form-control form-control-sm"
+                          placeholder="Product name"
+                          value={productDraft.name}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="col-md-4">
+                        <label className="form-label">Category *</label>
+                        <select
+                          className="form-select form-select-sm"
+                          value={productDraft.category_id}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, category_id: Number(e.target.value) }))}
+                        >
+                          <option value={11}>Mens</option>
+                          <option value={12}>Womens</option>
+                          <option value={13}>Kids</option>
+                          <option value={14}>New Arrivals</option>
+                          <option value={15}>Sale</option>
+                        </select>
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Price (GBP) *</label>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          className="form-control form-control-sm"
+                          placeholder="29.99"
+                          value={productDraft.price}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, price: e.target.value }))}
+                        />
+                      </div>
+                      <div className="col-md-4">
+                        <label className="form-label">Stock</label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="form-control form-control-sm"
+                          placeholder="0"
+                          value={productDraft.stock}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, stock: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-control form-control-sm"
+                          rows={3}
+                          placeholder="Product description"
+                          value={productDraft.description}
+                          onChange={(e) => setProductDraft((prev) => ({ ...prev, description: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label d-block">Sizes</label>
+                        <div className="d-flex flex-wrap gap-2 mb-1">
+                          <small className="text-muted w-100">Adult:</small>
+                          {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                            <div key={size} className="form-check form-check-inline">
+                              <input
+                                type="checkbox"
+                                className="form-check-input"
+                                id={`size-${size}`}
+                                checked={productDraft.sizes.includes(size)}
+                                onChange={() => toggleSize(size)}
+                              />
+                              <label className="form-check-label" htmlFor={`size-${size}`}>{size}</label>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="d-flex flex-wrap gap-2">
+                          <small className="text-muted w-100">Kids:</small>
+                          {["5-6", "7-8", "9-10", "11-12"].map((size) => (
+                            <div key={size} className="form-check form-check-inline">
+                              <input
+                                type="checkbox"
+                                className="form-check-input"
+                                id={`size-kids-${size}`}
+                                checked={productDraft.sizes.includes(size)}
+                                onChange={() => toggleSize(size)}
+                              />
+                              <label className="form-check-label" htmlFor={`size-kids-${size}`}>{size}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label">Colors</label>
+                        <div className="d-flex flex-wrap gap-2 align-items-center">
+                          {productDraft.colors.map((color, idx) => (
+                            <input
+                              key={idx}
+                              className="form-control form-control-sm"
+                              style={{ width: 140 }}
+                              placeholder={`Color ${idx + 1}`}
+                              value={color}
+                              onChange={(e) => {
+                                const next = [...productDraft.colors];
+                                next[idx] = e.target.value;
+                                setProductDraft((prev) => ({ ...prev, colors: next }));
+                              }}
+                            />
+                          ))}
+                          {productDraft.colors.length < 6 && (
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary btn-sm"
+                              onClick={() =>
+                                setProductDraft((prev) => ({ ...prev, colors: [...prev.colors, ""] }))
+                              }
+                            >
+                              + Color
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <label className="form-label">Image URLs (up to 3)</label>
+                        <div className="d-flex flex-column gap-2">
+                          {productDraft.images.map((url, idx) => (
+                            <input
+                              key={idx}
+                              className="form-control form-control-sm"
+                              placeholder={`Image ${idx + 1} URL — e.g. /assets/men/shirt.jpg`}
+                              value={url}
+                              onChange={(e) => {
+                                const next = [...productDraft.images];
+                                next[idx] = e.target.value;
+                                setProductDraft((prev) => ({ ...prev, images: next }));
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-12">
+                        <button
+                          className="btn btn-dark btn-sm"
+                          onClick={addProduct}
+                          disabled={submittingProduct}
+                        >
+                          {submittingProduct ? "Creating..." : "Create Product"}
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                )}
+
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p) => (
+                        <tr key={p.id}>
+                          <td>{p.id}</td>
+                          <td>{p.sku || "—"}</td>
+                          <td>{p.name}</td>
+                          <td>{p.category || "—"}</td>
+                          <td>£{Number(p.price || 0).toFixed(2)}</td>
+                          <td>{p.stock ?? 0}</td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => deleteProduct(p.id)}
+                              disabled={deletingProductId === p.id}
+                            >
+                              {deletingProductId === p.id ? "Deleting..." : "Delete"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {products.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="text-center text-muted">No products found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
               </div>
             </div>
           )}
