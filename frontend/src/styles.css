@@ -846,9 +846,9 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   vertical-align: middle;
   padding: 10px 12px;
 }
-.osai-admin .table td { font-size: 13px; color: var(--text) }
+.osai-admin .table td { font-size: 13px; color: var(--text) !important; background-color: transparent !important; --bs-table-bg: transparent; --bs-table-striped-bg: transparent; --bs-table-hover-bg: transparent }
 .osai-admin .table tbody tr { transition: background 0.12s }
-.osai-admin .table tbody tr:hover td { background: var(--card-hover) !important }
+.osai-admin .table tbody tr:hover td { background-color: var(--card-hover) !important }
 
 /* Forms */
 .osai-admin .form-control,

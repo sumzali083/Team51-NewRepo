@@ -234,6 +234,10 @@ router.post("/products", adminMiddleware, async (req, res) => {
 router.delete("/products/:id", adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    // Remove from carts and wishlists first (FK references to products.id)
+    await db.query(`DELETE FROM basket_items   WHERE product_id = ?`, [id]);
+    await db.query(`DELETE FROM wishlist_items WHERE product_id = ?`, [id]);
+    await db.query(`DELETE FROM reviews        WHERE product_id = ?`, [id]);
     await db.query(`DELETE FROM product_images WHERE product_id = ?`, [id]);
     await db.query(`DELETE FROM product_sizes  WHERE product_id = ?`, [id]);
     await db.query(`DELETE FROM product_colors WHERE product_id = ?`, [id]);
@@ -242,7 +246,7 @@ router.delete("/products/:id", adminMiddleware, async (req, res) => {
     res.json({ message: "Product deleted" });
   } catch (err) {
     console.error("Admin delete product error:", err);
-    res.status(500).json({ message: "Failed to delete product" });
+    res.status(500).json({ message: err.message || "Failed to delete product" });
   }
 });
 
