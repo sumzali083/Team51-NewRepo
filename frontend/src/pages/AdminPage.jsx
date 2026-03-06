@@ -3,6 +3,7 @@ import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
 export default function AdminPage() {
+  const LOW_STOCK_LIMIT = 5;
   const { user } = useContext(AuthContext);
   const [reports, setReports] = useState(null);
   const [products, setProducts] = useState([]);
@@ -206,10 +207,25 @@ export default function AdminPage() {
     ];
   }, [messages.length, orders.length, products.length, reports, reviews.length]);
 
+  const outOfStockProducts = useMemo(
+    () => products.filter((p) => Number(p.stock ?? 0) === 0),
+    [products]
+  );
+
+  const lowStockProducts = useMemo(
+    () =>
+      products.filter((p) => {
+        const stock = Number(p.stock ?? 0);
+        return stock > 0 && stock <= LOW_STOCK_LIMIT;
+      }),
+    [products, LOW_STOCK_LIMIT]
+  );
+
   const tabs = [
     { key: "dashboard", label: "Dashboard",        icon: "bi-speedometer2" },
     { key: "products",  label: "Products",          icon: "bi-box-seam" },
     { key: "inventory", label: "Inventory",         icon: "bi-clipboard-data" },
+    { key: "stockAlerts", label: "Stock Alerts",    icon: "bi-exclamation-triangle" },
     { key: "orders",    label: "Orders",            icon: "bi-bag-check" },
     { key: "reviews",   label: "Reviews",           icon: "bi-star" },
     { key: "contacts",  label: "Contact Messages",  icon: "bi-envelope" },
@@ -613,6 +629,138 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "stockAlerts" && (
+            <div className="d-flex flex-column gap-3">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="osai-admin-tab-header">
+                    <h4 className="osai-admin-section-title">Out of Stock</h4>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      {outOfStockProducts.length} products
+                    </span>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>ID</th>
+                          <th>SKU</th>
+                          <th>Name</th>
+                          <th>Category</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {outOfStockProducts.map((p) => (
+                          <tr key={p.id}>
+                            <td>{p.id}</td>
+                            <td>{p.sku || "-"}</td>
+                            <td>{p.name}</td>
+                            <td>{p.category || "-"}</td>
+                            <td>£{Number(p.price || 0).toFixed(2)}</td>
+                            <td style={{ width: 120 }}>
+                              <input
+                                type="number"
+                                min="0"
+                                className="form-control form-control-sm"
+                                value={stockDraft[p.id] ?? 0}
+                                onChange={(e) =>
+                                  setStockDraft((prev) => ({ ...prev, [p.id]: e.target.value }))
+                                }
+                              />
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-dark"
+                                onClick={() => updateStock(p.id)}
+                                disabled={savingStockId === p.id}
+                              >
+                                {savingStockId === p.id ? "Saving..." : "Save"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {outOfStockProducts.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                              No out-of-stock products.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="osai-admin-tab-header">
+                    <h4 className="osai-admin-section-title">Low Stock</h4>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      {lowStockProducts.length} products (1-{LOW_STOCK_LIMIT})
+                    </span>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>ID</th>
+                          <th>SKU</th>
+                          <th>Name</th>
+                          <th>Category</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lowStockProducts.map((p) => (
+                          <tr key={p.id}>
+                            <td>{p.id}</td>
+                            <td>{p.sku || "-"}</td>
+                            <td>{p.name}</td>
+                            <td>{p.category || "-"}</td>
+                            <td>£{Number(p.price || 0).toFixed(2)}</td>
+                            <td style={{ width: 120 }}>
+                              <input
+                                type="number"
+                                min="0"
+                                className="form-control form-control-sm"
+                                value={stockDraft[p.id] ?? 0}
+                                onChange={(e) =>
+                                  setStockDraft((prev) => ({ ...prev, [p.id]: e.target.value }))
+                                }
+                              />
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-dark"
+                                onClick={() => updateStock(p.id)}
+                                disabled={savingStockId === p.id}
+                              >
+                                {savingStockId === p.id ? "Saving..." : "Save"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {lowStockProducts.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                              No low-stock products.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
