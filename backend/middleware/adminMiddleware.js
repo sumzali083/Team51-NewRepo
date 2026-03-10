@@ -3,10 +3,10 @@ const db = require("../config/db");
 
 async function adminMiddleware(req, res, next) {
   try {
-    const userId = req.headers["x-user-id"];
+    const userId = req.session?.userId; // fixed bug (use session)
 
     if (!userId) {
-      return res.status(401).json({ message: "User ID header missing" });
+      return res.status(401).json({ message: "Not authenticated" });
     }
 
     // check user in database
