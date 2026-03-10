@@ -102,4 +102,55 @@ router.post("/checkout", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/orders/history
+ * Returns all orders for a logged in user
+ */
+
+router.get("/history", async(req,res) =>{
+  const userId = req.session && req.session.userId;
+
+  if(!userId){
+    return res.status(401).json({ message: "Please log in to view order history"});
+  }
+
+  try {
+    // Get orders for user
+
+    const result = await db.query(
+      `SELECT * FROM orders
+      WHERE user_id = ?
+      ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    const orders = result[0];
+    //get items for each order
+    for (let i=0;i<orders.length;i++) {
+      const order = orders[i];
+
+      const itemResult = await db.query(
+        `SELECT
+          oi.product_id,
+          oi.quantity,
+          oi.price_each,
+          p.name
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?`,
+        [order.id]
+      );
+
+      const items = itemResult[0];
+      order.items = items;
+    }
+
+    res.json(orders);
+
+  } catch (err) {
+    console.error("Order history error:", err);
+    res.status(500).json({message:"Server error"});
+  }
+});
+
 module.exports = router;
