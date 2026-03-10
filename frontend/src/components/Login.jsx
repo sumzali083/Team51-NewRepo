@@ -30,6 +30,7 @@ const LABEL = {
 export function Login({ initialEmail = "" }) {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -193,7 +194,7 @@ export function Login({ initialEmail = "" }) {
 
           <input
             id="login-password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -206,6 +207,16 @@ export function Login({ initialEmail = "" }) {
             }
           />
         </div>
+
+          <div style={{marginTop: 6}}>
+            <label style={{fontSize: 12, color: "#aaa"}}>
+              <input
+                type="checkbox"
+                onChange={() => setShowPassword(!showPassword)}
+                /> {" "}
+                Show password
+            </label>
+          </div>
 
         <button
           type="submit"
