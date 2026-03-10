@@ -1,9 +1,33 @@
 const express = require("express");
 const cors = require("cors");
+<<<<<<< HEAD
 
 const app = express();
 
 // === MIDDLEWARE ===
+=======
+const session = require("express-session");
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config();
+
+const productRoutes = require("./routes/products");
+const cartRoutes = require("./routes/cart");
+const orderRoutes = require("./routes/orders");
+const feedbackRoutes = require("./routes/feedback");
+const contactRoutes = require("./routes/contact");
+const userRoutes = require("./routes/users");
+const reviewRoutes = require("./routes/reviews");
+const chatbotRoutes = require("./routes/chatbot");
+const adminRoutes = require("./routes/admin");
+const wishlistRoutes = require("./routes/wishlist");
+
+const app = express();
+
+// Required for HTTPS sessions on university VMs
+app.set("trust proxy", 1);
+
+>>>>>>> deploy-branch
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -13,6 +37,7 @@ app.use(cors({
   credentials: true
 }));
 
+<<<<<<< HEAD
 app.use(express.json()); // middleware to parse JSON request bodies
 
 // === ROUTE IMPORTS ===
@@ -27,6 +52,23 @@ const userRoutes = require("./routes/users");
 app.get("/", (req, res) => {
   res.send("Backend is working - Summer");
 });
+=======
+app.use(express.json());
+
+// Session config
+app.use(session({
+  name: "team51.sid",
+  secret: process.env.SESSION_SECRET || "osai-fashion-secret-key-summer",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 604800000
+  }
+}));
+>>>>>>> deploy-branch
 
 app.get("/api", (req, res) => {
   res.json({ 
@@ -35,23 +77,42 @@ app.get("/api", (req, res) => {
       "GET /api/products",
       "GET /api/products/:id",
       "POST /api/cart",
+<<<<<<< HEAD
       "GET /api/orders",
       "POST /api/feedback",
       "POST /api/contact",
       "POST /api/users/register",
       "POST /api/users/login"
+=======
+      "POST /api/orders/checkout",
+      "POST /api/feedback",
+      "POST /api/contact",
+      "POST /api/users/register",
+      "POST /api/users/login",
+      "GET /api/users/me",
+      "POST /api/users/logout",
+      "GET /api/reviews/:productId",
+      "POST /api/reviews/:productId",
+      "DELETE /api/reviews/:reviewId",
+      "POST /api/chatbot"
+>>>>>>> deploy-branch
     ]
   });
 });
 
+<<<<<<< HEAD
 
 // === API ROUTES ===
+=======
+// API routes
+>>>>>>> deploy-branch
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/users", userRoutes);
+<<<<<<< HEAD
 
 
 // === 404 HANDLER ===
@@ -68,3 +129,37 @@ app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`🌐 Live URL: https://cs2team51.cs2410-web01pvm.aston.ac.uk:${PORT}`);
 });
+=======
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+
+// Serve uploaded product images
+const uploadsPath = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
+app.use("/uploads", express.static(uploadsPath));
+
+// Serve static frontend if built
+const distPath = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
+app.use((req, res) => {
+  if (req.url.startsWith("/api")) {
+    return res.status(404).json({ message: "API route not found" });
+  }
+
+  if (fs.existsSync(path.join(distPath, "index.html"))) {
+    return res.sendFile(path.join(distPath, "index.html"));
+  }
+
+  return res.status(404).send("Frontend build not found");
+});
+
+const PORT = process.env.PORT || 21051;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+>>>>>>> deploy-branch

@@ -1,0 +1,134 @@
+/* ── Full-width hero: escape the Bootstrap container ── */
+.osai-hero-container {
+  position: relative;
+  /* Break out of any parent container */
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  /* Height */
+  height: 72vh;
+  min-height: 480px;
+  overflow: hidden;
+  border-radius: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+@media (min-width: 768px) {
+  .osai-hero-container { height: 88vh; min-height: 600px }
+}
+
+/* Slide */
+.osai-hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  display: block;
+}
+
+/* Gradient overlay — heavier at bottom for text legibility */
+.osai-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,0.15) 0%,
+    rgba(0,0,0,0.10) 40%,
+    rgba(0,0,0,0.55) 75%,
+    rgba(0,0,0,0.80) 100%
+  );
+}
+
+/* Text content — bottom left, editorial style */
+.osai-hero-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 10;
+  padding: 40px 32px;
+  text-align: left;
+}
+@media (min-width: 1200px) {
+  .osai-hero-content {
+    bottom: 52px;
+    padding: 56px calc((100vw - 1200px) / 2 + 24px);
+  }
+}
+
+.osai-hero-title {
+  color: #fff;
+  font-family: 'Barlow Condensed', 'Inter', sans-serif;
+  font-size: clamp(44px, 9vw, 110px);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.osai-hero-sub {
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* Navigation arrows */
+.osai-hero-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  z-index: 20;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.osai-hero-nav.left  { left: 20px }
+.osai-hero-nav.right { right: 20px }
+.osai-hero-nav:hover {
+  background: rgba(0,0,0,0.5);
+  border-color: rgba(255,255,255,0.35);
+}
+
+/* Slide indicators */
+.osai-hero-indicators {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 20;
+}
+@media (min-width: 1200px) {
+  .osai-hero-indicators { left: 50%; transform: translateX(-50%) }
+}
+
+.dot {
+  width: 24px;
+  height: 2px;
+  border-radius: 0;
+  background: rgba(255,255,255,0.25);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.dot.active {
+  width: 48px;
+  background: rgba(255,255,255,0.9);
+}
