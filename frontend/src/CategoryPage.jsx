@@ -51,35 +51,10 @@ export function CategoryPage({ cat, pageTitle }) {
       setLoading(true);
       setError(null);
 
-      const catKey = cat || pageTitle.toLowerCase();
-
-      // For New Arrivals and Sale, show a mixed selection of existing products
-      if (catKey === "newarrivals" || catKey === "sale") {
-        if (!cancelled) {
-          const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
-          const menProducts = shuffle(PRODUCTS.filter((p) => p.cat === "men"));
-          const womenProducts = shuffle(PRODUCTS.filter((p) => p.cat === "women"));
-          const kidsProducts = shuffle(PRODUCTS.filter((p) => p.cat === "kids"));
-
-          const mixed = [
-            womenProducts[0],
-            menProducts[0],
-            kidsProducts[0],
-            womenProducts[1],
-            kidsProducts[1],
-            menProducts[1],
-          ].filter(Boolean);
-
-          setProducts(mixed);
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
         // Try to fetch from backend API first
         const res = await api.get("/api/products", {
-          params: { cat: cat || (pageTitle === "Mens" ? "men" : pageTitle === "Womens" ? "women" : pageTitle === "Kids" ? "kids" : pageTitle.toLowerCase()) },
+          params: { cat: cat || (pageTitle === "Mens" ? "men" : pageTitle === "Womens" ? "women" : pageTitle === "Kids" ? "kids" : pageTitle === "New Arrivals" ? "newarrivals" : pageTitle === "Sale" ? "sale" : pageTitle.toLowerCase()) },
         });
 
         if (!cancelled) {
@@ -104,9 +79,14 @@ export function CategoryPage({ cat, pageTitle }) {
               images: localMatch.images || (localMatch.image ? [localMatch.image] : []),
             };
           });
-
+          console.log("Products loaded from API:", apiProducts.length);
+          
+          // If API returns empty array (DB not connected), use fallback
           if (apiProducts.length === 0) {
+            const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
+            const catKey = catMap[pageTitle] || cat || pageTitle.toLowerCase();
             const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
+            console.log("API returned empty — using local PRODUCTS fallback:", localProducts.length);
             setProducts(localProducts);
           } else {
             setProducts(apiProducts);
@@ -114,9 +94,31 @@ export function CategoryPage({ cat, pageTitle }) {
         }
       } catch (err) {
         console.error("API failed — using local PRODUCTS fallback", err);
+        // Fallback to local data if API fails
         if (!cancelled) {
-          const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
-          setProducts(localProducts);
+          const catMap = { Mens: "men", Womens: "women", Kids: "kids", "New Arrivals": "newarrivals", Sale: "sale" };
+          const catKey = catMap[pageTitle] || cat || pageTitle.toLowerCase();
+
+          if (catKey === "newarrivals" || catKey === "sale") {
+            const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+            const menProducts = shuffle(PRODUCTS.filter((p) => p.cat === "men"));
+            const womenProducts = shuffle(PRODUCTS.filter((p) => p.cat === "women"));
+            const kidsProducts = shuffle(PRODUCTS.filter((p) => p.cat === "kids"));
+
+            const mixed = [
+              womenProducts[0],
+              menProducts[0],
+              kidsProducts[0],
+              womenProducts[1],
+              kidsProducts[1],
+              menProducts[1],
+            ].filter(Boolean);
+
+            setProducts(mixed);
+          } else {
+            const localProducts = PRODUCTS.filter((p) => p.cat === catKey);
+            setProducts(localProducts);
+          }
         }
       } finally {
         if (!cancelled) {

@@ -220,86 +220,6 @@ a { color: inherit; text-decoration: none }
   line-height: 1;
 }
 
-/* ─── HAMBURGER BUTTON ───────────────────────────────────────────────────── */
-.osai-hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 38px;
-  height: 38px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  gap: 5px;
-  order: -1;
-}
-
-.osai-hamburger-icon,
-.osai-hamburger-icon::before,
-.osai-hamburger-icon::after {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: #fff;
-  border-radius: 2px;
-  transition: transform 0.25s ease, opacity 0.25s ease;
-  position: relative;
-}
-.osai-hamburger-icon::before,
-.osai-hamburger-icon::after {
-  content: "";
-  position: absolute;
-  left: 0;
-}
-.osai-hamburger-icon::before { top: -7px; }
-.osai-hamburger-icon::after  { top:  7px; }
-
-/* X state */
-.osai-hamburger-icon.open { background: transparent; }
-.osai-hamburger-icon.open::before { transform: translateY(7px) rotate(45deg); }
-.osai-hamburger-icon.open::after  { transform: translateY(-7px) rotate(-45deg); }
-
-/* ─── MOBILE DROPDOWN MENU ───────────────────────────────────────────────── */
-.osai-mobile-menu {
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--bg-dark, #111);
-  list-style: none;
-  margin: 0;
-  padding: 8px 0 16px;
-  z-index: 999;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.osai-mobile-link {
-  display: block;
-  padding: 12px 24px;
-  color: rgba(255,255,255,0.85);
-  text-decoration: none;
-  font-family: var(--font-body);
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: background 0.15s, color 0.15s;
-}
-.osai-mobile-link:hover,
-.osai-mobile-link.active {
-  background: rgba(255,255,255,0.07);
-  color: #fff;
-}
-
 /* Mobile — hide nav links, show only icons + search */
 @media (max-width: 1024px) {
   .osai-nav-inner { padding: 0 20px !important }
@@ -307,7 +227,6 @@ a { color: inherit; text-decoration: none }
 }
 @media (max-width: 768px) {
   .osai-nav-links { display: none }
-  .osai-hamburger { display: flex }
   .osai-search { width: 160px }
   .osai-search:focus-within { width: 200px }
 }
@@ -747,294 +666,59 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   min-height: 70vh;
 }
 .osai-admin-muted { color: var(--sub); font-size: 13px }
-
-/* Cards */
 .osai-admin .card {
   background: var(--card);
   border: 1px solid var(--line) !important;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow);
 }
-.osai-admin .card-body { padding: 1.5rem }
-
-/* Section headings */
-.osai-admin-section-title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text);
-  margin-bottom: 0;
-}
-
-/* KPI cards */
-.osai-admin .kpi-card {
-  border-left: 2px solid var(--line-hover);
-  transition: border-color 0.2s;
-}
-.osai-admin .kpi-card:hover { border-left-color: var(--text) }
-.osai-admin .kpi-label {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--sub);
-  font-family: var(--font-display);
-}
-.osai-admin .kpi-value {
-  font-size: 22px;
-  font-weight: 700;
-  font-family: var(--font-display);
-  color: var(--text);
-  line-height: 1.1;
-  margin-top: 4px;
-}
-
-/* Sidebar nav */
-.osai-admin-sidebar-label {
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-family: var(--font-display);
-  margin-bottom: 12px;
-}
-.osai-admin .nav-pills .btn {
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-family: var(--font-display);
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: var(--radius) !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.15s;
-}
-.osai-admin .nav-pills .btn i { font-size: 14px; flex-shrink: 0 }
-.osai-admin .nav-pills .btn.btn-dark {
-  background: var(--text);
-  color: var(--bg);
-  border: 1px solid var(--text);
-}
-.osai-admin .nav-pills .btn:not(.btn-dark) {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--sub);
-}
-.osai-admin .nav-pills .btn:not(.btn-dark):hover {
-  border-color: var(--line-hover);
-  color: var(--text);
-  background: var(--bg-surface);
-}
-
-/* Tables */
 .osai-admin .table { color: var(--text) }
-.osai-admin .table-light th {
-  background: var(--bg-surface) !important;
+.osai-admin .table-light {
+  background: #0f0f0f !important;
   color: var(--sub) !important;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-family: var(--font-display);
-  font-weight: 600;
-  padding: 10px 12px;
 }
 .osai-admin .table td,
 .osai-admin .table th {
   border-color: var(--line) !important;
-  vertical-align: middle;
-  padding: 10px 12px;
 }
-.osai-admin .table td { font-size: 13px; color: var(--text) !important; background-color: transparent !important; --bs-table-bg: transparent; --bs-table-striped-bg: transparent; --bs-table-hover-bg: transparent }
-.osai-admin .table tbody tr { transition: background 0.12s }
-.osai-admin .table tbody tr:hover td { background-color: var(--card-hover) !important }
-
-/* Forms */
 .osai-admin .form-control,
 .osai-admin .form-select {
-  background: var(--bg-surface);
+  background: var(--bg-alt);
   color: var(--text);
   border-color: var(--line);
-  font-size: 13px;
-  border-radius: var(--radius);
 }
-.osai-admin .form-control:focus,
-.osai-admin .form-select:focus {
-  background: var(--bg-surface);
-  color: var(--text);
-  border-color: var(--line-hover);
-  box-shadow: var(--focus);
-}
-.osai-admin .form-control::placeholder { color: var(--muted) }
-.osai-admin input[type="file"].form-control { color: var(--sub) }
-.osai-admin input[type="file"].form-control::file-selector-button {
-  background: var(--bg-surface);
-  color: var(--text);
-  border: none;
-  border-right: 1px solid var(--line);
-  padding: 4px 12px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-right: 10px;
-}
-.osai-admin .form-label {
-  color: var(--sub);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-family: var(--font-display);
-  margin-bottom: 5px;
-}
-.osai-admin .form-check-input {
-  background-color: var(--bg-surface);
-  border-color: var(--line-hover);
-}
-.osai-admin .form-check-input:checked {
-  background-color: var(--text);
-  border-color: var(--text);
-}
-.osai-admin .form-check-label {
-  color: var(--text);
-  font-size: 13px;
-}
-
-/* Add product form panel */
-.osai-admin-form-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--line-hover) !important;
-  border-radius: var(--radius-md);
-}
-.osai-admin-form-panel h5 {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text);
-}
-.osai-admin-form-section {
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-  margin-top: 4px;
-}
-.osai-admin-form-section-label {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-family: var(--font-display);
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-/* Buttons */
 .osai-admin .btn-dark {
   background: var(--text);
   color: var(--bg);
   border: 1px solid var(--text);
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-size: 11px;
-  border-radius: var(--radius);
-}
-.osai-admin .btn-dark:hover {
-  background: rgba(255,255,255,0.88);
-  border-color: rgba(255,255,255,0.88);
 }
 .osai-admin .btn-outline-secondary {
   border-color: var(--line-hover);
   color: var(--sub);
-  font-size: 11px;
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  border-radius: var(--radius);
 }
 .osai-admin .btn-outline-secondary:hover {
   border-color: var(--text);
   color: var(--text);
-  background: transparent;
 }
 .osai-admin .btn-outline-danger {
   color: #f87171;
-  border-color: rgba(248,113,113,0.35);
-  font-size: 11px;
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  border-radius: var(--radius);
-}
-.osai-admin .btn-outline-danger:hover {
-  background: rgba(248,113,113,0.1);
-  color: #f87171;
-  border-color: #f87171;
+  border-color: rgba(255,60,60,0.4);
 }
 .osai-admin .btn-outline-dark {
   border-color: var(--line-hover);
   color: var(--text);
-  font-size: 11px;
-  font-family: var(--font-display);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border-radius: var(--radius);
 }
 .osai-admin .btn-outline-dark:hover {
-  background: var(--bg-surface);
   border-color: var(--text);
 }
-
-/* Badges */
 .osai-admin .badge.text-bg-dark {
   background: var(--text) !important;
   color: var(--bg) !important;
-  font-family: var(--font-display);
-  letter-spacing: 0.06em;
-  font-size: 11px;
 }
-.osai-admin .badge.text-bg-secondary {
-  background: var(--bg-surface) !important;
-  color: var(--sub) !important;
-  border: 1px solid var(--line);
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
+.osai-admin .nav-pills .btn {
   font-size: 11px;
-}
-
-/* Order status badges */
-.osai-status {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 2px;
-  font-size: 11px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  border: 1px solid transparent;
 }
-.osai-status-pending    { background: rgba(251,191,36,0.12);  color: #fbbf24; border-color: rgba(251,191,36,0.3) }
-.osai-status-processing { background: rgba(96,165,250,0.12);  color: #60a5fa; border-color: rgba(96,165,250,0.3) }
-.osai-status-shipped    { background: rgba(167,139,250,0.12); color: #a78bfa; border-color: rgba(167,139,250,0.3) }
-.osai-status-delivered  { background: rgba(74,222,128,0.12);  color: #4ade80; border-color: rgba(74,222,128,0.3) }
-.osai-status-cancelled  { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.3) }
-
-/* Divider between tab header and content */
-.osai-admin-tab-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--line);
-}
-
-/* Text overrides */
-.osai-admin .text-muted { color: var(--sub) !important }
 .card-title { color: var(--text) !important }
 .card-text { color: var(--sub) !important }
 .card-img-top { border-bottom: 1px solid var(--line) }

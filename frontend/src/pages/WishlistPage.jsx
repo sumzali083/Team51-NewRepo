@@ -1,7 +1,31 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { WishlistContext } from "../context/WishlistContext";
 import { CartContext } from "../context/CartContext";
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut",
+    },
+  },
+};
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist } = useContext(WishlistContext);
@@ -21,14 +45,33 @@ export default function WishlistPage() {
         </ol>
       </nav>
 
-      <h1 className="mb-4">Your Wishlist</h1>
+      <motion.h1
+        className="mb-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        Your Wishlist
+      </motion.h1>
 
       {wishlist.length === 0 ? (
-        <div className="alert alert-info">Your wishlist is empty. Browse products and add your favourites.</div>
+        <motion.div
+          className="alert alert-info"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          Your wishlist is empty. Browse products and add your favourites.
+        </motion.div>
       ) : (
-        <div className="row g-4">
+        <motion.div
+          className="row g-4"
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {wishlist.map((item) => (
-            <div key={item.id} className="col-md-4">
+            <motion.div key={item.id} className="col-md-4" variants={cardVariants}>
               <div className="card h-100 shadow-sm">
                 {item.image || item.images?.[0] ? (
                   <img src={item.image || item.images?.[0]} className="card-img-top" alt={item.name} />
@@ -47,9 +90,9 @@ export default function WishlistPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
