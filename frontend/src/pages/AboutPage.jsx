@@ -24,7 +24,8 @@ export function AboutPage() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('animate-on-scroll');
-          observer.unobserve(entry.target);
+        } else {
+          entry.target.classList.remove('animate-on-scroll');
         }
       });
     };
