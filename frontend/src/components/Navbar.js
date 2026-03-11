@@ -64,6 +64,11 @@ export default function Navbar() {
                 Login / Profile
               </Link>
             </li>
+            <li className="nav-item"> 
+              <Link className="nav-link" to="/orders">
+                My Orders
+              </Link>
+            </li>
             <li className="nav-item">
               <Link className="btn btn-outline-light position-relative" to="/cart">
                 🛒
