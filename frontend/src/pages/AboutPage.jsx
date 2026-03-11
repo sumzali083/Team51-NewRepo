@@ -1,8 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export function AboutPage() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  
+  // Create refs for each animated section
+  const introRef = useRef(null);
+  const section1Ref = useRef(null);
+  const image1Ref = useRef(null);
+  const text1Ref = useRef(null);
+  const section2Ref = useRef(null);
+  const image2Ref = useRef(null);
+  const text2Ref = useRef(null);
+
+  useEffect(() => {
+    // Set up Intersection Observer for scroll-triggered animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-on-scroll');
+          observer.unobserve(entry.target);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all animated elements
+    [introRef.current, image1Ref.current, text1Ref.current, image2Ref.current, text2Ref.current].forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -15,7 +50,7 @@ export function AboutPage() {
 
   return (
     <main style={{ backgroundColor: "#0b0b0b", color: "#fff", minHeight: "100vh", paddingTop: "3rem" }}>
-      <section className="container text-center py-5 fadeInUp">
+      <section ref={introRef} className="container text-center py-5" data-animation="fadeInUp">
         <div>
           <h1 className="fw-bold text-decoration-underline display-5 mb-3">About OSAI</h1>
           <p className="fw-bold mb-3">From Japan to the streets around the globe</p>
@@ -27,11 +62,11 @@ export function AboutPage() {
 
       <section className="container py-5">
         <div className="row align-items-center gy-4">
-          <div className="col-md-6">
-            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image slideInLeft" />
+          <div ref={image1Ref} className="col-md-6" data-animation="slideInLeft">
+            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image" />
           </div>
 
-          <div className="col-md-6 fadeInRight">
+          <div ref={text1Ref} className="col-md-6" data-animation="fadeInRight">
             <h2 className="h3 fw-light mb-3">Our Story</h2>
             <p style={{ color: "#fff" }}>
               At OSAI, every piece begins with premium materials sourced directly from Japan's most respected textile mills. We choose fabrics known for their durability, comfort, and craftsmanship -- fibers that stay vibrant, hold their shape, and feel luxurious on the skin. This commitment ensures that every hoodie, T-shirt, or streetwear essential we produce meets the highest standards from the very first touch.
@@ -42,11 +77,11 @@ export function AboutPage() {
 
       <section className="container py-5">
         <div className="row align-items-center gy-4">
-          <div className="col-md-6 order-md-2">
-            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image slideInRight" />
+          <div ref={image2Ref} className="col-md-6 order-md-2" data-animation="slideInRight">
+            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image" />
           </div>
 
-          <div className="col-md-6 order-md-1 fadeInLeft">
+          <div ref={text2Ref} className="col-md-6 order-md-1" data-animation="fadeInLeft">
             <h2 className="h3 fw-light mb-3">Design &amp; Inspiration</h2>
             <p style={{ color: "#fff" }}>
               Our design team is the creative heartbeat of OSAI -- a collective of passionate artists and innovators inspired by the energy of Tokyo, Osaka, and global urban life. They draw from graffiti, architecture, music, and modern minimalism to craft pieces that blend authenticity with style. Every design is bold yet wearable, merging Japanese precision with contemporary streetwear aesthetics.

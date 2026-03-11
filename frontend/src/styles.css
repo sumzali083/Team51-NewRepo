@@ -643,6 +643,31 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   animation: fadeInRight 0.8s ease-out;
 }
 
+/* Scroll-triggered animations */
+[data-animation] {
+  opacity: 0;
+}
+
+[data-animation="slideInLeft"].animate-on-scroll {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+[data-animation="slideInRight"].animate-on-scroll {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+[data-animation="fadeInUp"].animate-on-scroll {
+  animation: fadeInUp 0.9s ease-out forwards;
+}
+
+[data-animation="fadeInLeft"].animate-on-scroll {
+  animation: fadeInLeft 0.8s ease-out forwards;
+}
+
+[data-animation="fadeInRight"].animate-on-scroll {
+  animation: fadeInRight 0.8s ease-out forwards;
+}
+
 @keyframes slideInLeft {
   from {
     opacity: 0;
