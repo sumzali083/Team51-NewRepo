@@ -31,7 +31,7 @@ export function AboutPage() {
             <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image slideInLeft" />
           </div>
 
-          <div className="col-md-6">
+          <div className="col-md-6 fadeInRight">
             <h2 className="h3 fw-light mb-3">Our Story</h2>
             <p style={{ color: "#fff" }}>
               At OSAI, every piece begins with premium materials sourced directly from Japan's most respected textile mills. We choose fabrics known for their durability, comfort, and craftsmanship -- fibers that stay vibrant, hold their shape, and feel luxurious on the skin. This commitment ensures that every hoodie, T-shirt, or streetwear essential we produce meets the highest standards from the very first touch.
@@ -46,7 +46,7 @@ export function AboutPage() {
             <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image slideInRight" />
           </div>
 
-          <div className="col-md-6 order-md-1">
+          <div className="col-md-6 order-md-1 fadeInLeft">
             <h2 className="h3 fw-light mb-3">Design &amp; Inspiration</h2>
             <p style={{ color: "#fff" }}>
               Our design team is the creative heartbeat of OSAI -- a collective of passionate artists and innovators inspired by the energy of Tokyo, Osaka, and global urban life. They draw from graffiti, architecture, music, and modern minimalism to craft pieces that blend authenticity with style. Every design is bold yet wearable, merging Japanese precision with contemporary streetwear aesthetics.

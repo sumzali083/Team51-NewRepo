@@ -635,6 +635,14 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   animation: fadeInUp 0.9s ease-out;
 }
 
+.fadeInLeft {
+  animation: fadeInLeft 0.8s ease-out;
+}
+
+.fadeInRight {
+  animation: fadeInRight 0.8s ease-out;
+}
+
 @keyframes slideInLeft {
   from {
     opacity: 0;
@@ -665,6 +673,28 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
