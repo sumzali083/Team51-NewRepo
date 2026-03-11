@@ -11,7 +11,7 @@ export function ChangePassword() {
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-//wrote change password page, only accessible if logged in. Form with current password, new password, confirm new password. Validations for empty fields, new password length, and matching new passwords. On submit, call API to change password and show success/error message.
+
   if (!user) {
     return (
       <div className="osai-auth-page">
