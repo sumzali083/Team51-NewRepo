@@ -30,9 +30,6 @@ export default function Navbar() {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav me-auto">
             <li className="nav-item">
-              <Link className="nav-link" to="/">Home</Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link" to="/mens">Mens</Link>
             </li>
             <li className="nav-item">
@@ -68,11 +65,6 @@ export default function Navbar() {
             <li className="nav-item">
               <Link className="btn btn-outline-light btn-sm me-3" to="/login">
                 Login / Profile
-              </Link>
-            </li>
-            <li className="nav-item"> 
-              <Link className="nav-link" to="/orders">
-                My Orders
               </Link>
             </li>
             <li className="nav-item me-2">

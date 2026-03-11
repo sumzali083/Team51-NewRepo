@@ -26,7 +26,6 @@ const cardVariants = {
     },
   },
 };
-
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist } = useContext(WishlistContext);
   const { addToCart } = useContext(CartContext);
