@@ -12,6 +12,7 @@ export function AboutPage() {
   const section2Ref = useRef(null);
   const image2Ref = useRef(null);
   const text2Ref = useRef(null);
+  const definesUsRef = useRef(null);
 
   useEffect(() => {
     // Set up Intersection Observer for scroll-triggered animations
@@ -33,7 +34,7 @@ export function AboutPage() {
     const observer = new IntersectionObserver(observerCallback, observerOptions);
 
     // Observe all animated elements
-    [introRef.current, image1Ref.current, text1Ref.current, image2Ref.current, text2Ref.current].forEach((el) => {
+    [introRef.current, image1Ref.current, text1Ref.current, image2Ref.current, text2Ref.current, definesUsRef.current].forEach((el) => {
       if (el) observer.observe(el);
     });
 
@@ -91,7 +92,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="container py-5" style={{ backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "0.5rem" }}>
+      <section ref={definesUsRef} className="container py-5" style={{ backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "0.5rem" }} data-animation="fadeInDown">
         <h2 className="text-center mb-4">What Defines Us</h2>
         <div className="row gy-4">
           {[

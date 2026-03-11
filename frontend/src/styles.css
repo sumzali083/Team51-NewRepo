@@ -643,6 +643,10 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   animation: fadeInRight 0.8s ease-out;
 }
 
+.fadeInDown {
+  animation: fadeInDown 0.8s ease-out;
+}
+
 /* Scroll-triggered animations */
 [data-animation] {
   opacity: 0;
@@ -666,6 +670,10 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
 
 [data-animation="fadeInRight"].animate-on-scroll {
   animation: fadeInRight 0.8s ease-out forwards;
+}
+
+[data-animation="fadeInDown"].animate-on-scroll {
+  animation: fadeInDown 0.8s ease-out forwards;
 }
 
 @keyframes slideInLeft {
@@ -720,6 +728,17 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
