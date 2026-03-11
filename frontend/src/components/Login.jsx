@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-// frontend/src/components/Login.jsx
-import React, { useState } from "react";
-import { CiUser } from "react-icons/ci";
-import { RiLockPasswordLine } from "react-icons/ri";
-import api from "../api"; // axios instance pointing at your backend
-
-// ✅ Named export (what LoginPage and App import)
-export function Login({ initialEmail = "" }) {
-  const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState("");
-=======
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
@@ -44,7 +32,6 @@ export function Login({ initialEmail = "" }) {
   const [password, setPassword] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
->>>>>>> deploy-branch
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -71,14 +58,6 @@ export function Login({ initialEmail = "" }) {
       setMessage(res.data?.message || "Login successful");
 
       if (user) {
-<<<<<<< HEAD
-        // store user so you can show “Hello, Summer” etc later
-        localStorage.setItem("osaiUser", JSON.stringify(user));
-        console.log("Logged in user:", user);
-      }
-    } catch (err) {
-      console.error("LOGIN ERROR:", err);
-=======
         login(user);
         localStorage.setItem("osaiUser", JSON.stringify(user));
         sessionStorage.setItem("user", JSON.stringify(user));
@@ -88,7 +67,6 @@ export function Login({ initialEmail = "" }) {
         }, 600);
       }
     } catch (err) {
->>>>>>> deploy-branch
       const msg =
         err?.response?.data?.message ||
         "Login failed. Please check your details and try again.";
@@ -116,17 +94,6 @@ export function Login({ initialEmail = "" }) {
         </p>
       </div>
 
-<<<<<<< HEAD
-      {error && (
-        <div
-          style={{
-            background: "#5c1a1a",
-            color: "#ffe5e5",
-            padding: "10px 14px",
-            borderRadius: 8,
-            marginBottom: 12,
-            fontSize: 14,
-=======
       <h2
         style={{
           fontFamily: "'Barlow Condensed', sans-serif",
@@ -154,7 +121,6 @@ export function Login({ initialEmail = "" }) {
             background: "rgba(255,60,60,0.12)",
             border: "1px solid rgba(255,60,60,0.25)",
             color: "#f87171",
->>>>>>> deploy-branch
           }}
         >
           {error}
@@ -164,14 +130,6 @@ export function Login({ initialEmail = "" }) {
       {message && (
         <div
           style={{
-<<<<<<< HEAD
-            background: "#1d3b21",
-            color: "#e1ffe5",
-            padding: "10px 14px",
-            borderRadius: 8,
-            marginBottom: 12,
-            fontSize: 14,
-=======
             marginBottom: 16,
             padding: "12px 16px",
             borderRadius: 6,
@@ -179,7 +137,6 @@ export function Login({ initialEmail = "" }) {
             background: "rgba(0,200,80,0.12)",
             border: "1px solid rgba(0,200,80,0.25)",
             color: "#4ade80",
->>>>>>> deploy-branch
           }}
         >
           {message}
@@ -188,65 +145,6 @@ export function Login({ initialEmail = "" }) {
 
       <form
         onSubmit={handleSubmit}
-<<<<<<< HEAD
-        style={{ display: "flex", flexDirection: "column", gap: 18 }}
-      >
-        {/* Email */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: "#222",
-            borderRadius: 8,
-            padding: "12px 16px",
-            border: "1px solid #333",
-          }}
-        >
-          <CiUser style={{ fontSize: 22, color: "#ff5a00", marginRight: 8 }} />
-          <input
-            style={{
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "#fff",
-              fontSize: 16,
-              flex: 1,
-            }}
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        {/* Password */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: "#222",
-            borderRadius: 8,
-            padding: "12px 16px",
-            border: "1px solid #333",
-          }}
-        >
-          <RiLockPasswordLine
-            style={{ fontSize: 22, color: "#ff5a00", marginRight: 8 }}
-          />
-          <input
-            style={{
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "#fff",
-              fontSize: 16,
-              flex: 1,
-            }}
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-=======
         noValidate
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
@@ -306,7 +204,6 @@ export function Login({ initialEmail = "" }) {
             onBlur={(e) =>
               (e.target.style.borderColor = "rgba(255,255,255,0.1)")
             }
->>>>>>> deploy-branch
           />
         </div>
 
@@ -314,18 +211,6 @@ export function Login({ initialEmail = "" }) {
           type="submit"
           disabled={loading}
           style={{
-<<<<<<< HEAD
-            background: loading ? "#aa4400" : "#ff5a00",
-            color: "#fff",
-            borderRadius: 8,
-            padding: "13px 0",
-            fontWeight: 700,
-            fontSize: 17,
-            border: "none",
-            cursor: loading ? "default" : "pointer",
-            marginTop: 8,
-            boxShadow: "0 2px 8px rgba(0,0,0,.10)",
-=======
             width: "100%",
             padding: "14px",
             background: loading ? "#ccc" : "#fff",
@@ -345,13 +230,10 @@ export function Login({ initialEmail = "" }) {
           }}
           onMouseLeave={(e) => {
             if (!loading) e.target.style.background = "#fff";
->>>>>>> deploy-branch
           }}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
-<<<<<<< HEAD
-=======
 
         <div
           style={{
@@ -384,7 +266,6 @@ export function Login({ initialEmail = "" }) {
             Change Password
           </Link>
         </div>
->>>>>>> deploy-branch
       </form>
     </div>
   );

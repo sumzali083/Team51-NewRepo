@@ -1,14 +1,8 @@
-<<<<<<< HEAD
-import React from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { PRODUCTS } from "../data";
-=======
 import React, { useContext } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 import { PRODUCTS, Fallback } from "../data";
->>>>>>> deploy-branch
 
 const PER_PAGE = 8;
 
@@ -17,10 +11,6 @@ export function SearchPage() {
   const q = searchParams.get("q") || "";
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
 
-<<<<<<< HEAD
-  const filtered = PRODUCTS.filter((p) =>
-    !q ? true : p.name.toLowerCase().includes(q.toLowerCase()) || (p.desc && p.desc.toLowerCase().includes(q.toLowerCase()))
-=======
   const { addToCart } = useContext(CartContext);
   const { addToWishlist } = useContext(WishlistContext);
 
@@ -29,7 +19,6 @@ export function SearchPage() {
       ? true
       : p.name.toLowerCase().includes(q.toLowerCase()) ||
         (p.desc && p.desc.toLowerCase().includes(q.toLowerCase()))
->>>>>>> deploy-branch
   );
 
   const total = filtered.length;
@@ -45,48 +34,6 @@ export function SearchPage() {
   };
 
   return (
-<<<<<<< HEAD
-    <>
-      <h2>Search results</h2>
-
-      <div className="controls">
-        <span id="count" className="chip">
-          {total} result{total !== 1 ? "s" : ""} for "{q}"
-        </span>
-      </div>
-
-      <section id="grid" className="grid mt-3" role="list" aria-label={`Search results`}>
-        {slice.map((p) => (
-          <article key={p.id} className="card" role="listitem">
-            <Link to={`/product/${encodeURIComponent(p.id)}`} aria-label={p.name}>
-              <div className="thumb">
-                <img src={p.images[0]} alt={p.name} />
-              </div>
-              <div className="body">
-                <div className="title">{p.name}</div>
-                <div className="meta">
-                  <span className="price">£{p.price.toFixed(2)}</span>
-                  {p.tag && <span className="badge">{p.tag}</span>}
-                </div>
-              </div>
-            </Link>
-          </article>
-        ))}
-      </section>
-
-      <nav className="pagination" role="navigation" aria-label="Pagination">
-        <button className="btn" onClick={() => goPage(safePage - 1)} disabled={safePage <= 1}>
-          Prev
-        </button>
-        <span className="chip" id="pageStat">
-          Page {safePage} of {pages}
-        </span>
-        <button className="btn" onClick={() => goPage(safePage + 1)} disabled={safePage >= pages}>
-          Next
-        </button>
-      </nav>
-    </>
-=======
     <div className="page-padded">
       <h2 style={{
         fontFamily: "'Barlow Condensed', sans-serif",
@@ -171,6 +118,5 @@ export function SearchPage() {
         </nav>
       )}
     </div>
->>>>>>> deploy-branch
   );
 }

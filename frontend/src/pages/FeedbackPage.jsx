@@ -2,16 +2,6 @@
 import React, { useState, useRef } from "react";
 import api from "../api";
 
-<<<<<<< HEAD
-export default function FeedbackPage({ onNavigate }) {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    rating: "",
-    comment: "",
-  });
-
-=======
 const INPUT = {
   width: "100%",
   display: "block",
@@ -40,7 +30,6 @@ const LABEL = {
 export default function FeedbackPage() {
   const [form, setForm] = useState({ name: "", email: "", rating: 0, comment: "" });
   const [hovered, setHovered] = useState(0);
->>>>>>> deploy-branch
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
   const clearTimer = useRef(null);
@@ -53,73 +42,28 @@ export default function FeedbackPage() {
   const validate = () => {
     if (!form.name.trim()) return "Name is required";
     if (!form.email.trim()) return "Email is required";
-<<<<<<< HEAD
-
-    const ratingNum = Number(form.rating);
-    if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
-      return "Rating must be between 1 and 5";
-    }
-    if (!form.comment || form.comment.trim() === "") {
-      return "Comment is required";
-    }
-=======
     if (!form.rating || form.rating < 1 || form.rating > 5) return "Please select a rating";
     if (!form.comment.trim()) return "Comment is required";
->>>>>>> deploy-branch
     return null;
   };
 
   const showAlert = (a) => {
     setAlert(a);
     if (clearTimer.current) clearTimeout(clearTimer.current);
-<<<<<<< HEAD
-    if (a && a.type === "success") {
-=======
     if (a?.type === "success") {
->>>>>>> deploy-branch
       clearTimer.current = setTimeout(() => setAlert(null), 4000);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-
-    const v = validate();
-    if (v) {
-      showAlert({ type: "danger", text: v });
-      return;
-    }
-=======
     const v = validate();
     if (v) return showAlert({ type: "danger", text: v });
->>>>>>> deploy-branch
 
     setLoading(true);
     showAlert(null);
 
     try {
-<<<<<<< HEAD
-      const payload = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        rating: Number(form.rating),
-        comment: form.comment.trim(), // backend maps this to `comments` column
-      };
-
-      const res = await api.post("/api/feedback", payload);
-
-      showAlert({
-        type: "success",
-        text: res.data?.message || "Feedback submitted.",
-      });
-
-      setForm({ name: "", email: "", rating: "", comment: "" });
-    } catch (err) {
-      console.error("FEEDBACK ERROR:", err);
-      const msg =
-        err?.response?.data?.message || "Server error submitting feedback";
-=======
       const res = await api.post("/api/feedback", {
         name: form.name.trim(),
         email: form.email.trim(),
@@ -130,42 +74,12 @@ export default function FeedbackPage() {
       setForm({ name: "", email: "", rating: 0, comment: "" });
     } catch (err) {
       const msg = err?.response?.data?.message || "Server error submitting feedback";
->>>>>>> deploy-branch
       showAlert({ type: "danger", text: msg });
     } finally {
       setLoading(false);
     }
   };
 
-<<<<<<< HEAD
-  return (
-    <main className="container mt-5" style={{ maxWidth: 900 }}>
-      <div className="p-4 bg-white rounded shadow-sm">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="mb-0">Send Us Feedback</h2>
-          {typeof onNavigate === "function" && (
-            <button
-              className="btn btn-link text-decoration-none"
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigate(e, "home");
-              }}
-            >
-              ← Back to Home
-            </button>
-          )}
-        </div>
-
-        <p className="text-muted">
-          Tell us what you think about our products, website, or anything else.
-        </p>
-
-        {alert && (
-          <div
-            className={`alert alert-${alert.type} mt-2`}
-            role="alert"
-            aria-live="polite"
-=======
   const handleReset = () => {
     setForm({ name: "", email: "", rating: 0, comment: "" });
     if (clearTimer.current) clearTimeout(clearTimer.current);
@@ -225,69 +139,11 @@ export default function FeedbackPage() {
               border: `1px solid ${alert.type === "success" ? "rgba(0,200,80,0.25)" : "rgba(255,60,60,0.25)"}`,
               color: alert.type === "success" ? "#4ade80" : "#f87171",
             }}
->>>>>>> deploy-branch
           >
             {alert.text}
           </div>
         )}
 
-<<<<<<< HEAD
-        <form onSubmit={handleSubmit} className="mt-3" noValidate>
-          <div className="mb-3">
-            <label htmlFor="feedback-name" className="form-label">
-              Name
-            </label>
-            <input
-              id="feedback-name"
-              name="name"
-              className="form-control"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="feedback-email" className="form-label">
-              Email
-            </label>
-            <input
-              id="feedback-email"
-              name="email"
-              type="email"
-              className="form-control"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="feedback-rating" className="form-label">
-              Rating (1–5)
-            </label>
-            <select
-              id="feedback-rating"
-              name="rating"
-              value={form.rating}
-              onChange={handleChange}
-              className="form-select"
-              required
-            >
-              <option value="">Choose a rating…</option>
-              <option value="1">1 – Very bad</option>
-              <option value="2">2</option>
-              <option value="3">3 – Okay</option>
-              <option value="4">4</option>
-              <option value="5">5 – Excellent</option>
-            </select>
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="feedback-comment" className="form-label">
-              Comment
-            </label>
-=======
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* Name + Email — two columns */}
@@ -361,24 +217,11 @@ export default function FeedbackPage() {
           {/* Comment */}
           <div>
             <label style={LABEL} htmlFor="feedback-comment">Comment</label>
->>>>>>> deploy-branch
             <textarea
               id="feedback-comment"
               name="comment"
               value={form.comment}
               onChange={handleChange}
-<<<<<<< HEAD
-              rows="5"
-              className="form-control"
-              placeholder="Share your thoughts…"
-              required
-            />
-          </div>
-
-          <div className="d-flex gap-2">
-            <button type="submit" className="btn btn-dark" disabled={loading}>
-              {loading ? "Sending..." : "Submit Feedback"}
-=======
               rows={6}
               placeholder="Share your thoughts…"
               style={{ ...INPUT, resize: "vertical", minHeight: 140 }}
@@ -411,20 +254,10 @@ export default function FeedbackPage() {
               onMouseLeave={e => { if (!loading) e.target.style.background = "#fff"; }}
             >
               {loading ? "Sending…" : "Submit Feedback"}
->>>>>>> deploy-branch
             </button>
 
             <button
               type="button"
-<<<<<<< HEAD
-              className="btn btn-outline-secondary"
-              onClick={() => {
-                setForm({ name: "", email: "", rating: "", comment: "" });
-                if (clearTimer.current) clearTimeout(clearTimer.current);
-                setAlert(null);
-              }}
-              disabled={loading}
-=======
               onClick={handleReset}
               disabled={loading}
               style={{
@@ -439,17 +272,12 @@ export default function FeedbackPage() {
                 textUnderlineOffset: 3,
                 padding: 0,
               }}
->>>>>>> deploy-branch
             >
               Reset
             </button>
           </div>
         </form>
       </div>
-<<<<<<< HEAD
-    </main>
-=======
     </div>
->>>>>>> deploy-branch
   );
 }

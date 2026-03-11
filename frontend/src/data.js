@@ -254,8 +254,6 @@ export const PRODUCTS = [
     sizes: ["5-8", "9-12"],
     colors: ["Multi", "White"],
   },
-<<<<<<< HEAD
-=======
 
   // NEW ARRIVALS (Featured recent products)
   {
@@ -370,5 +368,4 @@ export const PRODUCTS = [
     sizes: ["5-6", "7-8", "9-10", "11-12"],
     colors: ["Purple", "Orange", "Teal"],
   },
->>>>>>> deploy-branch
 ];

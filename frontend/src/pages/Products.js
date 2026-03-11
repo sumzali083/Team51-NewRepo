@@ -1,30 +1,17 @@
-<<<<<<< HEAD
-import { useContext } from "react";
-=======
 import { useContext, useState } from "react";
->>>>>>> deploy-branch
 import { CartContext } from "../context/CartContext";
 import { products } from "../data/products";
 
 export default function Products() {
   var cartContext = useContext(CartContext);
   var addToCart = cartContext.addToCart;
-<<<<<<< HEAD
-=======
   const [hoveredProductId, setHoveredProductId] = useState(null);
->>>>>>> deploy-branch
 
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Our Products</h2>
       <div className="row g-4">
         {products.map(function(product) {
-<<<<<<< HEAD
-          return (
-            <div key={product.id} className="col-md-4">
-              <div className="card h-100 shadow-sm">
-                <img src={product.image} className="card-img-top" alt={product.name} />
-=======
           const primaryImage = product.image || (product.images && product.images[0]) || "";
           const secondaryImage = (product.images && product.images[1]) || primaryImage;
           const isHovered = hoveredProductId === product.id;
@@ -63,7 +50,6 @@ export default function Products() {
                     }}
                   />
                 </div>
->>>>>>> deploy-branch
                 <div className="card-body d-flex flex-column">
                   <h5 className="card-title">{product.name}</h5>
                   <p className="card-text fw-bold">£{product.price.toFixed(2)}</p>

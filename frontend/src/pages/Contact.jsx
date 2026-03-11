@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-import React, { useState, useRef } from "react";
-import api from "../api";
-
-export default function Contact({ onNavigate }) {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState(null);
-  const clearTimer = useRef(null);
-=======
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
@@ -63,7 +53,6 @@ export default function Contact() {
 
     return () => observer.disconnect();
   }, []);
->>>>>>> deploy-branch
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,30 +83,6 @@ export default function Contact() {
     showAlert(null);
 
     try {
-<<<<<<< HEAD
-      const payload = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        message: form.message.trim(),
-      };
-
-      const res = await api.post("/api/contact", payload);
-
-
-      showAlert({
-        type: "success",
-        text: res.data?.message || "Message sent!",
-      });
-
-      setForm({ name: "", email: "", message: "" });
-    } catch (err) {
-      console.log("CONTACT ERROR:", err);
-      const msg =
-        err?.response?.data?.message ||
-        (err.code === "ECONNABORTED"
-          ? "Request timed out"
-          : "Server error");
-=======
       const messageBody = form.subject.trim()
         ? `Subject: ${form.subject.trim()}\n\n${form.message.trim()}`
         : form.message.trim();
@@ -134,27 +99,12 @@ export default function Contact() {
       const msg =
         err?.response?.data?.message ||
         (err.code === "ECONNABORTED" ? "Request timed out" : "Server error");
->>>>>>> deploy-branch
       showAlert({ type: "danger", text: msg });
     } finally {
       setLoading(false);
     }
   };
 
-<<<<<<< HEAD
-  return (
-    <main className="container mt-5" style={{ maxWidth: 900 }}>
-      <div className="p-4 bg-white rounded shadow-sm">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="mb-0">Contact Us</h2>
-        </div>
-
-        {alert && (
-          <div
-            className={`alert alert-${alert.type} mt-2`}
-            role="alert"
-            aria-live="polite"
-=======
   const titleSlideFadeIn = {
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? "translateX(0)" : "translateX(-90px)",
@@ -247,48 +197,11 @@ export default function Contact() {
               border: `1px solid ${alert.type === "success" ? "rgba(0,200,80,0.25)" : "rgba(255,60,60,0.25)"}`,
               color: alert.type === "success" ? "#4ade80" : "#f87171",
             }}
->>>>>>> deploy-branch
           >
             {alert.text}
           </div>
         )}
 
-<<<<<<< HEAD
-        <form onSubmit={handleSubmit} className="mt-3" noValidate>
-          <div className="mb-3">
-            <label htmlFor="contact-name" className="form-label">
-              Name
-            </label>
-            <input
-              id="contact-name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="form-control"
-              placeholder="Your full name"
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="contact-email" className="form-label">
-              Email
-            </label>
-            <input
-              id="contact-email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              type="email"
-              className="form-control"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div className="mb-3">
-            <label htmlFor="contact-message" className="form-label">
-              Message
-            </label>
-=======
         <form onSubmit={handleSubmit} noValidate>
           {/* NAME + Email — two columns */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -339,26 +252,11 @@ export default function Contact() {
           {/* Message */}
           <div style={{ marginBottom: 24 }}>
             <label style={LABEL} htmlFor="contact-message">Message</label>
->>>>>>> deploy-branch
             <textarea
               id="contact-message"
               name="message"
               value={form.message}
               onChange={handleChange}
-<<<<<<< HEAD
-              rows="6"
-              className="form-control"
-              placeholder="Write your message here"
-            />
-          </div>
-
-          <button type="submit" className="btn btn-dark" disabled={loading}>
-            {loading ? "Sending..." : "Send Message"}
-          </button>
-        </form>
-      </div>
-    </main>
-=======
               rows={8}
               placeholder="Enter message"
               style={{ ...INPUT, resize: "vertical", minHeight: 180 }}
@@ -453,6 +351,5 @@ export default function Contact() {
         </p>
       </div>
     </div>
->>>>>>> deploy-branch
   );
 }
