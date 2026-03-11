@@ -15,7 +15,7 @@ export function AboutPage() {
 
   return (
     <main style={{ backgroundColor: "#0b0b0b", color: "#fff", minHeight: "100vh", paddingTop: "3rem" }}>
-      <section className="container text-center py-5">
+      <section className="container text-center py-5 fadeInUp">
         <div>
           <h1 className="fw-bold text-decoration-underline display-5 mb-3">About OSAI</h1>
           <p className="fw-bold mb-3">From Japan to the streets around the globe</p>
