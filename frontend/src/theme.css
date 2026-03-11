@@ -1,0 +1,222 @@
+/* Theme CSS Variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --card-bg: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #e9ecef;
+  --text-secondary: #adb5bd;
+  --border-color: #495057;
+  --card-bg: #2d2d2d;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Apply theme variables to body and main elements */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.container,
+main.container {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Cards and product items */
+.card {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card-body {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.card-title,
+.card-text {
+  color: var(--text-primary) !important;
+}
+
+/* Override Bootstrap bg-dark for theming */
+.navbar.bg-dark {
+  background-color: #212529 !important;
+}
+
+[data-theme="dark"] .navbar.bg-dark {
+  background-color: #0d0d0d !important;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Footer theming */
+footer.bg-dark {
+  background-color: #212529 !important;
+}
+
+[data-theme="dark"] footer.bg-dark {
+  background-color: #0d0d0d !important;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Override any bg-dark divs for theming */
+.bg-dark {
+  background-color: #212529 !important;
+}
+
+[data-theme="dark"] .bg-dark {
+  background-color: #0d0d0d !important;
+}
+
+/* Form inputs */
+.form-control {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.form-control:focus {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: #667eea;
+}
+
+/* Tables */
+table {
+  color: var(--text-primary);
+}
+
+.table {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* List groups */
+.list-group-item {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* Modals */
+.modal-content {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+/* Breadcrumbs and other elements */
+.breadcrumb {
+  background-color: var(--bg-secondary);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.
+}
+
+/* Additional root and container styling for dark mode */
+[data-theme="dark"] #root {
+  background-color: var(--bg-primary);
+}
+
+[data-theme="dark"] .container {
+  background-color: var(--bg-primary);
+}
+
+[data-theme="dark"] .container-fluid {
+  background-color: var(--bg-primary);
+}
+
+/* Headings and text */
+h1, h2, h3, h4, h5, h6,
+p, span, div {
+  color: inherit;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--text-primary);
+}
+
+/* Ensure all text inherits theme colors */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div:not(.navbar):not(.footer):not(.btn) {
+  color: var(--text-primary);
+}
+
+/* Bootstrap text-light stays light in both modes */
+.text-light {
+  color: #f8f9fa !important;
+}
+
+[data-theme="dark"] .text-light {
+  color: #e9ecef !important;
+}
+
+/* Ensure divs with bg-dark have light text */
+.bg-dark * {
+  color: #f8f9fa;
+}
+
+[data-theme="dark"] .bg-dark * {
+  color: #e9ecef;
+}
+
+/* Chatbot theme adaptation */
+[data-theme="dark"] .chatbot-window {
+  background: var(--card-bg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .chatbot-messages {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .bot-message .message-content {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .quick-questions {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .quick-btn {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  color: #667eea;
+}
+
+[data-theme="dark"] .chatbot-input {
+  background: var(--card-bg);
+  border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .chatbot-input input {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
