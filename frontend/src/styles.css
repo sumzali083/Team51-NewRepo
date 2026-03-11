@@ -622,6 +622,37 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   max-width: 30%; max-height: 50%;
   display: block; margin: 0 auto;
 }
+
+.slideInLeft {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.slideInRight {
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 768px){ .about-image { max-height: 320px } }
 
 /* ─── ACCESSIBILITY ──────────────────────────────────────────────────────── */

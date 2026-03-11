@@ -28,7 +28,7 @@ export function AboutPage() {
       <section className="container py-5">
         <div className="row align-items-center gy-4">
           <div className="col-md-6">
-            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image" />
+            <img src="/images/about_us1.jpeg" alt="Materials" className="img-fluid rounded-3 shadow about-image slideInLeft" />
           </div>
 
           <div className="col-md-6">
@@ -43,7 +43,7 @@ export function AboutPage() {
       <section className="container py-5">
         <div className="row align-items-center gy-4">
           <div className="col-md-6 order-md-2">
-            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image" />
+            <img src="/images/about_us3.jpeg" alt="Design Studio" className="img-fluid rounded-3 shadow about-image slideInRight" />
           </div>
 
           <div className="col-md-6 order-md-1">
