@@ -134,7 +134,14 @@ router.get("/history", async(req,res) =>{
           oi.product_id,
           oi.quantity,
           oi.price_each,
-          p.name
+          p.name,
+          (
+            SELECT pi.url
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+            ORDER BY pi.sort_order ASC, pi.id ASC
+            LIMIT 1
+          ) AS image
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
         WHERE oi.order_id = ?`,
