@@ -137,6 +137,13 @@ export function Layout() {
                     </NavLink>
                   )}
                   <NavLink
+                    to="/orders"
+                    className="osai-action-btn"
+                    title="Order history"
+                  >
+                    <i className="bi bi-receipt" />
+                  </NavLink>
+                  <NavLink
                     to="/account/change-password"
                     className="osai-action-btn"
                     title="Change password"
