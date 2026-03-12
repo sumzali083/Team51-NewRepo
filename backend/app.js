@@ -4,6 +4,7 @@ const session = require("express-session");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+const db = require("./config/db");
 
 const productRoutes = require("./routes/products");
 const cartRoutes = require("./routes/cart");
@@ -66,6 +67,48 @@ app.get("/api", (req, res) => {
       "POST /api/chatbot"
     ]
   });
+});
+
+// Direct history endpoint fallback to avoid route-mount issues in some deploys.
+app.get("/api/orders/history", async (req, res) => {
+  const userId = req.session && req.session.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Please log in to view order history" });
+  }
+
+  try {
+    const [orders] = await db.query(
+      "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC",
+      [userId]
+    );
+
+    for (const order of orders) {
+      const [items] = await db.query(
+        `SELECT
+          oi.product_id,
+          oi.quantity,
+          oi.price_each,
+          p.name,
+          (
+            SELECT pi.url
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+            ORDER BY pi.sort_order ASC, pi.id ASC
+            LIMIT 1
+          ) AS image
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?`,
+        [order.id]
+      );
+      order.items = items;
+    }
+
+    return res.json(orders);
+  } catch (err) {
+    console.error("Order history error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 // API routes
