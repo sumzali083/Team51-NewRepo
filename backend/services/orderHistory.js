@@ -1,75 +1,104 @@
 const db = require("../config/db");
 
-async function fetchOrders(userId) {
+async function getColumnSet(tableName) {
   try {
-    const [orders] = await db.query(
-      "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC",
-      [userId]
-    );
-    return orders;
+    const [rows] = await db.query("SHOW COLUMNS FROM ??", [tableName]);
+    return new Set(rows.map((r) => r.Field));
   } catch (err) {
-    // Older schemas might not have created_at on orders.
-    if (err && err.code === "ER_BAD_FIELD_ERROR") {
-      const [orders] = await db.query(
-        "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC",
-        [userId]
-      );
-      return orders;
-    }
+    if (err && err.code === "ER_NO_SUCH_TABLE") return null;
     throw err;
   }
+}
+
+async function fetchOrders(userId) {
+  const orderCols = await getColumnSet("orders");
+  if (!orderCols) return [];
+
+  const orderBy = orderCols.has("created_at") ? "created_at DESC" : "id DESC";
+  const [orders] = await db.query(
+    `SELECT * FROM orders WHERE user_id = ? ORDER BY ${orderBy}`,
+    [userId]
+  );
+  return orders;
 }
 
 async function fetchOrderItems(orderId) {
-  try {
-    const [items] = await db.query(
-      `SELECT
-        oi.product_id,
-        oi.quantity,
-        oi.price_each,
-        p.name,
-        (
-          SELECT pi.url
-          FROM product_images pi
-          WHERE pi.product_id = p.id
-          ORDER BY pi.sort_order ASC, pi.id ASC
-          LIMIT 1
-        ) AS image
-      FROM order_items oi
-      JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ?`,
-      [orderId]
-    );
-    return items;
-  } catch (err) {
-    // If image-table/column is missing, still return order items.
-    if (
-      err &&
-      (err.code === "ER_NO_SUCH_TABLE" || err.code === "ER_BAD_FIELD_ERROR")
-    ) {
-      const [items] = await db.query(
-        `SELECT
-          oi.product_id,
-          oi.quantity,
-          oi.price_each,
-          p.name,
-          NULL AS image
-        FROM order_items oi
-        JOIN products p ON oi.product_id = p.id
-        WHERE oi.order_id = ?`,
-        [orderId]
-      );
-      return items;
-    }
-    throw err;
+  const orderItemCols = await getColumnSet("order_items");
+  if (!orderItemCols) return [];
+
+  const productCols = await getColumnSet("products");
+  if (!productCols) return [];
+
+  const hasPriceEach = orderItemCols.has("price_each");
+  const hasPrice = orderItemCols.has("price");
+  const priceExpr = hasPriceEach
+    ? "oi.price_each AS price_each"
+    : hasPrice
+      ? "oi.price AS price_each"
+      : "0 AS price_each";
+
+  const nameExpr = productCols.has("name")
+    ? "p.name AS name"
+    : "CONCAT('Product #', oi.product_id) AS name";
+
+  let imageExpr = "NULL AS image";
+  const imageCols = await getColumnSet("product_images");
+  if (
+    imageCols &&
+    imageCols.has("product_id") &&
+    (imageCols.has("url") || imageCols.has("image_url"))
+  ) {
+    const urlCol = imageCols.has("url") ? "url" : "image_url";
+    const orderParts = [];
+    if (imageCols.has("sort_order")) orderParts.push("pi.sort_order ASC");
+    if (imageCols.has("id")) orderParts.push("pi.id ASC");
+    if (imageCols.has("image_id")) orderParts.push("pi.image_id ASC");
+
+    const orderSql = orderParts.length ? ` ORDER BY ${orderParts.join(", ")}` : "";
+    imageExpr = `(
+      SELECT pi.${urlCol}
+      FROM product_images pi
+      WHERE pi.product_id = p.id
+      ${orderSql}
+      LIMIT 1
+    ) AS image`;
   }
+
+  const [items] = await db.query(
+    `SELECT
+      oi.product_id,
+      oi.quantity,
+      ${priceExpr},
+      ${nameExpr},
+      ${imageExpr}
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.id
+    WHERE oi.order_id = ?`,
+    [orderId]
+  );
+  return items;
+}
+
+function getOrderId(order) {
+  if (order && order.id != null) return order.id;
+  if (order && order.order_id != null) return order.order_id;
+  return null;
+}
+
+function normalizeOrder(order) {
+  if (order.id == null && order.order_id != null) {
+    return { ...order, id: order.order_id };
+  }
+  return order;
 }
 
 async function getOrderHistoryForUser(userId) {
-  const orders = await fetchOrders(userId);
+  const rows = await fetchOrders(userId);
+  const orders = rows.map(normalizeOrder);
 
   for (const order of orders) {
-    order.items = await fetchOrderItems(order.id);
+    const orderId = getOrderId(order);
+    order.items = orderId == null ? [] : await fetchOrderItems(orderId);
   }
 
   return orders;
