@@ -108,7 +108,7 @@ router.post("/login", loginLimiter, async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      "SELECT id, name, email, password_hash FROM users WHERE email = ?",
+      "SELECT id, name, email, password_hash, is_admin FROM users WHERE email = ?",
       [email]
     );
 
@@ -129,6 +129,7 @@ router.post("/login", loginLimiter, async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      is_admin: user.is_admin === 1,
     };
 
     return res.json({
@@ -137,6 +138,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        is_admin: user.is_admin === 1,
       },
     });
   } catch (err) {
@@ -149,6 +151,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         id: 1,
         name: "Test User",
         email,
+        is_admin: false,
       };
       return res.status(200).json({
         message:
@@ -157,6 +160,7 @@ router.post("/login", loginLimiter, async (req, res) => {
           id: 1,
           name: "Test User",
           email,
+          is_admin: false,
         },
       });
     }
@@ -167,6 +171,7 @@ router.post("/login", loginLimiter, async (req, res) => {
       id: 1,
       name: "Test User",
       email,
+      is_admin: false,
     };
     return res.status(200).json({
       message:
