@@ -154,6 +154,83 @@
   box-shadow: none;
 }
 
+.chatbot-product-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.chatbot-product-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.chatbot-product-card:hover {
+  border-color: var(--line-hover);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.chatbot-product-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.chatbot-product-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.chatbot-product-price {
+  font-size: 12px;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.chatbot-product-meta {
+  margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.chatbot-stock {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chatbot-stock-soldout {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.6);
+  background: rgba(185, 28, 28, 0.25);
+}
+
+.chatbot-stock-low {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.6);
+  background: rgba(180, 83, 9, 0.22);
+}
+
+.chatbot-stock-in {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(22, 101, 52, 0.2);
+}
+
 /* Typing indicator */
 .typing-indicator {
   display: flex;
