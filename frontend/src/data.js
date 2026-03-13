@@ -318,6 +318,7 @@ export const PRODUCTS = [
     cat: "sale",
     name: "Classic Cotton Tee - SALE",
     price: 12.99,
+    originalPrice: 24.99,
     images: [
       "/assets/men/aeroflex-tee-1.jpg",
       "/assets/men/aeroflex-tee-2.jpg",
@@ -332,6 +333,7 @@ export const PRODUCTS = [
     cat: "sale",
     name: "Summer Shorts Pack - SALE",
     price: 19.99,
+    originalPrice: 44.99,
     images: [
       "/assets/men/shorts-core-1.jpg",
       "/assets/men/shorts-core-2.jpg",
@@ -346,6 +348,7 @@ export const PRODUCTS = [
     cat: "sale",
     name: "Women's Training Tank - SALE",
     price: 15.99,
+    originalPrice: 34.99,
     images: [
       "/assets/women/croptee-airlite-1.jpg",
       "/assets/women/croptee-airlite-2.jpg",
@@ -360,6 +363,7 @@ export const PRODUCTS = [
     cat: "sale",
     name: "Kids' Colorful Hoodie - SALE",
     price: 17.99,
+    originalPrice: 39.99,
     images: [
       "/assets/kids/hoodie-brightday-1.jpg",
       "/assets/kids/hoodie-brightday-2.jpg",

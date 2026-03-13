@@ -261,6 +261,8 @@ export function CategoryPage({ cat, pageTitle }) {
           const hoverImg = (product.images && product.images[1]) || img;
           const isHovered = hoveredProductId === product.id;
           const price = Number(product.price || 0);
+          const originalPrice = product.originalPrice ? Number(product.originalPrice) : null;
+          const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : null;
 
           return (
             <motion.div key={product.id} className="col-md-4" variants={cardVariants}>
@@ -305,9 +307,33 @@ export function CategoryPage({ cat, pageTitle }) {
                   <Link to={`/product/${product.id}`} className="text-decoration-none">
                     <h5 className="card-title">{product.name}</h5>
                   </Link>
-                  <p className="card-text fw-bold" style={{ color: '#fff' }}>
-                    £{price.toFixed(2)}
-                  </p>
+                  <div style={{ marginBottom: 8 }}>
+                    {originalPrice ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ color: '#888', fontSize: 13, textDecoration: 'line-through' }}>
+                          £{originalPrice.toFixed(2)}
+                        </span>
+                        <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>
+                          £{price.toFixed(2)}
+                        </span>
+                        <span style={{
+                          background: '#e53935',
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: '0.06em',
+                          padding: '2px 7px',
+                          borderRadius: 3,
+                        }}>
+                          -{discountPct}%
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="card-text fw-bold mb-0" style={{ color: '#fff' }}>
+                        £{price.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
                   <div className="d-grid gap-2 mt-auto">
                     <button
                       className="btn btn-dark"
