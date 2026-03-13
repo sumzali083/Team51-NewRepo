@@ -32,6 +32,7 @@ async function ensureRefundsTable() {
         details TEXT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'pending',
         admin_note TEXT NULL,
+        instruction_link VARCHAR(1000) NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
@@ -40,6 +41,10 @@ async function ensureRefundsTable() {
         KEY idx_refund_status (status),
         KEY idx_refund_created_at (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
+    );
+    // Keep older deployments forward-compatible.
+    await db.query(
+      "ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS instruction_link VARCHAR(1000) NULL AFTER admin_note"
     );
   })();
 
@@ -72,6 +77,7 @@ router.get("/my", requireAuth, async (req, res) => {
         rr.details,
         rr.status,
         rr.admin_note,
+        rr.instruction_link,
         rr.created_at,
         rr.updated_at
       FROM refund_requests rr

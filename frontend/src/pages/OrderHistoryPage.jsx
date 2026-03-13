@@ -3,6 +3,21 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
+function refundBadgeClass(status) {
+  if (status === "refunded") return "text-bg-success";
+  if (status === "approved" || status === "processing") return "text-bg-info";
+  if (status === "rejected") return "text-bg-danger";
+  return "text-bg-secondary";
+}
+
+function refundButtonLabel(status) {
+  if (status === "pending") return "Refund requested";
+  if (status === "approved" || status === "processing") return "Refund in progress";
+  if (status === "refunded") return "Refund completed";
+  if (status === "rejected") return "Request again";
+  return "Request refund";
+}
+
 export default function OrderHistoryPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -57,13 +72,41 @@ export default function OrderHistoryPage() {
       {orders.map((order) => (
         <div key={order.id} className="mb-5">
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <h5 className="mb-0">
-              Order #{order.id} - GBP {Number(order.total_price || 0).toFixed(2)}
-            </h5>
-            <Link to="/refunds" className="btn btn-sm btn-outline-light">
-              Request refund
+            <div>
+              <h5 className="mb-1">
+                Order #{order.id} - GBP {Number(order.total_price || 0).toFixed(2)}
+              </h5>
+              {order.refund && (
+                <span className={`badge ${refundBadgeClass(order.refund.status)}`}>
+                  Refund: {order.refund.status}
+                </span>
+              )}
+            </div>
+            <Link
+              to="/refunds"
+              className="btn btn-sm btn-outline-light"
+            >
+              {refundButtonLabel(order.refund?.status)}
             </Link>
           </div>
+
+          {order.refund && (
+            <div className="alert alert-secondary py-2 px-3 mb-3">
+              <div style={{ fontSize: 14 }}>
+                <strong>Refund update:</strong> {order.refund.admin_note || "No admin note yet."}
+              </div>
+              {order.refund.instruction_link && (
+                <a
+                  href={order.refund.instruction_link}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 13 }}
+                >
+                  Open return instructions / QR link
+                </a>
+              )}
+            </div>
+          )}
 
           <div className="row g-4">
             {(order.items || []).map((item, index) => {

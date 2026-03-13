@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [orderStatusDraft, setOrderStatusDraft] = useState({});
   const [refundStatusDraft, setRefundStatusDraft] = useState({});
   const [refundAdminNoteDraft, setRefundAdminNoteDraft] = useState({});
+  const [refundInstructionLinkDraft, setRefundInstructionLinkDraft] = useState({});
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
@@ -55,6 +56,7 @@ export default function AdminPage() {
       setOrderStatusDraft(Object.fromEntries((ordersRes.data || []).map((o) => [o.id, o.status || "pending"])));
       setRefundStatusDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.status || "pending"])));
       setRefundAdminNoteDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.admin_note || ""])));
+      setRefundInstructionLinkDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.instruction_link || ""])));
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to fetch admin data");
     } finally {
@@ -97,14 +99,15 @@ export default function AdminPage() {
   const updateRefundStatus = async (refundId) => {
     const status = refundStatusDraft[refundId];
     const adminNote = refundAdminNoteDraft[refundId] || "";
+    const instructionLink = refundInstructionLinkDraft[refundId] || "";
     if (!status) return;
 
     setSavingRefundId(refundId);
     try {
-      await api.put(`/api/admin/refunds/${refundId}/status`, { status, adminNote });
+      await api.put(`/api/admin/refunds/${refundId}/status`, { status, adminNote, instructionLink });
       setRefunds((prev) =>
         prev.map((r) =>
-          r.id === refundId ? { ...r, status, admin_note: adminNote } : r
+          r.id === refundId ? { ...r, status, admin_note: adminNote, instruction_link: instructionLink } : r
         )
       );
     } catch (err) {
@@ -887,6 +890,7 @@ export default function AdminPage() {
                         <th>Reason</th>
                         <th>Status</th>
                         <th>Admin Note</th>
+                        <th>Instructions Link / QR URL</th>
                         <th>Date</th>
                         <th>Action</th>
                       </tr>
@@ -926,6 +930,16 @@ export default function AdminPage() {
                               }
                             />
                           </td>
+                          <td style={{ minWidth: 220 }}>
+                            <input
+                              className="form-control form-control-sm"
+                              placeholder="https://... (return label/QR)"
+                              value={refundInstructionLinkDraft[r.id] || ""}
+                              onChange={(e) =>
+                                setRefundInstructionLinkDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                            />
+                          </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
                             {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
                           </td>
@@ -942,7 +956,7 @@ export default function AdminPage() {
                       ))}
                       {refunds.length === 0 && (
                         <tr>
-                          <td colSpan={9} className="text-center" style={{ color: "var(--sub)" }}>
+                          <td colSpan={10} className="text-center" style={{ color: "var(--sub)" }}>
                             No refund requests yet.
                           </td>
                         </tr>
