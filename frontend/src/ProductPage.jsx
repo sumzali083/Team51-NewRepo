@@ -20,6 +20,7 @@ export function ProductPage() {
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
   const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState("success");
   const isInWishlist = product && wishlist && wishlist.some((item) => item.id === product.id);
 
   // Reviews state
@@ -110,9 +111,16 @@ export function ProductPage() {
       size,
       color,
       image: images[activeImg] || product.image,
+    }).then((result) => {
+      if (result && result.message) {
+        setMsg(result.message);
+        setMsgType(result.ok ? "success" : "danger");
+      } else {
+        setMsg(`Added "${product.name}" to basket!`);
+        setMsgType("success");
+      }
+      setTimeout(() => setMsg(""), 3000);
     });
-    setMsg(`Added "${product.name}" to basket!`);
-    setTimeout(() => setMsg(""), 3000);
   };
 
   const handleToggleWishlist = () => {
@@ -184,6 +192,10 @@ export function ProductPage() {
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : 0;
+  const stock = Number(product.stock);
+  const hasStockInfo = Number.isFinite(stock);
+  const isSoldOut = hasStockInfo && stock <= 0;
+  const isLowStock = hasStockInfo && stock > 0 && stock <= 5;
 
   return (
     <div className="container mt-5">
@@ -244,6 +256,17 @@ export function ProductPage() {
             <h3 style={{ color: '#fff', fontWeight: 700 }}>£{product.price.toFixed(2)}</h3>
           )}
           <p className="mt-3">{product.desc || product.description}</p>
+          {hasStockInfo && (
+            <div className="mb-2">
+              {isSoldOut ? (
+                <span className="badge text-bg-danger">Sold out</span>
+              ) : isLowStock ? (
+                <span className="badge text-bg-warning">Low stock: {stock} left</span>
+              ) : (
+                <span className="badge text-bg-success">In stock</span>
+              )}
+            </div>
+          )}
 
           {product.sizes && product.sizes.length > 0 && (
             <div className="mb-3">
@@ -283,8 +306,9 @@ export function ProductPage() {
           <button
             className="btn btn-dark btn-lg w-100 mt-3"
             onClick={handleAddToCart}
+            disabled={isSoldOut}
           >
-            Add to Basket
+            {isSoldOut ? "Sold Out" : "Add to Basket"}
           </button>
 
           <button
@@ -295,7 +319,7 @@ export function ProductPage() {
           </button>
 
           {msg && (
-            <div className="alert alert-success mt-3" role="alert">
+            <div className={`alert alert-${msgType} mt-3`} role="alert">
               {msg}
             </div>
           )}
