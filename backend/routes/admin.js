@@ -3,8 +3,29 @@ const express = require("express");
 const db = require("../config/db");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const { ensureRefundsTable, ALLOWED_STATUSES } = require("./refunds");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const router = express.Router();
+
+const uploadsPath = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsPath),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    const safeExt = ext && ext.length <= 6 ? ext : ".jpg";
+    cb(null, `product-${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
+  },
+});
+const upload = multer({ storage });
+
+async function tableExists(tableName) {
+  const [rows] = await db.query("SHOW TABLES LIKE ?", [tableName]);
+  return rows.length > 0;
+}
 
 /* ======================================================
    USER MANAGEMENT
@@ -161,6 +182,166 @@ router.get("/reports", adminMiddleware, async (req, res) => {
 });
 
 /* ======================================================
+   PRODUCT MANAGEMENT
+====================================================== */
+
+router.get("/products", adminMiddleware, async (_req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        p.id,
+        p.sku,
+        p.name,
+        p.price,
+        p.stock,
+        p.category_id,
+        c.name AS category,
+        p.description,
+        p.created_at
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      ORDER BY p.id DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Admin get products error:", err);
+    res.status(500).json({ message: "Failed to fetch products" });
+  }
+});
+
+router.post("/upload-image", adminMiddleware, upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: "No image uploaded" });
+  return res.json({ url: `/uploads/${req.file.filename}` });
+});
+
+router.post("/products", adminMiddleware, async (req, res) => {
+  const {
+    sku,
+    name,
+    category_id,
+    price,
+    stock = 0,
+    description = "",
+    sizes = [],
+    colors = [],
+    images = [],
+  } = req.body || {};
+
+  if (!sku || !name || !category_id || !price) {
+    return res.status(400).json({ message: "sku, name, category_id and price are required" });
+  }
+
+  let conn;
+  try {
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    const [ins] = await conn.query(
+      `INSERT INTO products (sku, category_id, name, description, price, stock)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [String(sku).trim(), Number(category_id), String(name).trim(), String(description).trim(), Number(price), Number(stock) || 0]
+    );
+    const productId = ins.insertId;
+
+    if ((await tableExists("product_sizes")) && Array.isArray(sizes) && sizes.length) {
+      for (const s of sizes) {
+        await conn.query("INSERT INTO product_sizes (product_id, size) VALUES (?, ?)", [productId, String(s)]);
+      }
+    }
+
+    if ((await tableExists("product_colors")) && Array.isArray(colors) && colors.length) {
+      for (const c of colors) {
+        if (!String(c).trim()) continue;
+        await conn.query("INSERT INTO product_colors (product_id, color) VALUES (?, ?)", [productId, String(c).trim()]);
+      }
+    }
+
+    if ((await tableExists("product_images")) && Array.isArray(images) && images.length) {
+      for (let i = 0; i < images.length; i += 1) {
+        const url = String(images[i] || "").trim();
+        if (!url) continue;
+        await conn.query(
+          "INSERT INTO product_images (product_id, url, sort_order) VALUES (?, ?, ?)",
+          [productId, url, i]
+        );
+      }
+    }
+
+    await conn.commit();
+    return res.status(201).json({ message: "Product created", id: productId });
+  } catch (err) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Admin add product rollback error:", rollbackErr);
+      }
+    }
+    console.error("Admin add product error:", err);
+    return res.status(500).json({ message: "Failed to create product" });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+router.put("/products/:id/stock", adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { stock } = req.body || {};
+  const n = Number(stock);
+  if (!Number.isInteger(n) || n < 0) {
+    return res.status(400).json({ message: "stock must be a non-negative integer" });
+  }
+  try {
+    const [result] = await db.query("UPDATE products SET stock = ? WHERE id = ?", [n, id]);
+    if (!result.affectedRows) return res.status(404).json({ message: "Product not found" });
+    return res.json({ message: "Stock updated" });
+  } catch (err) {
+    console.error("Admin update stock error:", err);
+    return res.status(500).json({ message: "Failed to update stock" });
+  }
+});
+
+router.delete("/products/:id", adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  let conn;
+  try {
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    if (await tableExists("product_images")) {
+      await conn.query("DELETE FROM product_images WHERE product_id = ?", [id]);
+    }
+    if (await tableExists("product_sizes")) {
+      await conn.query("DELETE FROM product_sizes WHERE product_id = ?", [id]);
+    }
+    if (await tableExists("product_colors")) {
+      await conn.query("DELETE FROM product_colors WHERE product_id = ?", [id]);
+    }
+
+    const [result] = await conn.query("DELETE FROM products WHERE id = ?", [id]);
+    if (!result.affectedRows) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    await conn.commit();
+    return res.json({ message: "Product deleted" });
+  } catch (err) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackErr) {
+        console.error("Admin delete product rollback error:", rollbackErr);
+      }
+    }
+    console.error("Admin delete product error:", err);
+    return res.status(500).json({ message: "Failed to delete product" });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+/* ======================================================
    REFUND REQUESTS
 ====================================================== */
 
@@ -258,6 +439,39 @@ router.delete("/messages/:id", adminMiddleware, async (req, res) => {
     res.json({ message: "Message deleted" });
   } catch (err) {
     console.error("Admin delete message error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ======================================================
+   REVIEWS
+====================================================== */
+
+router.get("/reviews", adminMiddleware, async (_req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, product_id, rating, comment, reviewer_name, created_at
+       FROM reviews
+       ORDER BY created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Admin get reviews error:", err);
+    res.status(500).json({ message: "Failed to fetch reviews" });
+  }
+});
+
+router.delete("/reviews/:id", adminMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query("DELETE FROM reviews WHERE id = ?", [id]);
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+    res.json({ message: "Review deleted" });
+  } catch (err) {
+    console.error("Admin delete review error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
