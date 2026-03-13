@@ -102,7 +102,7 @@ export default function WishlistPage() {
                           <span className="osai-stock-pill osai-stock-pill-soldout">Sold out</span>
                         ) : isLowStock ? (
                           <span className="osai-stock-pill osai-stock-pill-low">Low stock: {stock} left</span>
-                        )}
+                        ) : null}
                       </div>
                     )}
 

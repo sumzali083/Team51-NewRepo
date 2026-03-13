@@ -364,7 +364,7 @@ export function CategoryPage({ cat, pageTitle }) {
                         <span className="osai-stock-pill osai-stock-pill-soldout">Sold out</span>
                       ) : isLowStock ? (
                         <span className="osai-stock-pill osai-stock-pill-low">Low stock: {stock} left</span>
-                      )}
+                      ) : null}
                     </div>
                   )}
                   <div className="d-grid gap-2 mt-auto">
