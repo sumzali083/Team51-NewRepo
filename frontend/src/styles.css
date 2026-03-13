@@ -1256,6 +1256,36 @@ textarea.form-control { background-color: var(--bg-surface) !important; color: v
 .badge.bg-secondary { background: var(--bg-surface) !important; color: var(--sub) !important }
 span.badge:not(.osai-badge) { background: var(--bg-surface) !important; color: var(--sub) !important; border: 1px solid var(--line) }
 
+/* Stock visibility pills */
+.osai-stock-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+.osai-stock-pill-soldout {
+  color: #fecaca;
+  background: rgba(185, 28, 28, 0.28);
+  border-color: rgba(248, 113, 113, 0.7);
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.2) inset;
+}
+.osai-stock-pill-low {
+  color: #fde68a;
+  background: rgba(180, 83, 9, 0.26);
+  border-color: rgba(251, 191, 36, 0.7);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15) inset;
+}
+.osai-stock-pill-in {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.22);
+  border-color: rgba(74, 222, 128, 0.6);
+}
+
 /* Quantity input in cart */
 input[type="number"] {
   background-color: var(--bg-surface) !important;

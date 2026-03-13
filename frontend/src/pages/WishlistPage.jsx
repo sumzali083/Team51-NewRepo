@@ -99,11 +99,11 @@ export default function WishlistPage() {
                     {hasStockInfo && (
                       <div className="mb-2">
                         {isSoldOut ? (
-                          <span className="badge text-bg-danger">Sold out</span>
+                          <span className="osai-stock-pill osai-stock-pill-soldout">Sold out</span>
                         ) : isLowStock ? (
-                          <span className="badge text-bg-warning">Low stock: {stock} left</span>
+                          <span className="osai-stock-pill osai-stock-pill-low">Low stock: {stock} left</span>
                         ) : (
-                          <span className="badge text-bg-success">In stock</span>
+                          <span className="osai-stock-pill osai-stock-pill-in">In stock</span>
                         )}
                       </div>
                     )}
