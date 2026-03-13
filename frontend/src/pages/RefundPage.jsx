@@ -190,6 +190,7 @@ export default function RefundPage() {
                     <th>Status</th>
                     <th>Reason</th>
                     <th>Admin Note</th>
+                    <th>Instructions</th>
                     <th>Date</th>
                   </tr>
                 </thead>
@@ -205,6 +206,15 @@ export default function RefundPage() {
                       </td>
                       <td>{r.reason}</td>
                       <td>{r.admin_note || "-"}</td>
+                      <td>
+                        {r.instruction_link ? (
+                          <a href={r.instruction_link} target="_blank" rel="noreferrer">
+                            Open link
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                       <td>{r.created_at ? new Date(r.created_at).toLocaleString() : "-"}</td>
                     </tr>
                   ))}

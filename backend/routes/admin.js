@@ -358,6 +358,7 @@ router.get("/refunds", adminMiddleware, async (req, res) => {
         rr.details,
         rr.status,
         rr.admin_note,
+        rr.instruction_link,
         rr.created_at,
         rr.updated_at,
         u.name AS user_name,
@@ -378,7 +379,7 @@ router.put("/refunds/:id/status", adminMiddleware, async (req, res) => {
   try {
     await ensureRefundsTable();
     const { id } = req.params;
-    const { status, adminNote } = req.body || {};
+    const { status, adminNote, instructionLink } = req.body || {};
 
     if (!ALLOWED_STATUSES.has(status)) {
       return res.status(400).json({ message: "Invalid refund status" });
@@ -386,9 +387,14 @@ router.put("/refunds/:id/status", adminMiddleware, async (req, res) => {
 
     const [result] = await db.query(
       `UPDATE refund_requests
-       SET status = ?, admin_note = ?
+       SET status = ?, admin_note = ?, instruction_link = ?
        WHERE id = ?`,
-      [status, adminNote ? String(adminNote).slice(0, 4000) : null, id]
+      [
+        status,
+        adminNote ? String(adminNote).slice(0, 4000) : null,
+        instructionLink ? String(instructionLink).slice(0, 1000) : null,
+        id,
+      ]
     );
 
     if (!result.affectedRows) {

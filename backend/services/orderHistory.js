@@ -79,6 +79,33 @@ async function fetchOrderItems(orderId) {
   return items;
 }
 
+async function fetchRefundSummary(userId, orderId) {
+  const refundCols = await getColumnSet("refund_requests");
+  if (!refundCols) return null;
+
+  const hasInstructionLink = refundCols.has("instruction_link");
+  const instructionExpr = hasInstructionLink
+    ? "instruction_link"
+    : "NULL AS instruction_link";
+
+  const [rows] = await db.query(
+    `SELECT
+      id,
+      status,
+      reason,
+      admin_note,
+      ${instructionExpr},
+      updated_at,
+      created_at
+    FROM refund_requests
+    WHERE user_id = ? AND order_id = ?
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 1`,
+    [userId, orderId]
+  );
+  return rows.length ? rows[0] : null;
+}
+
 function getOrderId(order) {
   if (order && order.id != null) return order.id;
   if (order && order.order_id != null) return order.order_id;
@@ -99,6 +126,7 @@ async function getOrderHistoryForUser(userId) {
   for (const order of orders) {
     const orderId = getOrderId(order);
     order.items = orderId == null ? [] : await fetchOrderItems(orderId);
+    order.refund = orderId == null ? null : await fetchRefundSummary(userId, orderId);
   }
 
   return orders;
