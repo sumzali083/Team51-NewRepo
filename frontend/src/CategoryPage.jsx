@@ -68,10 +68,13 @@ export function CategoryPage({ cat, pageTitle }) {
     () => Object.fromEntries(PRODUCTS.map((p) => [normalizeName(p.name), p])),
     [normalizeName]
   );
-  const localProductsForCategory = React.useMemo(
-    () => PRODUCTS.filter((p) => p.cat === catKey),
-    [catKey]
-  );
+  const localProductsForCategory = React.useMemo(() => {
+    if (catKey === "sale")
+      return PRODUCTS.filter((p) => p.originalPrice).slice(0, 6);
+    if (catKey === "newarrivals")
+      return PRODUCTS.filter((p) => p.isNewArrival).slice(0, 6);
+    return PRODUCTS.filter((p) => p.cat === catKey);
+  }, [catKey]);
 
   useEffect(() => {
     let cancelled = false;

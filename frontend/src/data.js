@@ -8,6 +8,7 @@ export const PRODUCTS = [
     cat: "men",
     name: "AeroFlex Running Tee",
     price: 29.99,
+    originalPrice: 49.99,
     images: ["/assets/men/aeroflex-tee-1.jpg", "/assets/men/aeroflex-tee-2.jpg"],
     desc: "Featherlight training tee with breathable mesh zones.",
     sizes: ["S", "M", "L", "XL"],
@@ -30,6 +31,7 @@ export const PRODUCTS = [
     cat: "men",
     name: "Therma+ Hoodie",
     price: 49.0,
+    originalPrice: 75.0,
     images: [
       "/assets/men/hoodie-therma-1.jpg",
       "/assets/men/hoodie-therma-2.jpg",
@@ -58,6 +60,7 @@ export const PRODUCTS = [
     cat: "men",
     name: "All-Weather Jacket",
     price: 89.0,
+    isNewArrival: true,
     images: [
       "/assets/men/jacket-allweather-1.jpg",
       "/assets/men/jacket-allweather-2.jpg",
@@ -72,6 +75,7 @@ export const PRODUCTS = [
     cat: "men",
     name: "Everyday Crew Socks (3-pack)",
     price: 12.0,
+    isNewArrival: true,
     images: [
       "/assets/men/socks-everyday-1.jpg",
       "/assets/men/socks-everyday-2.jpg",
@@ -87,6 +91,7 @@ export const PRODUCTS = [
     cat: "women",
     name: "AirLite Crop Tee",
     price: 27.99,
+    originalPrice: 44.99,
     images: [
       "/assets/women/croptee-airlite-1.jpg",
       "/assets/women/croptee-airlite-2.jpg",
@@ -102,6 +107,7 @@ export const PRODUCTS = [
     cat: "women",
     name: "Sculpt Leggings 7/8",
     price: 42.0,
+    isNewArrival: true,
     images: [
       "/assets/women/leggings-sculpt-1.jpg",
       "/assets/women/leggings-sculpt-2.jpg",
@@ -130,6 +136,7 @@ export const PRODUCTS = [
     cat: "women",
     name: "Trail Windbreaker",
     price: 79.0,
+    isNewArrival: true,
     images: [
       "/assets/women/jacket-trailwind-1.jpg",
       "/assets/women/jacket-trailwind-2.jpg",
@@ -159,6 +166,7 @@ export const PRODUCTS = [
     cat: "women",
     name: "Cloud Fleece Joggers",
     price: 44.0,
+    originalPrice: 69.0,
     images: [
       "/assets/women/joggers-cloudfleece-1.jpg",
       "/assets/women/joggers-cloudfleece-2.jpg",
@@ -174,6 +182,7 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Galaxy Graphic Tee",
     price: 14.99,
+    originalPrice: 24.99,
     images: [
       "/assets/kids/tee-galaxy-1.jpg",
       "/assets/kids/tee-galaxy-2.jpg",
@@ -203,6 +212,7 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Bright Day Hoodie",
     price: 24.99,
+    originalPrice: 39.99,
     images: [
       "/assets/kids/hoodie-brightday-1.jpg",
       "/assets/kids/hoodie-brightday-2.jpg",
@@ -231,6 +241,7 @@ export const PRODUCTS = [
     cat: "kids",
     name: "All-Weather Shell",
     price: 34.99,
+    isNewArrival: true,
     images: [
       "/assets/kids/jacket-shell-1.jpg",
       "/assets/kids/jacket-shell-2.jpg",
@@ -246,6 +257,7 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Everyday Trainer Socks (5-pack)",
     price: 10.0,
+    isNewArrival: true,
     images: [
       "/assets/kids/socks-trainer-1.jpg",
       "/assets/kids/socks-trainer-2.jpg",
@@ -255,121 +267,6 @@ export const PRODUCTS = [
     colors: ["Multi", "White"],
   },
 
-  // NEW ARRIVALS (Featured recent products)
-  {
-    id: "na-001",
-    cat: "newarrivals",
-    name: "Premium Tech Jacket",
-    price: 99.99,
-    images: [
-      "/assets/men/jacket-allweather-1.jpg",
-      "/assets/men/jacket-allweather-2.jpg",
-    ],
-    desc: "State-of-the-art moisture-wicking performance jacket.",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Black", "Navy"],
-  },
-
-  {
-    id: "na-002",
-    cat: "newarrivals",
-    name: "Ultra Comfort Sports Bra",
-    price: 54.99,
-    images: [
-      "/assets/women/croptee-airlite-1.jpg",
-      "/assets/women/croptee-airlite-2.jpg",
-    ],
-    desc: "Maximum support with minimal bounce technology.",
-    sizes: ["XS", "S", "M", "L", "XL"],
-    colors: ["Black", "White", "Navy"],
-  },
-
-  {
-    id: "na-003",
-    cat: "newarrivals",
-    name: "Kids' Adventure Backpack",
-    price: 29.99,
-    images: [
-      "/assets/kids/jacket-shell-1.jpg",
-      "/assets/kids/jacket-shell-2.jpg",
-    ],
-    desc: "Ergonomic design with reflective details for safety.",
-    sizes: ["One Size"],
-    colors: ["Red", "Blue", "Green"],
-  },
-
-  {
-    id: "na-004",
-    cat: "newarrivals",
-    name: "Smart Fitness Leggings",
-    price: 64.99,
-    images: [
-      "/assets/women/leggings-sculpt-1.jpg",
-      "/assets/women/leggings-sculpt-2.jpg",
-    ],
-    desc: "Integrated pocket for phone and keys.",
-    sizes: ["XS", "S", "M", "L", "XL"],
-    colors: ["Black", "Graphite"],
-  },
-
-  // SALE (Discounted items)
-  {
-    id: "sale-001",
-    cat: "sale",
-    name: "Classic Cotton Tee - SALE",
-    price: 12.99,
-    originalPrice: 24.99,
-    images: [
-      "/assets/men/aeroflex-tee-1.jpg",
-      "/assets/men/aeroflex-tee-2.jpg",
-    ],
-    desc: "Timeless cotton tee. Was $24.99, now $12.99!",
-    sizes: ["S", "M", "L", "XL", "XXL"],
-    colors: ["White", "Black", "Grey"],
-  },
-
-  {
-    id: "sale-002",
-    cat: "sale",
-    name: "Summer Shorts Pack - SALE",
-    price: 19.99,
-    originalPrice: 44.99,
-    images: [
-      "/assets/men/shorts-core-1.jpg",
-      "/assets/men/shorts-core-2.jpg",
-    ],
-    desc: "Lightweight shorts. Was $44.99, now $19.99!",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Khaki", "Navy", "Black"],
-  },
-
-  {
-    id: "sale-003",
-    cat: "sale",
-    name: "Women's Training Tank - SALE",
-    price: 15.99,
-    originalPrice: 34.99,
-    images: [
-      "/assets/women/croptee-airlite-1.jpg",
-      "/assets/women/croptee-airlite-2.jpg",
-    ],
-    desc: "Perfect for gym or yoga. Was $34.99, now $15.99!",
-    sizes: ["XS", "S", "M", "L"],
-    colors: ["Black", "Pink", "White"],
-  },
-
-  {
-    id: "sale-004",
-    cat: "sale",
-    name: "Kids' Colorful Hoodie - SALE",
-    price: 17.99,
-    originalPrice: 39.99,
-    images: [
-      "/assets/kids/hoodie-brightday-1.jpg",
-      "/assets/kids/hoodie-brightday-2.jpg",
-    ],
-    desc: "Vibrant colors. Was $39.99, now $17.99!",
-    sizes: ["5-6", "7-8", "9-10", "11-12"],
-    colors: ["Purple", "Orange", "Teal"],
-  },
 ];
+// Sale page    → products with originalPrice set (m-001, m-003, w-001, w-006, k-001, k-003)
+// New Arrivals → products with isNewArrival: true (m-005, m-006, w-002, w-004, k-005, k-006)

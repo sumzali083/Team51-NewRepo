@@ -31,6 +31,7 @@ const BASE_SELECT = `
     c.name AS category_name,
     p.name,
     p.price,
+    p.original_price,
     p.description AS \`desc\`,
     GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
     GROUP_CONCAT(DISTINCT ps.size ORDER BY ps.size SEPARATOR '||') AS sizes,
@@ -49,6 +50,7 @@ function buildProductRow(r) {
     cat: catFromCategoryName(r.category_name),
     name: r.name,
     price: Number(r.price),
+    originalPrice: r.original_price != null ? Number(r.original_price) : null,
     desc: r.desc,
     images: splitList(r.images),
     sizes: splitList(r.sizes),
@@ -70,16 +72,23 @@ router.get("/", async (req, res) => {
 
   const where = [];
   const params = [];
+  let orderBy = "ORDER BY p.id ASC";
+  let limitSql = "";
 
-  if (cat) {
+  if (cat === "sale") {
+    // Fetch real products from any category that have a discounted price
+    where.push("p.original_price IS NOT NULL");
+    limitSql = "LIMIT 6";
+  } else if (cat === "newarrivals") {
+    // Fetch the 6 most recently added products from any category
+    orderBy = "ORDER BY p.id DESC";
+    limitSql = "LIMIT 6";
+  } else if (cat) {
     // map frontend cat to category names in DB
     if (cat === "men") where.push("c.name = 'Mens'");
     else if (cat === "women") where.push("c.name = 'Womens'");
     else if (cat === "kids") where.push("c.name = 'Kids'");
-    else if (cat === "newarrivals") where.push("c.name = 'New Arrivals'");
-    else if (cat === "sale") where.push("c.name = 'Sale'");
     else {
-      // fallback: try match category name directly
       where.push("LOWER(c.name) = ?");
       params.push(cat);
     }
@@ -98,8 +107,9 @@ router.get("/", async (req, res) => {
   const sql = `
     ${BASE_SELECT}
     ${whereSql}
-    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.description
-    ORDER BY p.id ASC
+    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.original_price, p.description
+    ${orderBy}
+    ${limitSql}
   `;
 
   try {
