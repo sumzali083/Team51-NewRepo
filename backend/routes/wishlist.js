@@ -31,11 +31,11 @@ router.get("/", requireAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT
-        w.id,
+        w.id AS wishlist_id,
         p.id AS product_id,
+        p.sku AS sku,
         p.name,
         p.price,
-        p.sku,
         COALESCE(
           (SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1),
           p.image_url,
