@@ -89,10 +89,10 @@ router.get("/", async (req, res) => {
   let limitSql = "";
 
   if (cat === "sale") {
-    // Fetch real products from any category that have a discounted price
-    // Only add the filter if the column actually exists in the DB
+    // If original_price column doesn't exist, return empty so frontend uses local fallback
     const saleHasOP = await hasOriginalPriceCol();
-    if (saleHasOP) where.push("p.original_price IS NOT NULL");
+    if (!saleHasOP) return res.json([]);
+    where.push("p.original_price IS NOT NULL");
     limitSql = "LIMIT 6";
   } else if (cat === "newarrivals") {
     // Fetch the 6 most recently added products from any category
