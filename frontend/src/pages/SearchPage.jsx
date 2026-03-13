@@ -1,8 +1,9 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 import { PRODUCTS, Fallback } from "../data";
+import api from "../api";
 
 const PER_PAGE = 8;
 
@@ -15,19 +16,52 @@ export function SearchPage() {
   const { addToWishlist } = useContext(WishlistContext);
   const [cartMsg, setCartMsg] = useState("");
   const [cartMsgType, setCartMsgType] = useState("success");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filtered = PRODUCTS.filter((p) =>
-    !q
-      ? true
-      : p.name.toLowerCase().includes(q.toLowerCase()) ||
-        (p.desc && p.desc.toLowerCase().includes(q.toLowerCase()))
-  );
+  useEffect(() => {
+    if (!q.trim()) {
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    api
+      .get("/api/products", { params: { q: q.trim() } })
+      .then((res) => {
+        const apiResults = res.data || [];
+        if (apiResults.length > 0) {
+          setResults(apiResults);
+        } else {
+          // Fallback to local data if API returns nothing
+          const lower = q.toLowerCase();
+          setResults(
+            PRODUCTS.filter(
+              (p) =>
+                p.name.toLowerCase().includes(lower) ||
+                (p.desc && p.desc.toLowerCase().includes(lower))
+            )
+          );
+        }
+      })
+      .catch(() => {
+        // API failed — use local fallback
+        const lower = q.toLowerCase();
+        setResults(
+          PRODUCTS.filter(
+            (p) =>
+              p.name.toLowerCase().includes(lower) ||
+              (p.desc && p.desc.toLowerCase().includes(lower))
+          )
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [q]);
 
-  const total = filtered.length;
+  const total = results.length;
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
   const safePage = Math.min(Math.max(1, page), pages);
   const start = (safePage - 1) * PER_PAGE;
-  const slice = filtered.slice(start, start + PER_PAGE);
+  const slice = results.slice(start, start + PER_PAGE);
 
   const goPage = (newPage) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -60,12 +94,18 @@ export function SearchPage() {
       </h2>
 
       <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>
-        {total} result{total !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;
+        {loading
+          ? "Searching…"
+          : `${total} result${total !== 1 ? "s" : ""} for \u201c${q}\u201d`}
       </p>
 
       {cartMsg && <div className={`alert alert-${cartMsgType}`}>{cartMsg}</div>}
 
-      {slice.length === 0 ? (
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#888" }}>
+          Searching…
+        </div>
+      ) : slice.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#888" }}>
           No products found matching &ldquo;{q}&rdquo;.
         </div>
@@ -74,6 +114,10 @@ export function SearchPage() {
           {slice.map((p) => {
             const img = (p.images && p.images[0]) || p.image || Fallback;
             const price = Number(p.price || 0);
+            const originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+            const discountPct = originalPrice
+              ? Math.round((1 - price / originalPrice) * 100)
+              : null;
             const stock = Number(p.stock);
             const hasStockInfo = Number.isFinite(stock);
             const isSoldOut = hasStockInfo && stock <= 0;
@@ -88,9 +132,7 @@ export function SearchPage() {
                       className="card-img-top"
                       alt={p.name}
                       style={{ cursor: "pointer" }}
-                      onError={(e) => {
-                        e.target.src = Fallback;
-                      }}
+                      onError={(e) => { e.target.src = Fallback; }}
                     />
                   </Link>
 
@@ -99,9 +141,33 @@ export function SearchPage() {
                       <h5 className="card-title">{p.name}</h5>
                     </Link>
 
-                    <p className="card-text fw-bold" style={{ color: "#fff" }}>
-                      GBP {price.toFixed(2)}
-                    </p>
+                    <div style={{ marginBottom: 8 }}>
+                      {originalPrice ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ color: "#888", fontSize: 13, textDecoration: "line-through" }}>
+                            £{originalPrice.toFixed(2)}
+                          </span>
+                          <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>
+                            £{price.toFixed(2)}
+                          </span>
+                          <span style={{
+                            background: "#e53935",
+                            color: "#fff",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            padding: "2px 7px",
+                            borderRadius: 3,
+                          }}>
+                            -{discountPct}%
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="card-text fw-bold mb-0" style={{ color: "#fff" }}>
+                          £{price.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
 
                     {hasStockInfo && (isSoldOut || isLowStock) && (
                       <div className="mb-2">
@@ -111,12 +177,6 @@ export function SearchPage() {
                           <span className="osai-stock-pill osai-stock-pill-low">Low stock: {stock} left</span>
                         )}
                       </div>
-                    )}
-
-                    {p.tag && (
-                      <span className="badge mb-2" style={{ alignSelf: "flex-start" }}>
-                        {p.tag}
-                      </span>
                     )}
 
                     <div className="d-grid gap-2 mt-auto">
