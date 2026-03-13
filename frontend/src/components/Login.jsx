@@ -170,27 +170,7 @@ export function Login({ initialEmail = "" }) {
         </div>
 
         <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 8,
-            }}
-          >
-            <span style={LABEL}>Password</span>
-            <Link
-              to="/forgot-password"
-              style={{
-                fontSize: 12,
-                color: "#888",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label style={LABEL}>Password</label>
 
           <input
             id="login-password"
