@@ -2,11 +2,59 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const db = require("../config/db"); // mysql2/promise pool
 
 const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
+
+let mailTransporter = null;
+
+function getResetBaseUrl(req) {
+  const envUrl = process.env.PASSWORD_RESET_BASE_URL || process.env.FRONTEND_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+
+  const host = req.get("host");
+  const proto = req.secure ? "https" : "http";
+  return `${proto}://${host}`;
+}
+
+function getMailer() {
+  if (mailTransporter) return mailTransporter;
+
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!host || !user || !pass) return null;
+
+  mailTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  return mailTransporter;
+}
+
+async function ensureForgotPasswordTable() {
+  await db.query(
+    `CREATE TABLE IF NOT EXISTS forgot_password (
+      id INT NOT NULL AUTO_INCREMENT,
+      email VARCHAR(255) NOT NULL,
+      reset_token VARCHAR(255) NOT NULL,
+      token_expiry DATETIME NOT NULL,
+      requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_fp_email (email),
+      KEY idx_fp_token (reset_token),
+      KEY idx_fp_expiry (token_expiry)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
+  );
+}
 
 // Limit login attempts
 const loginLimiter = rateLimit({
@@ -228,6 +276,8 @@ router.post("/forgot-password", async (req, res) => {
   }
 
   try {
+    await ensureForgotPasswordTable();
+
     // Check if a user exists for this email
     const [users] = await db.query(
       "SELECT id, email FROM users WHERE email = ?",
@@ -253,14 +303,34 @@ router.post("/forgot-password", async (req, res) => {
       [email.trim(), token, expiresAt]
     );
 
-    // Build reset URL for your frontend (update domain/path if needed)
-    const resetUrl = `https://your-frontend-domain.com/reset-password?token=${token}`;
-    console.log("Password reset link for", email.trim(), "=>", resetUrl);
+    const resetBaseUrl = getResetBaseUrl(req);
+    const resetUrl = `${resetBaseUrl}/reset-password?token=${token}`;
 
-    return res.json({
+    const transporter = getMailer();
+    if (transporter) {
+      const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+      await transporter.sendMail({
+        from,
+        to: email.trim(),
+        subject: "OSAI Password Reset",
+        text: `You requested a password reset. Use this link within 60 minutes: ${resetUrl}`,
+        html: `<p>You requested a password reset.</p><p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 60 minutes.</p>`,
+      });
+    } else {
+      // Fallback while SMTP is not configured.
+      console.log("Password reset link for", email.trim(), "=>", resetUrl);
+    }
+
+    const payload = {
       message:
         "If an account with that email exists, you will receive a password reset link.",
-    });
+    };
+
+    if (!transporter && process.env.NODE_ENV !== "production") {
+      payload.resetUrl = resetUrl;
+    }
+
+    return res.json(payload);
   } catch (err) {
     console.error("Forgot password error:", err);
     return res.status(500).json({ message: "Server error" });
@@ -283,6 +353,8 @@ router.post("/reset-password", async (req, res) => {
   }
 
   try {
+    await ensureForgotPasswordTable();
+
     // Look up latest matching token
     const [rows] = await db.query(
       `SELECT email, token_expiry
