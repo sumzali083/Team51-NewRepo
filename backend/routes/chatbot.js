@@ -87,7 +87,7 @@ function extractFilters(message) {
 
 function shouldSearchProducts(message, filters) {
   const m = String(message || "").toLowerCase();
-  if (filters.category || filters.priceMin !== null || filters.priceMax !== null || filters.stockMode || filters.keywords.length) {
+  if (filters.category || filters.priceMin !== null || filters.priceMax !== null || filters.stockMode) {
     return true;
   }
   return PRODUCT_SEARCH_TRIGGERS.some((t) => m.includes(t));
@@ -206,9 +206,53 @@ function getFallbackReply(message) {
   return "I can help you find products. Try: 'show womens under 50 in stock' or 'find black hoodie'.";
 }
 
+function getSupportReply(message) {
+  const m = (message || "").toLowerCase().trim();
+
+  // Refunds / returns / orders
+  if (m.includes("refund") || m.includes("return")) {
+    return "We accept returns within 30 days. To request a refund, go to your orders/history and click request refund, or contact OSAI@aston.ac.uk with your order number.";
+  }
+  if (m.includes("order") || m.includes("track")) {
+    return "You can check your order status from your account order history, or contact OSAI@aston.ac.uk with your order number.";
+  }
+
+  // Delivery / payments
+  if (m.includes("shipping") || m.includes("delivery")) {
+    return "We ship across the UK. Standard delivery is usually 3-5 working days, with faster options at checkout.";
+  }
+  if (m.includes("payment") || m.includes("pay")) {
+    return "You can pay securely at checkout. Prices are shown on each product page.";
+  }
+
+  // Account / navigation / contact
+  if (m.includes("login") || m.includes("sign in") || m.includes("account")) {
+    return "Use Login/Profile in the top-right to sign in or create an account.";
+  }
+  if (m.includes("contact") || m.includes("email") || m.includes("reach")) {
+    return "You can contact us at OSAI@aston.ac.uk or use the Contact page in the menu.";
+  }
+  if (m.includes("where are you") || m.includes("address") || m.includes("location")) {
+    return "We're at 134a Aston Road, Birmingham, United Kingdom.";
+  }
+  if (m.includes("menu") || m.includes("where can i") || m.includes("navigate") || m.includes("what page")) {
+    return "From the menu you can go to Home, Mens, Womens, Kids, New Arrivals, Sale, Contact, and About.";
+  }
+  if (m.includes("cart") || m.includes("basket") || m.includes("checkout")) {
+    return "Use the basket icon in the top-right, then continue to checkout when ready.";
+  }
+
+  return null;
+}
+
 router.post("/", async (req, res) => {
   try {
     const { message } = req.body || {};
+    const supportReply = getSupportReply(message);
+    if (supportReply) {
+      return res.json({ response: supportReply, products: [] });
+    }
+
     const filters = extractFilters(message);
 
     if (shouldSearchProducts(message, filters)) {
