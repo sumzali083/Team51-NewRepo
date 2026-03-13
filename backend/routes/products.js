@@ -22,16 +22,28 @@ function catFromCategoryName(categoryName) {
   return s.replace(/\s+/g, "");
 }
 
-// This query assembles product into arrays via GROUP_CONCAT.
-// Works on most MySQL versions (no JSON_ARRAYAGG needed).
-const BASE_SELECT = `
+// Cache whether original_price column exists (checked once per process)
+let _hasOriginalPrice = null;
+async function hasOriginalPriceCol() {
+  if (_hasOriginalPrice !== null) return _hasOriginalPrice;
+  const [rows] = await db.query(
+    `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'original_price' LIMIT 1`
+  );
+  _hasOriginalPrice = rows.length > 0;
+  return _hasOriginalPrice;
+}
+
+function buildBaseSelect(includeOriginalPrice) {
+  const opCol = includeOriginalPrice ? "p.original_price," : "NULL AS original_price,";
+  return `
   SELECT
     p.id AS db_id,
     p.sku AS id,
     c.name AS category_name,
     p.name,
     p.price,
-    p.original_price,
+    ${opCol}
     p.description AS \`desc\`,
     GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
     GROUP_CONCAT(DISTINCT ps.size ORDER BY ps.size SEPARATOR '||') AS sizes,
@@ -42,6 +54,7 @@ const BASE_SELECT = `
   LEFT JOIN product_sizes  ps ON ps.product_id = p.id
   LEFT JOIN product_colors pc ON pc.product_id = p.id
 `;
+}
 
 function buildProductRow(r) {
   return {
@@ -77,7 +90,9 @@ router.get("/", async (req, res) => {
 
   if (cat === "sale") {
     // Fetch real products from any category that have a discounted price
-    where.push("p.original_price IS NOT NULL");
+    // Only add the filter if the column actually exists in the DB
+    const saleHasOP = await hasOriginalPriceCol();
+    if (saleHasOP) where.push("p.original_price IS NOT NULL");
     limitSql = "LIMIT 6";
   } else if (cat === "newarrivals") {
     // Fetch the 6 most recently added products from any category
@@ -104,10 +119,14 @@ router.get("/", async (req, res) => {
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
+  const hasOP = await hasOriginalPriceCol();
+  const BASE_SELECT = buildBaseSelect(hasOP);
+  const opGroup = hasOP ? "p.original_price," : "";
+
   const sql = `
     ${BASE_SELECT}
     ${whereSql}
-    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.original_price, p.description
+    GROUP BY p.id, p.sku, c.name, p.name, p.price, ${opGroup} p.description
     ${orderBy}
     ${limitSql}
   `;
@@ -135,10 +154,14 @@ router.get("/:id", async (req, res) => {
   const where = isNumeric ? "p.id = ?" : "p.sku = ?";
   const param = isNumeric ? Number(raw) : raw;
 
+  const hasOP = await hasOriginalPriceCol();
+  const BASE_SELECT = buildBaseSelect(hasOP);
+  const opGroup = hasOP ? "p.original_price," : "";
+
   const sql = `
     ${BASE_SELECT}
     WHERE ${where}
-    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.description
+    GROUP BY p.id, p.sku, c.name, p.name, p.price, ${opGroup} p.description
     LIMIT 1
   `;
 
