@@ -27,6 +27,20 @@ async function tableExists(tableName) {
   return rows.length > 0;
 }
 
+// Cache column existence checks so we only query INFORMATION_SCHEMA once per process
+const _colCache = {};
+async function columnExists(table, column) {
+  const key = `${table}.${column}`;
+  if (_colCache[key] !== undefined) return _colCache[key];
+  const [rows] = await db.query(
+    `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+    [table, column]
+  );
+  _colCache[key] = rows.length > 0;
+  return _colCache[key];
+}
+
 /* ======================================================
    USER MANAGEMENT
 ====================================================== */
@@ -187,13 +201,17 @@ router.get("/reports", adminMiddleware, async (req, res) => {
 
 router.get("/products", adminMiddleware, async (_req, res) => {
   try {
+    const hasOriginalPrice = await columnExists("products", "original_price");
+    const opSelect = hasOriginalPrice ? "p.original_price," : "NULL AS original_price,";
+    const opGroup  = hasOriginalPrice ? "p.original_price," : "";
+
     const [rows] = await db.query(
       `SELECT
         p.id,
         p.sku,
         p.name,
         p.price,
-        p.original_price,
+        ${opSelect}
         p.stock,
         p.category_id,
         c.name AS category,
@@ -207,10 +225,9 @@ router.get("/products", adminMiddleware, async (_req, res) => {
       LEFT JOIN product_images pi ON pi.product_id = p.id
       LEFT JOIN product_sizes  ps ON ps.product_id = p.id
       LEFT JOIN product_colors pc ON pc.product_id = p.id
-      GROUP BY p.id, p.sku, p.name, p.price, p.original_price, p.stock, p.category_id, c.name, p.description, p.created_at
+      GROUP BY p.id, p.sku, p.name, p.price, ${opGroup} p.stock, p.category_id, c.name, p.description, p.created_at
       ORDER BY p.id DESC`
     );
-    // Parse delimited lists into arrays
     res.json(rows.map((r) => ({
       ...r,
       images: r.images ? r.images.split("||").filter(Boolean) : [],
@@ -251,11 +268,15 @@ router.post("/products", adminMiddleware, async (req, res) => {
     conn = await db.getConnection();
     await conn.beginTransaction();
 
+    const hasOP = await columnExists("products", "original_price");
     const originalPriceVal = original_price ? Number(original_price) : null;
+    const opCol = hasOP ? ", original_price" : "";
+    const opPlaceholder = hasOP ? ", ?" : "";
+    const opValues = hasOP ? [originalPriceVal] : [];
     const [ins] = await conn.query(
-      `INSERT INTO products (sku, category_id, name, description, price, original_price, stock)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [String(sku).trim(), Number(category_id), String(name).trim(), String(description).trim(), Number(price), originalPriceVal, Number(stock) || 0]
+      `INSERT INTO products (sku, category_id, name, description, price${opCol}, stock)
+       VALUES (?, ?, ?, ?, ?${opPlaceholder}, ?)`,
+      [String(sku).trim(), Number(category_id), String(name).trim(), String(description).trim(), Number(price), ...opValues, Number(stock) || 0]
     );
     const productId = ins.insertId;
 
@@ -316,10 +337,13 @@ router.put("/products/:id", adminMiddleware, async (req, res) => {
     conn = await db.getConnection();
     await conn.beginTransaction();
 
+    const hasOP = await columnExists("products", "original_price");
     const originalPriceVal = original_price ? Number(original_price) : null;
+    const opSet = hasOP ? ", original_price=?" : "";
+    const opValues = hasOP ? [originalPriceVal] : [];
     await conn.query(
-      `UPDATE products SET sku=?, name=?, category_id=?, price=?, original_price=?, stock=?, description=? WHERE id=?`,
-      [String(sku || "").trim(), String(name).trim(), Number(category_id), Number(price), originalPriceVal, Number(stock) || 0, String(description).trim(), id]
+      `UPDATE products SET sku=?, name=?, category_id=?, price=?${opSet}, stock=?, description=? WHERE id=?`,
+      [String(sku || "").trim(), String(name).trim(), Number(category_id), Number(price), ...opValues, Number(stock) || 0, String(description).trim(), id]
     );
 
     if (await tableExists("product_sizes")) {
