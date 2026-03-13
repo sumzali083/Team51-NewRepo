@@ -94,10 +94,13 @@ router.get("/", async (req, res) => {
     // If original_price column doesn't exist, return empty so frontend uses local fallback
     const saleHasOP = await hasOriginalPriceCol();
     if (!saleHasOP) return res.json([]);
+    // Only pull from real product categories, not the "Sale" DB category
     where.push("p.original_price IS NOT NULL");
+    where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     limitSql = "LIMIT 6";
   } else if (cat === "newarrivals") {
-    // Fetch the 6 most recently added products from any category
+    // 6 most recently added products from real categories only (not "New Arrivals" or "Sale" DB categories)
+    where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     orderBy = "ORDER BY p.id DESC";
     limitSql = "LIMIT 6";
   } else if (cat) {
