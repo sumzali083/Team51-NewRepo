@@ -1357,21 +1357,26 @@ export default function AdminPage() {
                           <td style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {r.reason}
                           </td>
-                          <td style={{ minWidth: 170 }}>
-                            <select
-                              className="form-select form-select-sm"
-                              style={{ minWidth: 160, color: "var(--text)", backgroundColor: "var(--bg-surface)" }}
-                              value={refundStatusDraft[r.id] || "pending"}
-                              onChange={(e) =>
-                                setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
-                              }
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="approved">Approved</option>
-                              <option value="processing">Processing</option>
-                              <option value="rejected">Rejected</option>
-                              <option value="refunded">Refunded</option>
-                            </select>
+                          <td style={{ minWidth: 190 }}>
+                            <div className="d-flex flex-column gap-2">
+                              <span className={`osai-status osai-status-${refundStatusDraft[r.id] || "pending"}`}>
+                                {refundStatusDraft[r.id] || "pending"}
+                              </span>
+                              <select
+                                className="form-select form-select-sm"
+                                style={{ minWidth: 170, color: "var(--text)", backgroundColor: "var(--bg-surface)" }}
+                                value={refundStatusDraft[r.id] || "pending"}
+                                onChange={(e) =>
+                                  setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                }
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="processing">Processing</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="refunded">Refunded</option>
+                              </select>
+                            </div>
                           </td>
                           <td style={{ minWidth: 220 }}>
                             <input

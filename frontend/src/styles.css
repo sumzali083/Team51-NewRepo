@@ -1143,6 +1143,9 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
 .osai-status-shipped    { background: rgba(167,139,250,0.12); color: #a78bfa; border-color: rgba(167,139,250,0.3) }
 .osai-status-delivered  { background: rgba(74,222,128,0.12);  color: #4ade80; border-color: rgba(74,222,128,0.3) }
 .osai-status-cancelled  { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.3) }
+.osai-status-approved   { background: rgba(74,222,128,0.12);  color: #4ade80; border-color: rgba(74,222,128,0.3) }
+.osai-status-rejected   { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.3) }
+.osai-status-refunded   { background: rgba(167,139,250,0.12); color: #a78bfa; border-color: rgba(167,139,250,0.3) }
 
 /* Divider between tab header and content */
 .osai-admin-tab-header {
