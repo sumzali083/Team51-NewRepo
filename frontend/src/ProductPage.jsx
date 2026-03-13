@@ -220,7 +220,29 @@ export function ProductPage() {
 
         <div className="col-md-6">
           <h1>{product.name}</h1>
-          <h3 style={{ color: '#fff', fontWeight: 700 }}>£{product.price.toFixed(2)}</h3>
+          {product.originalPrice ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+              <span style={{ color: '#888', fontSize: 16, textDecoration: 'line-through' }}>
+                £{Number(product.originalPrice).toFixed(2)}
+              </span>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 26 }}>
+                £{product.price.toFixed(2)}
+              </span>
+              <span style={{
+                background: '#e53935',
+                color: '#fff',
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                padding: '3px 9px',
+                borderRadius: 3,
+              }}>
+                -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+              </span>
+            </div>
+          ) : (
+            <h3 style={{ color: '#fff', fontWeight: 700 }}>£{product.price.toFixed(2)}</h3>
+          )}
           <p className="mt-3">{product.desc || product.description}</p>
 
           {product.sizes && product.sizes.length > 0 && (
