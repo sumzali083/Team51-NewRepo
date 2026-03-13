@@ -48,7 +48,8 @@ export function CartProvider(props) {
         name: item.name,
         price: parseFloat(item.price),
         image: normalizeImage(item.image_url),
-        quantity: item.quantity
+        quantity: item.quantity,
+        stock: Number(item.stock ?? 0),
       }));
       setCart(formattedCart);
     } catch (err) {
@@ -60,6 +61,16 @@ export function CartProvider(props) {
   }
 
   async function addToCart(product) {
+    const stock =
+      product && product.stock !== undefined && product.stock !== null
+        ? Number(product.stock)
+        : null;
+    const hasStockInfo = Number.isFinite(stock);
+
+    if (hasStockInfo && stock <= 0) {
+      return { ok: false, message: "This item is sold out." };
+    }
+
     if (user) {
       // Logged in - sync to backend
       try {
@@ -69,11 +80,27 @@ export function CartProvider(props) {
         });
         // Reload cart from backend
         await loadCartFromBackend();
+        if (hasStockInfo && stock <= 5) {
+          return { ok: true, message: `Added to basket. Only ${stock} left in stock.` };
+        }
+        return { ok: true, message: "Added to basket." };
       } catch (err) {
         console.error("Error adding to cart:", err);
+        return {
+          ok: false,
+          message: err?.response?.data?.message || "Could not add item to basket.",
+        };
       }
     } else {
       // Not logged in - use local state
+      const existing = cart.find(function(item) {
+        return item.id === product.id;
+      });
+      const nextQty = (existing ? Number(existing.quantity || 0) : 0) + 1;
+      if (hasStockInfo && nextQty > stock) {
+        return { ok: false, message: `Only ${stock} left in stock.` };
+      }
+
       setCart(function(prev) {
         var exists = prev.find(function(item) {
           return item.id === product.id;
@@ -91,6 +118,10 @@ export function CartProvider(props) {
 
         return prev.concat(Object.assign({}, product, { quantity: 1 }));
       });
+      if (hasStockInfo && stock <= 5) {
+        return { ok: true, message: `Added to basket. Only ${stock} left in stock.` };
+      }
+      return { ok: true, message: "Added to basket." };
     }
   }
 

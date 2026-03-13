@@ -39,6 +39,8 @@ export function CategoryPage({ cat, pageTitle }) {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("featured");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [cartMsg, setCartMsg] = useState("");
+  const [cartMsgType, setCartMsgType] = useState("success");
   const catMap = React.useMemo(
     () => ({
       Mens: "men",
@@ -163,6 +165,15 @@ export function CategoryPage({ cat, pageTitle }) {
     setIsDropdownOpen(false);
   };
 
+  const handleAddToCart = async (product) => {
+    const result = await addToCart(product);
+    if (result && result.message) {
+      setCartMsg(result.message);
+      setCartMsgType(result.ok ? "success" : "danger");
+      setTimeout(() => setCartMsg(""), 3000);
+    }
+  };
+
   if (loading) {
     return <div className="container mt-5">Loading products…</div>;
   }
@@ -253,6 +264,12 @@ export function CategoryPage({ cat, pageTitle }) {
         </div>
       </div>
 
+      {cartMsg && (
+        <div className={`alert alert-${cartMsgType}`} role="alert">
+          {cartMsg}
+        </div>
+      )}
+
       <motion.div
         className="row g-4"
         variants={gridVariants}
@@ -266,6 +283,10 @@ export function CategoryPage({ cat, pageTitle }) {
           const price = Number(product.price || 0);
           const originalPrice = product.originalPrice ? Number(product.originalPrice) : null;
           const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : null;
+          const stock = Number(product.stock);
+          const hasStockInfo = Number.isFinite(stock);
+          const isSoldOut = hasStockInfo && stock <= 0;
+          const isLowStock = hasStockInfo && stock > 0 && stock <= 5;
 
           return (
             <motion.div key={product.id} className="col-md-4" variants={cardVariants}>
@@ -337,12 +358,24 @@ export function CategoryPage({ cat, pageTitle }) {
                       </p>
                     )}
                   </div>
+                  {hasStockInfo && (
+                    <div className="mb-2">
+                      {isSoldOut ? (
+                        <span className="badge text-bg-danger">Sold out</span>
+                      ) : isLowStock ? (
+                        <span className="badge text-bg-warning">Low stock: {stock} left</span>
+                      ) : (
+                        <span className="badge text-bg-success">In stock</span>
+                      )}
+                    </div>
+                  )}
                   <div className="d-grid gap-2 mt-auto">
                     <button
                       className="btn btn-dark"
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
+                      disabled={isSoldOut}
                     >
-                      Add to Basket
+                      {isSoldOut ? "Sold Out" : "Add to Basket"}
                     </button>
                     <button
                       className="btn btn-outline-danger"
