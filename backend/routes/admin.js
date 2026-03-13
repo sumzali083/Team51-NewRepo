@@ -2,6 +2,7 @@
 const express = require("express");
 const db = require("../config/db");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const { ensureRefundsTable, ALLOWED_STATUSES } = require("./refunds");
 
 const router = express.Router();
 
@@ -130,17 +131,93 @@ router.get("/reports", adminMiddleware, async (req, res) => {
     const [[lowStock]] = await db.query(
       "SELECT COUNT(*) AS lowStockCount FROM products WHERE stock <= 5"
     );
+    let refundCount = { totalRefundRequests: 0 };
+    let pendingRefundCount = { pendingRefundRequests: 0 };
+    try {
+      await ensureRefundsTable();
+      [[refundCount]] = await db.query(
+        "SELECT COUNT(*) AS totalRefundRequests FROM refund_requests"
+      );
+      [[pendingRefundCount]] = await db.query(
+        "SELECT COUNT(*) AS pendingRefundRequests FROM refund_requests WHERE status = 'pending'"
+      );
+    } catch (refundErr) {
+      console.error("Admin refund report segment error:", refundErr);
+    }
 
     res.json({
       totalProducts: productCount.totalProducts,
       totalOrders: orderCount.totalOrders,
       totalRevenue: revenue.totalRevenue || 0,
-      lowStockCount: lowStock.lowStockCount
+      lowStockCount: lowStock.lowStockCount,
+      totalRefundRequests: refundCount.totalRefundRequests,
+      pendingRefundRequests: pendingRefundCount.pendingRefundRequests
     });
 
   } catch (err) {
     console.error("Admin reports error:", err);
     res.status(500).json({ message: "Failed to generate reports" });
+  }
+});
+
+/* ======================================================
+   REFUND REQUESTS
+====================================================== */
+
+router.get("/refunds", adminMiddleware, async (req, res) => {
+  try {
+    await ensureRefundsTable();
+    const [rows] = await db.query(
+      `SELECT
+        rr.id,
+        rr.user_id,
+        rr.order_id,
+        rr.order_item_id,
+        rr.reason,
+        rr.details,
+        rr.status,
+        rr.admin_note,
+        rr.created_at,
+        rr.updated_at,
+        u.name AS user_name,
+        u.email AS user_email
+      FROM refund_requests rr
+      JOIN users u ON rr.user_id = u.id
+      ORDER BY rr.created_at DESC`
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Admin get refunds error:", err);
+    res.status(500).json({ message: "Failed to fetch refund requests" });
+  }
+});
+
+router.put("/refunds/:id/status", adminMiddleware, async (req, res) => {
+  try {
+    await ensureRefundsTable();
+    const { id } = req.params;
+    const { status, adminNote } = req.body || {};
+
+    if (!ALLOWED_STATUSES.has(status)) {
+      return res.status(400).json({ message: "Invalid refund status" });
+    }
+
+    const [result] = await db.query(
+      `UPDATE refund_requests
+       SET status = ?, admin_note = ?
+       WHERE id = ?`,
+      [status, adminNote ? String(adminNote).slice(0, 4000) : null, id]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    res.json({ message: "Refund request updated" });
+  } catch (err) {
+    console.error("Admin update refund error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

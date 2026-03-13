@@ -15,6 +15,7 @@ const reviewRoutes = require("./routes/reviews");
 const chatbotRoutes = require("./routes/chatbot");
 const adminRoutes = require("./routes/admin");
 const wishlistRoutes = require("./routes/wishlist");
+const refundRoutes = require("./routes/refunds");
 const { getOrderHistoryForUser } = require("./services/orderHistory");
 
 const app = express();
@@ -61,6 +62,8 @@ app.get("/api", (req, res) => {
       "POST /api/users/login",
       "GET /api/users/me",
       "POST /api/users/logout",
+      "GET /api/refunds/my",
+      "POST /api/refunds",
       "GET /api/reviews/:productId",
       "POST /api/reviews/:productId",
       "DELETE /api/reviews/:reviewId",
@@ -96,6 +99,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/refunds", refundRoutes.router);
 
 // Serve uploaded product images
 const uploadsPath = path.join(__dirname, "uploads");

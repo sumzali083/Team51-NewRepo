@@ -8,6 +8,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [refunds, setRefunds] = useState([]);
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -16,8 +17,11 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [savingStockId, setSavingStockId] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
+  const [savingRefundId, setSavingRefundId] = useState(null);
   const [stockDraft, setStockDraft] = useState({});
   const [orderStatusDraft, setOrderStatusDraft] = useState({});
+  const [refundStatusDraft, setRefundStatusDraft] = useState({});
+  const [refundAdminNoteDraft, setRefundAdminNoteDraft] = useState({});
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
@@ -30,10 +34,11 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [reportsRes, productsRes, ordersRes, usersRes, messagesRes, reviewsRes] = await Promise.all([
+      const [reportsRes, productsRes, ordersRes, refundsRes, usersRes, messagesRes, reviewsRes] = await Promise.all([
         api.get("/api/admin/reports"),
         api.get("/api/admin/products"),
         api.get("/api/admin/orders"),
+        api.get("/api/admin/refunds"),
         api.get("/api/admin/users"),
         api.get("/api/admin/messages"),
         api.get("/api/admin/reviews"),
@@ -42,11 +47,14 @@ export default function AdminPage() {
       setReports(reportsRes.data || null);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
+      setRefunds(refundsRes.data || []);
       setUsers(usersRes.data || []);
       setMessages(messagesRes.data || []);
       setReviews(reviewsRes.data || []);
       setStockDraft(Object.fromEntries((productsRes.data || []).map((p) => [p.id, p.stock ?? 0])));
       setOrderStatusDraft(Object.fromEntries((ordersRes.data || []).map((o) => [o.id, o.status || "pending"])));
+      setRefundStatusDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.status || "pending"])));
+      setRefundAdminNoteDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.admin_note || ""])));
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to fetch admin data");
     } finally {
@@ -83,6 +91,26 @@ export default function AdminPage() {
       alert(err?.response?.data?.message || "Failed to update order status");
     } finally {
       setSavingOrderId(null);
+    }
+  };
+
+  const updateRefundStatus = async (refundId) => {
+    const status = refundStatusDraft[refundId];
+    const adminNote = refundAdminNoteDraft[refundId] || "";
+    if (!status) return;
+
+    setSavingRefundId(refundId);
+    try {
+      await api.put(`/api/admin/refunds/${refundId}/status`, { status, adminNote });
+      setRefunds((prev) =>
+        prev.map((r) =>
+          r.id === refundId ? { ...r, status, admin_note: adminNote } : r
+        )
+      );
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update refund request");
+    } finally {
+      setSavingRefundId(null);
     }
   };
 
@@ -200,12 +228,14 @@ export default function AdminPage() {
     return [
       { label: "Products", value: reports?.totalProducts ?? products.length },
       { label: "Orders", value: reports?.totalOrders ?? orders.length },
+      { label: "Refunds", value: reports?.totalRefundRequests ?? refunds.length },
       { label: "Revenue", value: `GBP ${Number(reports?.totalRevenue || 0).toFixed(2)}` },
       { label: "Low Stock", value: reports?.lowStockCount ?? 0 },
+      { label: "Pending Refunds", value: reports?.pendingRefundRequests ?? 0 },
       { label: "Messages", value: messages.length },
       { label: "Reviews", value: reviews.length },
     ];
-  }, [messages.length, orders.length, products.length, reports, reviews.length]);
+  }, [messages.length, orders.length, products.length, refunds.length, reports, reviews.length]);
 
   const outOfStockProducts = useMemo(
     () => products.filter((p) => Number(p.stock ?? 0) === 0),
@@ -227,6 +257,7 @@ export default function AdminPage() {
     { key: "inventory", label: "Inventory",         icon: "bi-clipboard-data" },
     { key: "stockAlerts", label: "Stock Alerts",    icon: "bi-exclamation-triangle" },
     { key: "orders",    label: "Orders",            icon: "bi-bag-check" },
+    { key: "refunds",   label: "Refunds",           icon: "bi-arrow-counterclockwise" },
     { key: "reviews",   label: "Reviews",           icon: "bi-star" },
     { key: "contacts",  label: "Contact Messages",  icon: "bi-envelope" },
     { key: "users",     label: "Users",             icon: "bi-people" },
@@ -830,6 +861,91 @@ export default function AdminPage() {
                       ))}
                       {orders.length === 0 && (
                         <tr><td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>No orders yet.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "refunds" && (
+            <div className="card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="osai-admin-tab-header">
+                  <h4 className="osai-admin-section-title">Refund Requests</h4>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{refunds.length} requests</span>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Order</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Admin Note</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {refunds.map((r) => (
+                        <tr key={r.id}>
+                          <td>#{r.id}</td>
+                          <td>{r.user_name || "-"}</td>
+                          <td style={{ color: "var(--sub)" }}>{r.user_email || "-"}</td>
+                          <td>#{r.order_id}</td>
+                          <td style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {r.reason}
+                          </td>
+                          <td style={{ width: 160 }}>
+                            <select
+                              className="form-select form-select-sm"
+                              value={refundStatusDraft[r.id] || "pending"}
+                              onChange={(e) =>
+                                setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="approved">Approved</option>
+                              <option value="processing">Processing</option>
+                              <option value="rejected">Rejected</option>
+                              <option value="refunded">Refunded</option>
+                            </select>
+                          </td>
+                          <td style={{ minWidth: 220 }}>
+                            <input
+                              className="form-control form-control-sm"
+                              placeholder="Optional note for customer"
+                              value={refundAdminNoteDraft[r.id] || ""}
+                              onChange={(e) =>
+                                setRefundAdminNoteDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                            />
+                          </td>
+                          <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                            {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-dark"
+                              onClick={() => updateRefundStatus(r.id)}
+                              disabled={savingRefundId === r.id}
+                            >
+                              {savingRefundId === r.id ? "Saving..." : "Save"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {refunds.length === 0 && (
+                        <tr>
+                          <td colSpan={9} className="text-center" style={{ color: "var(--sub)" }}>
+                            No refund requests yet.
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>

@@ -56,21 +56,30 @@ export default function OrderHistoryPage() {
 
       {orders.map((order) => (
         <div key={order.id} className="mb-5">
-          <h5 className="mb-3">
-            Order #{order.id} - £{Number(order.total_price || 0).toFixed(2)}
-          </h5>
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <h5 className="mb-0">
+              Order #{order.id} - GBP {Number(order.total_price || 0).toFixed(2)}
+            </h5>
+            <Link to="/refunds" className="btn btn-sm btn-outline-light">
+              Request refund
+            </Link>
+          </div>
 
           <div className="row g-4">
             {(order.items || []).map((item, index) => {
               const image =
-                item.image || (Array.isArray(item.images) ? item.images[0] : null) || "/images/placeholder.jpg";
+                item.image ||
+                (Array.isArray(item.images) ? item.images[0] : null) ||
+                "/images/placeholder.jpg";
               return (
                 <div key={`${order.id}-${item.product_id}-${index}`} className="col-md-4">
                   <div className="card h-100 shadow-sm">
                     <img src={image} className="card-img-top" alt={item.name} />
                     <div className="card-body d-flex flex-column">
                       <h5 className="card-title">{item.name}</h5>
-                      <p className="card-text fw-bold">£{Number(item.price_each || 0).toFixed(2)}</p>
+                      <p className="card-text fw-bold">
+                        GBP {Number(item.price_each || 0).toFixed(2)}
+                      </p>
                       <p className="mb-0 text-muted">Qty: {item.quantity}</p>
                     </div>
                   </div>
