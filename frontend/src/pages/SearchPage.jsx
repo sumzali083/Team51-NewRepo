@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
@@ -13,6 +13,8 @@ export function SearchPage() {
 
   const { addToCart } = useContext(CartContext);
   const { addToWishlist } = useContext(WishlistContext);
+  const [cartMsg, setCartMsg] = useState("");
+  const [cartMsgType, setCartMsgType] = useState("success");
 
   const filtered = PRODUCTS.filter((p) =>
     !q
@@ -33,22 +35,35 @@ export function SearchPage() {
     setSearchParams(params);
   };
 
+  const handleAddToCart = async (product) => {
+    const result = await addToCart(product);
+    if (result && result.message) {
+      setCartMsg(result.message);
+      setCartMsgType(result.ok ? "success" : "danger");
+      setTimeout(() => setCartMsg(""), 3000);
+    }
+  };
+
   return (
     <div className="page-padded">
-      <h2 style={{
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontSize: "clamp(28px,5vw,48px)",
-        fontWeight: 800,
-        textTransform: "uppercase",
-        letterSpacing: "0.04em",
-        marginBottom: 8,
-      }}>
+      <h2
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: "clamp(28px,5vw,48px)",
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          marginBottom: 8,
+        }}
+      >
         Search Results
       </h2>
 
       <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>
         {total} result{total !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;
       </p>
+
+      {cartMsg && <div className={`alert alert-${cartMsgType}`}>{cartMsg}</div>}
 
       {slice.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#888" }}>
@@ -59,6 +74,10 @@ export function SearchPage() {
           {slice.map((p) => {
             const img = (p.images && p.images[0]) || p.image || Fallback;
             const price = Number(p.price || 0);
+            const stock = Number(p.stock);
+            const hasStockInfo = Number.isFinite(stock);
+            const isSoldOut = hasStockInfo && stock <= 0;
+            const isLowStock = hasStockInfo && stock > 0 && stock <= 5;
 
             return (
               <div key={p.id} className="col-md-4">
@@ -69,7 +88,9 @@ export function SearchPage() {
                       className="card-img-top"
                       alt={p.name}
                       style={{ cursor: "pointer" }}
-                      onError={(e) => { e.target.src = Fallback; }}
+                      onError={(e) => {
+                        e.target.src = Fallback;
+                      }}
                     />
                   </Link>
 
@@ -79,8 +100,20 @@ export function SearchPage() {
                     </Link>
 
                     <p className="card-text fw-bold" style={{ color: "#fff" }}>
-                      £{price.toFixed(2)}
+                      GBP {price.toFixed(2)}
                     </p>
+
+                    {hasStockInfo && (
+                      <div className="mb-2">
+                        {isSoldOut ? (
+                          <span className="badge text-bg-danger">Sold out</span>
+                        ) : isLowStock ? (
+                          <span className="badge text-bg-warning">Low stock: {stock} left</span>
+                        ) : (
+                          <span className="badge text-bg-success">In stock</span>
+                        )}
+                      </div>
+                    )}
 
                     {p.tag && (
                       <span className="badge mb-2" style={{ alignSelf: "flex-start" }}>
@@ -89,11 +122,11 @@ export function SearchPage() {
                     )}
 
                     <div className="d-grid gap-2 mt-auto">
-                      <button className="btn btn-dark" onClick={() => addToCart(p)}>
-                        Add to Basket
+                      <button className="btn btn-dark" onClick={() => handleAddToCart(p)} disabled={isSoldOut}>
+                        {isSoldOut ? "Sold Out" : "Add to Basket"}
                       </button>
                       <button className="btn btn-outline-danger" onClick={() => addToWishlist(p)}>
-                        ♡ Favourite
+                        Favourite
                       </button>
                     </div>
                   </div>

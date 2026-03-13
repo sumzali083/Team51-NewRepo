@@ -30,11 +30,15 @@ router.post("/", getUserId, async (req, res) => {
   try {
     const userId = req.userId;
     const { productId, quantity } = req.body;
+    const qtyToAdd = Number(quantity);
 
     if (!productId || !quantity) {
       return res
         .status(400)
         .json({ message: "productId and quantity are required" });
+    }
+    if (!Number.isInteger(qtyToAdd) || qtyToAdd <= 0) {
+      return res.status(400).json({ message: "quantity must be a positive integer" });
     }
 
     // === STEP 1: RESOLVE SKU TO ID ===
@@ -55,17 +59,38 @@ router.post("/", getUserId, async (req, res) => {
        realProductId = productRows[0].id;
     }
 
-    // === STEP 2: CHECK IF ALREADY IN CART ===
+    // === STEP 2: CHECK STOCK ===
+    const [productRowsById] = await db.query(
+      "SELECT id, stock FROM products WHERE id = ? LIMIT 1",
+      [realProductId]
+    );
+    if (!productRowsById.length) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const availableStock = Number(productRowsById[0].stock || 0);
+    if (availableStock <= 0) {
+      return res.status(409).json({ message: "This item is sold out" });
+    }
+
+    // === STEP 3: CHECK IF ALREADY IN CART ===
     // Use realProductId here
     const [existingRows] = await db.query(
       `SELECT * FROM ${TABLE_NAME} WHERE user_id = ? AND product_id = ?`,
       [userId, realProductId]
     );
 
+    const currentQty = existingRows.length > 0 ? Number(existingRows[0].quantity || 0) : 0;
+    const newQty = currentQty + qtyToAdd;
+    if (newQty > availableStock) {
+      return res.status(409).json({
+        message: `Only ${availableStock} left in stock`,
+        availableStock,
+      });
+    }
+
     if (existingRows.length > 0) {
       // update quantity (add to existing)
       const current = existingRows[0];
-      const newQty = current.quantity + Number(quantity);
 
       await db.query(
         `UPDATE ${TABLE_NAME} SET quantity = ? WHERE id = ?`,
@@ -83,7 +108,7 @@ router.post("/", getUserId, async (req, res) => {
       const [result] = await db.query(
         `INSERT INTO ${TABLE_NAME} (user_id, product_id, quantity)
          VALUES (?, ?, ?)`,
-        [userId, realProductId, quantity]
+        [userId, realProductId, qtyToAdd]
       );
 
       return res.status(201).json({
@@ -114,6 +139,7 @@ router.get("/", getUserId, async (req, res) => {
         b.product_id,
         p.name, 
         p.price, 
+        p.stock,
         p.sku,
         COALESCE(
           (SELECT pi.url 
@@ -165,6 +191,22 @@ router.put("/:itemId", getUserId, async (req, res) => {
       // Delete if quantity is 0
       await db.query(`DELETE FROM ${TABLE_NAME} WHERE id = ?`, [itemId]);
       return res.json({ message: "Cart item removed" });
+    }
+
+    const productId = existing[0].product_id;
+    const [productRows] = await db.query(
+      "SELECT stock FROM products WHERE id = ? LIMIT 1",
+      [productId]
+    );
+    if (!productRows.length) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const availableStock = Number(productRows[0].stock || 0);
+    if (Number(quantity) > availableStock) {
+      return res.status(409).json({
+        message: availableStock <= 0 ? "This item is sold out" : `Only ${availableStock} left in stock`,
+        availableStock,
+      });
     }
 
     // Update quantity

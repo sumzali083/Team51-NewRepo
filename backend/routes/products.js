@@ -43,6 +43,7 @@ function buildBaseSelect(includeOriginalPrice) {
     c.name AS category_name,
     p.name,
     p.price,
+    p.stock,
     ${opCol}
     p.description AS \`desc\`,
     GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
@@ -63,6 +64,7 @@ function buildProductRow(r) {
     cat: catFromCategoryName(r.category_name),
     name: r.name,
     price: Number(r.price),
+    stock: Number(r.stock ?? 0),
     originalPrice: r.original_price != null ? Number(r.original_price) : null,
     desc: r.desc,
     images: splitList(r.images),
@@ -126,7 +128,7 @@ router.get("/", async (req, res) => {
   const sql = `
     ${BASE_SELECT}
     ${whereSql}
-    GROUP BY p.id, p.sku, c.name, p.name, p.price, ${opGroup} p.description
+    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.stock, ${opGroup} p.description
     ${orderBy}
     ${limitSql}
   `;
@@ -161,7 +163,7 @@ router.get("/:id", async (req, res) => {
   const sql = `
     ${BASE_SELECT}
     WHERE ${where}
-    GROUP BY p.id, p.sku, c.name, p.name, p.price, ${opGroup} p.description
+    GROUP BY p.id, p.sku, c.name, p.name, p.price, p.stock, ${opGroup} p.description
     LIMIT 1
   `;
 
