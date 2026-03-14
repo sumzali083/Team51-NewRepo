@@ -39,7 +39,16 @@ export function ProductPage() {
     setLoadingProduct(true);
     setActiveImg(0);
     api.get(`/api/products/${id}`)
-      .then((res) => setProduct(res.data))
+      .then((res) => {
+        const apiProduct = res.data;
+        // If DB product has no original_price, use local data.js value so sale
+        // pricing (strikethrough + badge) still shows on the detail page
+        if (!apiProduct.originalPrice) {
+          const local = PRODUCTS.find((p) => p.id === apiProduct.id);
+          if (local?.originalPrice) apiProduct.originalPrice = local.originalPrice;
+        }
+        setProduct(apiProduct);
+      })
       .catch(() => setProduct(PRODUCTS.find((p) => p.id === id) || null))
       .finally(() => setLoadingProduct(false));
   }, [id]);
@@ -238,7 +247,7 @@ export function ProductPage() {
                 £{Number(product.originalPrice).toFixed(2)}
               </span>
               <span style={{ color: '#fff', fontWeight: 700, fontSize: 26 }}>
-                £{product.price.toFixed(2)}
+                £{Number(product.price).toFixed(2)}
               </span>
               <span style={{
                 background: '#e53935',
@@ -253,7 +262,7 @@ export function ProductPage() {
               </span>
             </div>
           ) : (
-            <h3 style={{ color: '#fff', fontWeight: 700 }}>£{product.price.toFixed(2)}</h3>
+            <h3 style={{ color: '#fff', fontWeight: 700 }}>£{Number(product.price).toFixed(2)}</h3>
           )}
           <p className="mt-3">{product.desc || product.description}</p>
           {hasStockInfo && (isSoldOut || isLowStock) && (
