@@ -137,6 +137,7 @@ a { color: inherit; text-decoration: none }
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Search form — pill style */
@@ -315,7 +316,6 @@ a { color: inherit; text-decoration: none }
   cursor: pointer;
   padding: 6px;
   gap: 5px;
-  order: -1;
 }
 
 .osai-hamburger-icon,
@@ -404,8 +404,9 @@ a { color: inherit; text-decoration: none }
 @media (max-width: 768px) {
   .osai-nav-links { display: none }
   .osai-hamburger { display: flex }
-  .osai-search { width: 130px }
-  .osai-search:focus-within { width: 160px }
+  .osai-nav-actions { gap: 4px; margin-left: auto }
+  .osai-search { width: 120px }
+  .osai-search:focus-within { width: 150px }
   /* Profile pill: strip name + chevron, show just the avatar circle */
   .osai-profile-trigger { border: none; padding: 4px; border-radius: 50%; gap: 0 }
   .osai-profile-trigger-name,
@@ -418,10 +419,12 @@ a { color: inherit; text-decoration: none }
 @media (max-width: 520px) {
   .osai-nav-inner { padding: 0 12px !important }
   .osai-search { display: none }
-  .osai-action-btn { padding: 6px 7px }
-  .osai-action-btn i { font-size: 18px }
-  .osai-profile-trigger { padding: 3px 7px 3px 3px; gap: 5px }
-  .osai-profile-avatar { width: 24px; height: 24px; font-size: 10px }
+  .osai-nav-actions { gap: 2px }
+  .osai-action-btn { padding: 6px 8px }
+  .osai-action-btn i { font-size: 20px }
+  .osai-profile-trigger { padding: 4px }
+  .osai-profile-avatar { width: 26px; height: 26px; font-size: 11px }
+  .osai-hamburger { width: 36px; height: 36px }
   /* Profile dropdown: never overflow viewport */
   .osai-profile-trigger + div,
   [data-profile-dropdown] {

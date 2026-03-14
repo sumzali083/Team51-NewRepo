@@ -57,15 +57,6 @@ export function Layout() {
               <img src="/images/logo.png" alt="OSAI" />
             </NavLink>
 
-            <button
-              className="osai-hamburger"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((o) => !o)}
-            >
-              <span className={`osai-hamburger-icon${menuOpen ? " open" : ""}`} />
-            </button>
-
             <ul className="osai-nav-links">
               {[
                 { to: "/", label: "Home", end: true },
@@ -225,6 +216,15 @@ export function Layout() {
                   <span className="osai-login-label d-none d-xl-inline">Login</span>
                 </NavLink>
               )}
+
+              <button
+                className="osai-hamburger"
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((o) => !o)}
+              >
+                <span className={`osai-hamburger-icon${menuOpen ? " open" : ""}`} />
+              </button>
 
             </div>
           </div>
