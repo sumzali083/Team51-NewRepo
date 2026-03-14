@@ -404,11 +404,13 @@ a { color: inherit; text-decoration: none }
 @media (max-width: 768px) {
   .osai-nav-links { display: none }
   .osai-hamburger { display: flex }
-  .osai-search { width: 150px }
-  .osai-search:focus-within { width: 180px }
-  /* Profile pill duplicates the hamburger menu — hide it on mobile */
-  .osai-profile-trigger { display: none }
-  /* Login link: hide the text label, keep icon only */
+  .osai-search { width: 130px }
+  .osai-search:focus-within { width: 160px }
+  /* Profile pill: strip name + chevron, show just the avatar circle */
+  .osai-profile-trigger { border: none; padding: 4px; border-radius: 50%; gap: 0 }
+  .osai-profile-trigger-name,
+  .osai-profile-trigger-chevron { display: none }
+  /* Login: icon only */
   .osai-login-label { display: none }
 }
 
