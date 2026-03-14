@@ -390,8 +390,91 @@ a { color: inherit; text-decoration: none }
 @media (max-width: 768px) {
   .osai-nav-links { display: none }
   .osai-hamburger { display: flex }
-  .osai-search { width: 160px }
-  .osai-search:focus-within { width: 200px }
+  .osai-search { width: 150px }
+  .osai-search:focus-within { width: 180px }
+}
+
+/* Very small mobile: hide the search bar from the nav (it moves to the mobile menu) */
+@media (max-width: 520px) {
+  .osai-nav-inner { padding: 0 12px !important }
+  .osai-search { display: none }
+  .osai-action-btn { padding: 6px 7px }
+  .osai-action-btn i { font-size: 18px }
+  .osai-profile-trigger { padding: 3px 7px 3px 3px; gap: 5px }
+  .osai-profile-avatar { width: 24px; height: 24px; font-size: 10px }
+  /* Profile dropdown: never overflow viewport */
+  .osai-profile-trigger + div,
+  [data-profile-dropdown] {
+    right: -8px;
+    left: auto;
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* ─── MOBILE SEARCH (inside mobile menu) ────────────────────────────────── */
+.osai-mobile-search {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 12px 16px 4px;
+}
+.osai-mobile-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 12px;
+  outline: none;
+  font-family: var(--font-body);
+}
+.osai-mobile-search input::placeholder { color: #555 }
+.osai-mobile-search button {
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.osai-mobile-search button:hover { color: #fff }
+
+/* ─── GLOBAL PAGE PADDING ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page-container { padding: 28px 16px 60px }
+  .container { padding: 0 16px !important }
+}
+@media (max-width: 480px) {
+  .page-container { padding: 20px 12px 60px }
+  .container { padding: 0 12px !important }
+}
+
+/* ─── TABLE HORIZONTAL SCROLL ON MOBILE ──────────────────────────────── */
+@media (max-width: 768px) {
+  .table-responsive, .table-responsive-osai {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+  /* Wrap any Bootstrap table in scroll */
+  .osai-admin table,
+  .card table,
+  .table {
+    min-width: 600px;
+  }
+}
+
+/* ─── PRODUCT PAGE MOBILE ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .product { gap: 24px }
+}
+@media (max-width: 480px) {
+  /* Thumbnail strip wraps nicely */
+  .d-flex.gap-2 { flex-wrap: wrap }
 }
 
 /* ─── MAIN CONTENT ───────────────────────────────────────────────────────── */

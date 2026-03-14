@@ -91,6 +91,21 @@ export function Layout() {
 
             {menuOpen && (
               <ul className="osai-mobile-menu">
+                {/* Search bar — shown here on small screens where it's hidden in the nav */}
+                <li style={{ listStyle: "none" }}>
+                  <form className="osai-mobile-search" onSubmit={handleSearchSubmit}>
+                    <input
+                      type="search"
+                      placeholder="Search products..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      aria-label="Search products"
+                    />
+                    <button type="submit" aria-label="Submit search">
+                      <i className="bi bi-search" />
+                    </button>
+                  </form>
+                </li>
                 {[
                   { to: "/", label: "Home", end: true },
                   { to: "/mens", label: "Mens" },
@@ -111,6 +126,51 @@ export function Layout() {
                     </NavLink>
                   </li>
                 ))}
+                {/* Account links in mobile menu */}
+                {user ? (
+                  <>
+                    <li style={{ listStyle: "none" }}>
+                      <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "8px 16px" }} />
+                    </li>
+                    {user.is_admin && (
+                      <li>
+                        <NavLink className={({ isActive }) => `osai-mobile-link${isActive ? " active" : ""}`} to="/admin">
+                          <i className="bi bi-speedometer2" style={{ marginRight: 8, opacity: 0.6 }} />Admin Dashboard
+                        </NavLink>
+                      </li>
+                    )}
+                    <li>
+                      <NavLink className={({ isActive }) => `osai-mobile-link${isActive ? " active" : ""}`} to="/orders">
+                        <i className="bi bi-receipt" style={{ marginRight: 8, opacity: 0.6 }} />My Orders
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink className={({ isActive }) => `osai-mobile-link${isActive ? " active" : ""}`} to="/refunds">
+                        <i className="bi bi-arrow-counterclockwise" style={{ marginRight: 8, opacity: 0.6 }} />Refund Requests
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink className={({ isActive }) => `osai-mobile-link${isActive ? " active" : ""}`} to="/account/change-password">
+                        <i className="bi bi-key" style={{ marginRight: 8, opacity: 0.6 }} />Change Password
+                      </NavLink>
+                    </li>
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        className="osai-mobile-link"
+                        style={{ background: "transparent", border: "none", cursor: "pointer", width: "100%", textAlign: "left", color: "#f87171" }}
+                      >
+                        <i className="bi bi-box-arrow-right" style={{ marginRight: 8, opacity: 0.8 }} />Sign Out
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <NavLink className={({ isActive }) => `osai-mobile-link${isActive ? " active" : ""}`} to="/login">
+                      <i className="bi bi-person" style={{ marginRight: 8, opacity: 0.6 }} />Login / Sign Up
+                    </NavLink>
+                  </li>
+                )}
               </ul>
             )}
 

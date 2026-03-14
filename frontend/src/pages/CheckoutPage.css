@@ -89,6 +89,15 @@
   .co-grid { grid-template-columns: 1fr; }
   .co-right { order: -1; margin-bottom: 32px; }
 }
+@media (max-width: 640px) {
+  .co-grid { padding: 0 16px 60px; }
+  .co-field-row { grid-template-columns: 1fr; }
+  .co-toggle { padding: 10px 18px; }
+}
+@media (max-width: 400px) {
+  .co-grid { padding: 0 12px 60px; }
+  .co-section-heading { font-size: 18px; }
+}
 
 /* ── Left form panel ── */
 .co-left {
