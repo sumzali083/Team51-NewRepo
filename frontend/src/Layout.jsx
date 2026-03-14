@@ -82,20 +82,6 @@ export function Layout() {
 
             {menuOpen && (
               <ul className="osai-mobile-menu">
-                <li className="osai-mobile-search-item">
-                  <form className="osai-mobile-search" onSubmit={handleSearchSubmit}>
-                    <input
-                      type="search"
-                      placeholder="Search products..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      aria-label="Search products"
-                    />
-                    <button type="submit" aria-label="Submit search">
-                      <i className="bi bi-search" />
-                    </button>
-                  </form>
-                </li>
                 {[
                   { to: "/", label: "Home", end: true },
                   { to: "/mens", label: "Mens" },
