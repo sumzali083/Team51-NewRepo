@@ -217,7 +217,7 @@ export default function AdminPage() {
       // Merge: keep existing images that weren't removed, append newly uploaded ones
       const finalImages = [...(editDraft.images || []), ...uploadedUrls];
 
-      await api.put(`/api/admin/products/${editingProductId}`, {
+      const payload = {
         sku: editDraft.sku.trim(),
         name: editDraft.name.trim(),
         category_id: Number(editDraft.category_id),
@@ -228,13 +228,31 @@ export default function AdminPage() {
         sizes: editDraft.sizes,
         colors: (editDraft.colors || []).filter((c) => c.trim()),
         images: finalImages,
-      });
+      };
 
-      // Refresh products list
-      const res = await api.get("/api/admin/products");
-      setProducts(res.data || []);
-      setStockDraft(Object.fromEntries((res.data || []).map((p) => [p.id, p.stock ?? 0])));
+      await api.put(`/api/admin/products/${editingProductId}`, payload);
+
+      // Optimistically update local state immediately so UI reflects changes at once
+      const catName = categories.find((c) => c.id === payload.category_id)?.name || "";
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === editingProductId
+            ? { ...p, ...payload, category: catName }
+            : p
+        )
+      );
+      setStockDraft((prev) => ({ ...prev, [editingProductId]: payload.stock }));
       cancelEdit();
+
+      // Background re-sync to catch any server-side transformations
+      api.get("/api/admin/products")
+        .then((res) => {
+          if (res.data) {
+            setProducts(res.data);
+            setStockDraft(Object.fromEntries(res.data.map((p) => [p.id, p.stock ?? 0])));
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to update product");
     } finally {
