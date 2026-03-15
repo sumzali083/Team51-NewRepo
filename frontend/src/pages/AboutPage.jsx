@@ -76,9 +76,9 @@ export function AboutPage() {
         <h2 className="text-center mb-4">What Defines Us</h2>
         <div className="row gy-4">
           {[
-            { title: "Craftsmanship", description: "Every fragrance is handcrafted with meticulous attention to detail." },
-            { title: "Authenticity", description: "We use only the highest quality natural ingredients." },
-            { title: "Timelessness", description: "Designed to transcend trends, becoming cherished companions." }
+            { title: "Craftsmanship", description: "Every piece is handcrafted with meticulous attention to detail." },
+            { title: "Authenticity", description: "We use only the highest quality fabrics and materials." },
+            { title: "Timelessness", description: "Designed to transcend trends, becoming cherished wardrobe staples." }
           ].map((item, index) => (
             <div key={item.title} className={`col-md-4 text-center about-fade-up about-delay-${index + 2}`}>
               <h3 className="h5 fw-light mb-2">{item.title}</h3>
