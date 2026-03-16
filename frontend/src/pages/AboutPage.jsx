@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 export function AboutPage() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  
+
   // Create refs for each animated section
   const introRef = useRef(null);
   const image1Ref = useRef(null);
@@ -38,15 +36,6 @@ export function AboutPage() {
 
     return () => observer.disconnect();
   }, []);
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    setSubscribed(true);
-    setTimeout(() => {
-      setEmail("");
-      setSubscribed(false);
-    }, 3000);
-  };
 
   return (
     <main style={{ backgroundColor: "#0b0b0b", color: "#fff", minHeight: "100vh", paddingTop: "3rem" }}>
@@ -106,20 +95,6 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="container py-4">
-        <form onSubmit={handleSubscribe} className="d-flex flex-column flex-md-row gap-2">
-          <input
-            type="email"
-            className="form-control"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <button className="btn btn-light" type="submit">Subscribe</button>
-        </form>
-        {subscribed && <p className="mt-2">Thanks for subscribing.</p>}
-      </section>
     </main>
   );
 }
