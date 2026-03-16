@@ -6,6 +6,26 @@ const router = express.Router();
 // Table name for cart items
 const TABLE_NAME = "basket_items";
 
+// Ensure color/size/selected_image_url columns exist (run once on startup)
+(async () => {
+  try {
+    const cols = ["color VARCHAR(100)", "size VARCHAR(50)", "selected_image_url VARCHAR(1000)"];
+    for (const col of cols) {
+      const colName = col.split(" ")[0];
+      const [rows] = await db.query(
+        `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+        [TABLE_NAME, colName]
+      );
+      if (!rows.length) {
+        await db.query(`ALTER TABLE ${TABLE_NAME} ADD COLUMN ${col}`);
+      }
+    }
+  } catch (_) {
+    // Non-fatal: app still works, color/size just won't persist for logged-in users
+  }
+})();
+
 /**
  * Middleware to get userId from session
  */
@@ -29,7 +49,7 @@ const getUserId = (req, res, next) => {
 router.post("/", getUserId, async (req, res) => {
   try {
     const userId = req.userId;
-    const { productId, quantity } = req.body;
+    const { productId, quantity, color = null, size = null, selectedImageUrl = null } = req.body;
     const qtyToAdd = Number(quantity);
 
     if (!productId || !quantity) {
@@ -72,11 +92,13 @@ router.post("/", getUserId, async (req, res) => {
       return res.status(409).json({ message: "This item is sold out" });
     }
 
-    // === STEP 3: CHECK IF ALREADY IN CART ===
-    // Use realProductId here
+    // === STEP 3: CHECK IF ALREADY IN CART (match by product + color + size) ===
     const [existingRows] = await db.query(
-      `SELECT * FROM ${TABLE_NAME} WHERE user_id = ? AND product_id = ?`,
-      [userId, realProductId]
+      `SELECT * FROM ${TABLE_NAME}
+       WHERE user_id = ? AND product_id = ?
+         AND COALESCE(color,'') = COALESCE(?,'')
+         AND COALESCE(size,'') = COALESCE(?,'')`,
+      [userId, realProductId, color, size]
     );
 
     const currentQty = existingRows.length > 0 ? Number(existingRows[0].quantity || 0) : 0;
@@ -89,28 +111,23 @@ router.post("/", getUserId, async (req, res) => {
     }
 
     if (existingRows.length > 0) {
-      // update quantity (add to existing)
       const current = existingRows[0];
-
       await db.query(
-        `UPDATE ${TABLE_NAME} SET quantity = ? WHERE id = ?`,
-        [newQty, current.id]
+        `UPDATE ${TABLE_NAME} SET quantity = ?, selected_image_url = ? WHERE id = ?`,
+        [newQty, selectedImageUrl || current.selected_image_url, current.id]
       );
-
       return res.json({
         message: "Cart item updated",
         itemId: current.id,
         quantity: newQty,
-        productId: realProductId 
+        productId: realProductId
       });
     } else {
-      // insert new row using realProductId
       const [result] = await db.query(
-        `INSERT INTO ${TABLE_NAME} (user_id, product_id, quantity)
-         VALUES (?, ?, ?)`,
-        [userId, realProductId, qtyToAdd]
+        `INSERT INTO ${TABLE_NAME} (user_id, product_id, quantity, color, size, selected_image_url)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, realProductId, qtyToAdd, color, size, selectedImageUrl]
       );
-
       return res.status(201).json({
         message: "Item added to cart",
         itemId: result.insertId,
@@ -133,20 +150,20 @@ router.get("/", getUserId, async (req, res) => {
     const userId = req.userId;
 
     const [rows] = await db.query(
-      `SELECT 
+      `SELECT
         b.id,
         b.quantity,
         b.product_id,
-        p.name, 
-        p.price, 
+        b.color,
+        b.size,
+        b.selected_image_url,
+        p.name,
+        p.price,
         p.stock,
         p.sku,
         COALESCE(
-          (SELECT pi.url 
-           FROM product_images pi 
-           WHERE pi.product_id = p.id 
-           ORDER BY pi.sort_order ASC 
-           LIMIT 1),
+          b.selected_image_url,
+          (SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1),
           p.image_url,
           '/images/placeholder.jpg'
         ) AS image_url

@@ -44,12 +44,15 @@ export function CartProvider(props) {
       const res = await api.get("/api/cart");
       // Transform backend format to frontend format
       const formattedCart = res.data.map(item => ({
+        cartItemId: item.id,          // basket_items row id (for update/delete)
         id: item.product_id,
         name: item.name,
         price: parseFloat(item.price),
         image: normalizeImage(item.image_url),
         quantity: item.quantity,
         stock: Number(item.stock ?? 0),
+        color: item.color || "",
+        size: item.size || "",
       }));
       setCart(formattedCart);
     } catch (err) {
@@ -76,7 +79,10 @@ export function CartProvider(props) {
       try {
         await api.post("/api/cart", {
           productId: product.id,
-          quantity: 1
+          quantity: 1,
+          color: product.color || null,
+          size: product.size || null,
+          selectedImageUrl: product.image || null,
         });
         // Reload cart from backend
         await loadCartFromBackend();
@@ -127,19 +133,22 @@ export function CartProvider(props) {
 
   async function removeFromCart(id) {
     if (user) {
-      // Logged in - find the cart item ID from backend
       try {
-        const res = await api.get("/api/cart");
-        const item = res.data.find(i => i.product_id === id);
-        if (item) {
-          await api.delete(`/api/cart/${item.id}`);
-          await loadCartFromBackend();
+        // Use stored cartItemId if available, otherwise fall back to lookup
+        const cartItem = cart.find(i => i.id === id);
+        const cartItemId = cartItem?.cartItemId;
+        if (cartItemId) {
+          await api.delete(`/api/cart/${cartItemId}`);
+        } else {
+          const res = await api.get("/api/cart");
+          const item = res.data.find(i => i.product_id === id);
+          if (item) await api.delete(`/api/cart/${item.id}`);
         }
+        await loadCartFromBackend();
       } catch (err) {
         console.error("Error removing from cart:", err);
       }
     } else {
-      // Not logged in - use local state
       setCart(function(prev) {
         return prev.filter(function(item) {
           return item.id !== id;
@@ -150,20 +159,27 @@ export function CartProvider(props) {
 
   async function changeQuantity(id, qty) {
     if (user) {
-      // Logged in - update via backend
       try {
-        const res = await api.get("/api/cart");
-        const item = res.data.find(i => i.product_id === id);
-        if (item) {
+        const cartItem = cart.find(i => i.id === id);
+        const cartItemId = cartItem?.cartItemId;
+        if (cartItemId) {
           if (qty <= 0) {
-            // Remove if quantity is 0 or less
-            await api.delete(`/api/cart/${item.id}`);
+            await api.delete(`/api/cart/${cartItemId}`);
           } else {
-            // Update quantity using PUT
-            await api.put(`/api/cart/${item.id}`, { quantity: qty });
+            await api.put(`/api/cart/${cartItemId}`, { quantity: qty });
           }
-          await loadCartFromBackend();
+        } else {
+          const res = await api.get("/api/cart");
+          const item = res.data.find(i => i.product_id === id);
+          if (item) {
+            if (qty <= 0) {
+              await api.delete(`/api/cart/${item.id}`);
+            } else {
+              await api.put(`/api/cart/${item.id}`, { quantity: qty });
+            }
+          }
         }
+        await loadCartFromBackend();
       } catch (err) {
         console.error("Error updating cart:", err);
       }
