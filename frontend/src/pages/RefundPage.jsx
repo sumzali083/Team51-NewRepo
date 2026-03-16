@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
@@ -99,6 +99,7 @@ function StatusPill({ status }) {
 export default function RefundPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [orders, setOrders] = useState([]);
   const [refunds, setRefunds] = useState([]);
@@ -133,7 +134,10 @@ export default function RefundPage() {
         setOrders(safeOrders);
         setRefunds(Array.isArray(refundsRes.data) ? refundsRes.data : []);
         if (safeOrders.length) {
-          setForm((prev) => ({ ...prev, orderId: String(safeOrders[0].id) }));
+          const queryOrderId = new URLSearchParams(location.search).get("orderId");
+          const matched = safeOrders.find((o) => String(o.id) === String(queryOrderId));
+          const initialOrderId = matched ? String(matched.id) : String(safeOrders[0].id);
+          setForm((prev) => ({ ...prev, orderId: initialOrderId }));
         }
       } catch (err) {
         if (err?.response?.status === 401) {
@@ -147,7 +151,7 @@ export default function RefundPage() {
     }
 
     loadData();
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, navigate, location.search]);
 
   const selectedOrder = useMemo(
     () => orders.find((o) => String(o.id) === String(form.orderId)) || null,

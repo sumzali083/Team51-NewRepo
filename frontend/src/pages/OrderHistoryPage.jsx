@@ -74,7 +74,7 @@ export default function OrderHistoryPage() {
           <div className="d-flex align-items-center justify-content-between mb-3">
             <div>
               <h5 className="mb-1">
-                Order #{order.id} - GBP {Number(order.total_price || 0).toFixed(2)}
+                Order #{order.id} - £{Number(order.total_price || 0).toFixed(2)}
               </h5>
               {order.refund && (
                 <span className={`badge ${refundBadgeClass(order.refund.status)}`}>
@@ -83,7 +83,7 @@ export default function OrderHistoryPage() {
               )}
             </div>
             <Link
-              to="/refunds"
+              to={`/refunds?orderId=${encodeURIComponent(order.id)}`}
               className="btn btn-sm btn-outline-light"
             >
               {refundButtonLabel(order.refund?.status)}
@@ -121,7 +121,7 @@ export default function OrderHistoryPage() {
                     <div className="card-body d-flex flex-column">
                       <h5 className="card-title">{item.name}</h5>
                       <p className="card-text fw-bold">
-                        GBP {Number(item.price_each || 0).toFixed(2)}
+                        £{Number(item.price_each || 0).toFixed(2)}
                       </p>
                       <p className="mb-0 text-muted">Qty: {item.quantity}</p>
                     </div>
