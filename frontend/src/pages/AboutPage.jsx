@@ -79,7 +79,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section ref={definesUsRef} className="container py-5" style={{ backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "0.5rem" }} data-animation="fadeInDown">
+      <section ref={definesUsRef} className="container py-5 mb-5" style={{ backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "0.5rem" }} data-animation="fadeInDown">
         <h2 className="text-center mb-4">What Defines Us</h2>
         <div className="row gy-4">
           {[
