@@ -122,7 +122,7 @@ export function Layout() {
               <NavLink
                 to="/wishlist"
                 className="osai-action-btn"
-                aria-label={`Wishlist (${totalFav} items)`}
+                aria-label={`Favourites (${totalFav} items)`}
               >
                 <i className="bi bi-heart" />
                 {totalFav > 0 && <span className="osai-badge">{totalFav}</span>}

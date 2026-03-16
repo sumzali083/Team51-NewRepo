@@ -231,7 +231,7 @@ export default function Cart() {
               <span style={{ color: "#fff" }}>£{total.toFixed(2)}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, fontSize: 13 }}>
-              <span style={{ color: "#888" }}>Shipping</span>
+              <span style={{ color: "#888" }}>Delivery</span>
               <span style={{ color: "#fff" }}>£{shipping.toFixed(2)}</span>
             </div>
 

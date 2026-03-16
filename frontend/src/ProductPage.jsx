@@ -137,10 +137,10 @@ export function ProductPage() {
 
     if (isInWishlist) {
       removeFromWishlist(product.id);
-      setMsg(`Removed "${product.name}" from wishlist`);
+      setMsg(`Removed "${product.name}" from favourites`);
     } else {
       addToWishlist({ ...product, size, color, image: product.images?.[0] || product.image });
-      setMsg(`Added "${product.name}" to wishlist`);
+      setMsg(`Added "${product.name}" to favourites`);
     }
 
     setTimeout(() => setMsg(""), 2000);
@@ -295,7 +295,7 @@ export function ProductPage() {
 
           {product.colors && product.colors.length > 0 && (
             <div className="mb-3">
-              <label className="form-label fw-bold">Color:</label>
+              <label className="form-label fw-bold">Colour:</label>
               <div className="btn-group d-flex flex-wrap gap-2">
                 {product.colors.map((c) => (
                   <button
@@ -322,7 +322,7 @@ export function ProductPage() {
             className={`${isInWishlist ? "btn btn-danger" : "btn btn-outline-danger"} w-100 mt-2`}
             onClick={handleToggleWishlist}
           >
-            {isInWishlist ? "Remove from Wishlist ❤️" : "Add to Wishlist ♡"}
+            {isInWishlist ? "Remove from Favourites ❤️" : "Add to Favourites ♡"}
           </button>
 
           {msg && (

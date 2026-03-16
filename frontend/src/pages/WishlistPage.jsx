@@ -53,7 +53,7 @@ export default function WishlistPage() {
           <li className="breadcrumb-item">
             <Link to="/">Home</Link>
           </li>
-          <li className="breadcrumb-item active">Wishlist</li>
+          <li className="breadcrumb-item active">Favourites</li>
         </ol>
       </nav>
 
@@ -63,7 +63,7 @@ export default function WishlistPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        Your Wishlist
+        Your Favourites
       </motion.h1>
 
       {cartMsg && <div className={`alert alert-${cartMsgType}`}>{cartMsg}</div>}
@@ -75,7 +75,7 @@ export default function WishlistPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
-          Your wishlist is empty. Browse products and add your favourites.
+          Your favourites list is empty. Browse products and add items to your favourites.
         </motion.div>
       ) : (
         <motion.div className="row g-4" variants={gridVariants} initial="hidden" animate="visible">
