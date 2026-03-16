@@ -32,12 +32,61 @@ const PRODUCT_SEARCH_TRIGGERS = [
 ];
 
 const STOP_WORDS = new Set([
-  "show", "me", "find", "i", "am", "im", "looking", "for", "with", "and", "or",
-  "the", "a", "an", "in", "on", "at", "to", "from", "under", "over", "above",
-  "below", "between", "price", "cost", "products", "product", "item", "items",
-  "stock", "only", "please", "want", "need", "mens", "womens", "kids", "sale",
-  "new", "arrivals", "cheap", "best", "some", "what", "whats", "all", "gbp",
-  "pound", "pounds", "low", "high", "available", "out", "sold",
+  "show",
+  "me",
+  "find",
+  "i",
+  "am",
+  "im",
+  "looking",
+  "for",
+  "with",
+  "and",
+  "or",
+  "the",
+  "a",
+  "an",
+  "in",
+  "on",
+  "at",
+  "to",
+  "from",
+  "under",
+  "over",
+  "above",
+  "below",
+  "between",
+  "price",
+  "cost",
+  "products",
+  "product",
+  "item",
+  "items",
+  "stock",
+  "only",
+  "please",
+  "want",
+  "need",
+  "mens",
+  "womens",
+  "kids",
+  "sale",
+  "new",
+  "arrivals",
+  "cheap",
+  "best",
+  "some",
+  "what",
+  "whats",
+  "all",
+  "gbp",
+  "pound",
+  "pounds",
+  "low",
+  "high",
+  "available",
+  "out",
+  "sold",
 ]);
 
 let hasOriginalPrice = null;
@@ -90,15 +139,21 @@ function extractFilters(message) {
     filters.saleOnly = true;
   }
 
-  const between = m.match(/\bbetween\s+(\d+(?:\.\d+)?)\s*(?:and|to|-)\s*(\d+(?:\.\d+)?)\b/);
+  const between = m.match(
+    /\bbetween\s+(\d+(?:\.\d+)?)\s*(?:and|to|-)\s*(\d+(?:\.\d+)?)\b/
+  );
   if (between) {
     const a = Number(between[1]);
     const b = Number(between[2]);
     filters.priceMin = Math.min(a, b);
     filters.priceMax = Math.max(a, b);
   } else {
-    const under = m.match(/\b(?:under|below|less than|max)\s*(?:gbp)?\s*(\d+(?:\.\d+)?)\b/);
-    const over = m.match(/\b(?:over|above|more than|min)\s*(?:gbp)?\s*(\d+(?:\.\d+)?)\b/);
+    const under = m.match(
+      /\b(?:under|below|less than|max)\s*(?:gbp)?\s*(\d+(?:\.\d+)?)\b/
+    );
+    const over = m.match(
+      /\b(?:over|above|more than|min)\s*(?:gbp)?\s*(\d+(?:\.\d+)?)\b/
+    );
     if (under) filters.priceMax = Number(under[1]);
     if (over) filters.priceMin = Number(over[1]);
   }
@@ -192,9 +247,10 @@ async function searchProducts(filters) {
   }
 
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-  const orderBy = filters.category === "New Arrivals"
-    ? "p.id DESC"
-    : "CASE WHEN p.stock > 0 THEN 0 ELSE 1 END, p.price ASC, p.id DESC";
+  const orderBy =
+    filters.category === "New Arrivals"
+      ? "p.id DESC"
+      : "CASE WHEN p.stock > 0 THEN 0 ELSE 1 END, p.price ASC, p.id DESC";
 
   const sql = `
     SELECT
@@ -277,12 +333,19 @@ function getSupportReply(message) {
 function getFallbackReply(message) {
   const m = (message || "").toLowerCase().trim();
 
-  if (m.includes("who are you") || m.includes("what is this") || m.includes("what site") || m.includes("this website"))
+  if (
+    m.includes("who are you") ||
+    m.includes("what is this") ||
+    m.includes("what site") ||
+    m.includes("this website")
+  ) {
     return "This is OSAI Fashion. You can browse Mens, Womens, Kids, New Arrivals, and Sale from the menu.";
-  if (m.includes("hello") || m.includes("hi") || m.includes("hey"))
-    return "Hi! Ask me for products like: 'mens under 40 in stock', 'what is on sale', or 'show low stock items'.";
+  }
+  if (m.includes("hello") || m.includes("hi") || m.includes("hey")) {
+    return "Hi! Ask me for products like: 'mens under 40 in stock', 'find black hoodie', or 'show low stock items'.";
+  }
 
-  return "I can help you find products and answer support questions. Try: 'sale products under 30' or 'find black hoodie'.";
+  return "I can help you find products and answer support questions. Try: 'show womens under 50 in stock' or 'find black hoodie'.";
 }
 
 router.post("/", async (req, res) => {
