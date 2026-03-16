@@ -150,9 +150,14 @@ export function CategoryPage({ cat, pageTitle }) {
     } else if (sortBy === "price-high-low") {
       sorted.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
     } else if (sortBy === "newest") {
+      const extractId = (value) => {
+        const s = String(value || "");
+        const numeric = s.match(/(\d+)(?!.*\d)/);
+        return numeric ? Number(numeric[1]) : 0;
+      };
       sorted.sort((a, b) => {
-        const aId = a.id ? String(a.id).charCodeAt(String(a.id).length - 1) : 0;
-        const bId = b.id ? String(b.id).charCodeAt(String(b.id).length - 1) : 0;
+        const aId = extractId(a.id);
+        const bId = extractId(b.id);
         return bId - aId;
       });
     }

@@ -34,7 +34,7 @@ const CheckoutPage = () => {
     (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
-  const shipping = cart.length > 0 ? 8 : 0;
+  const shipping = deliveryType === "SHIP" && cart.length > 0 ? 8 : 0;
   const total = subtotal + shipping;
 
   const handleChange = (e) => {
@@ -70,14 +70,15 @@ const CheckoutPage = () => {
   const handleShippingNext = (e) => {
     e.preventDefault();
 
-    if (
+    const missingBase =
       !form.firstName.trim() ||
       !form.lastName.trim() ||
-      !form.address.trim() ||
-      !form.city.trim() ||
-      !form.postcode.trim() ||
-      !form.email.trim()
-    ) {
+      !form.email.trim();
+    const missingShip =
+      deliveryType === "SHIP" &&
+      (!form.address.trim() || !form.city.trim() || !form.postcode.trim());
+
+    if (missingBase || missingShip) {
       setCheckoutError("Please complete all required shipping details.");
       return;
     }
@@ -146,15 +147,36 @@ const CheckoutPage = () => {
     return (
       <div className="co-confirmed">
         <div className="co-confirmed-inner">
-          <div className="co-confirmed-icon">OK</div>
+          <div className="co-confirmed-icon">✓</div>
           <h1 className="co-confirmed-title">Order Confirmed</h1>
           <p className="co-confirmed-sub">
             Thank you, {form.firstName || "there"}! Your order has been placed.
             <br />
-            A confirmation will be sent to <strong>{form.email || user?.email || "your email"}</strong>.
+            You can view your order anytime from <strong>Order History</strong>.
           </p>
           <Link to="/" className="co-confirmed-btn">
             Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user?.id) {
+    return (
+      <div className="co-wrapper">
+        <div className="co-topbar">
+          <Link to="/" className="co-topbar-logo">
+            <img src="/images/logo.png" alt="OSAI" />
+          </Link>
+        </div>
+        <div style={{ maxWidth: 640, margin: "60px auto", textAlign: "center", color: "#fff" }}>
+          <h1 style={{ marginBottom: 12 }}>Please log in to checkout</h1>
+          <p style={{ color: "#888", marginBottom: 20 }}>
+            Sign in first so we can securely place your order and show it in your history.
+          </p>
+          <Link to="/login" className="co-confirmed-btn">
+            Go to Login
           </Link>
         </div>
       </div>
@@ -259,9 +281,14 @@ const CheckoutPage = () => {
               </div>
 
               <div className="co-summary-pill">
-                <span style={{ color: "#888", fontSize: 12 }}>Shipping to</span>
+                <span style={{ color: "#888", fontSize: 12 }}>
+                  {deliveryType === "PICK UP" ? "Pickup by" : "Shipping to"}
+                </span>
                 <span style={{ color: "#fff", fontSize: 13 }}>
-                  {form.firstName} {form.lastName}, {form.address}{form.city ? `, ${form.city}` : ""}
+                  {form.firstName} {form.lastName}
+                  {deliveryType === "SHIP"
+                    ? `, ${form.address}${form.city ? `, ${form.city}` : ""}`
+                    : ""}
                 </span>
                 <button
                   type="button"

@@ -20,15 +20,18 @@ export function CartProvider(props) {
 
   // Load cart on mount and when user changes
   useEffect(function() {
-    if (user) {
-      // User is logged in - load from backend
-      loadCartFromBackend();
-    } else {
-      // Not logged in - load from localStorage
-      var saved = localStorage.getItem("cart");
-      setCart(saved ? JSON.parse(saved) : []);
-      setLoading(false);
+    async function syncCartForSession() {
+      if (user) {
+        await mergeGuestCartIntoBackend();
+        await loadCartFromBackend();
+      } else {
+        // Not logged in - load from localStorage
+        var saved = localStorage.getItem("cart");
+        setCart(saved ? JSON.parse(saved) : []);
+        setLoading(false);
+      }
     }
+    syncCartForSession();
   }, [user]);
 
   // Save to localStorage when cart changes (only if not logged in)
@@ -123,6 +126,33 @@ export function CartProvider(props) {
       }
       return { ok: true, message: "Added to basket." };
     }
+  }
+
+  async function mergeGuestCartIntoBackend() {
+    var saved = localStorage.getItem("cart");
+    if (!saved) return;
+    var guestItems = [];
+    try {
+      guestItems = JSON.parse(saved) || [];
+    } catch {
+      guestItems = [];
+    }
+    if (!Array.isArray(guestItems) || guestItems.length === 0) {
+      localStorage.removeItem("cart");
+      return;
+    }
+
+    for (const item of guestItems) {
+      const productId = item && item.id;
+      const quantity = Math.max(1, Number(item?.quantity || 1));
+      if (!productId) continue;
+      try {
+        await api.post("/api/cart", { productId, quantity });
+      } catch (err) {
+        console.error("Error merging guest cart item:", err);
+      }
+    }
+    localStorage.removeItem("cart");
   }
 
   async function removeFromCart(id) {

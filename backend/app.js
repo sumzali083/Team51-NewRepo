@@ -19,6 +19,12 @@ const refundRoutes = require("./routes/refunds");
 const { getOrderHistoryForUser } = require("./services/orderHistory");
 
 const app = express();
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (!sessionSecret) {
+  console.error("SESSION_SECRET is required. Set it in your environment.");
+  process.exit(1);
+}
 
 // Required for HTTPS sessions on university VMs
 app.set("trust proxy", 1);
@@ -37,7 +43,7 @@ app.use(express.json());
 // Session config
 app.use(session({
   name: "team51.sid",
-  secret: process.env.SESSION_SECRET || "osai-fashion-secret-key-summer",
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {

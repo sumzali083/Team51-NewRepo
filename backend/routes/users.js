@@ -123,20 +123,6 @@ router.post("/register", async (req, res) => {
     });
   } catch (err) {
     console.error("Error registering user:", err);
-
-    // local laptop: DB not reachable → friendly fallback
-    if (err.code === "ETIMEDOUT") {
-      return res.status(200).json({
-        message:
-          "Registered (DB not available in local setup, but it will work on the uni server).",
-        user: {
-          id: Date.now(),
-          name: name.trim(),
-          email: email.trim(),
-        },
-      });
-    }
-
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -192,40 +178,7 @@ router.post("/login", loginLimiter, async (req, res) => {
   } catch (err) {
     console.error("Error logging in:", err);
 
-    if (err.code === "ETIMEDOUT") {
-      // Create session even for simulated login
-      req.session.userId = 1;
-      req.session.user = {
-        id: 1,
-        name: "Test User",
-        email,
-        is_admin: false,
-      };
-      return res.status(200).json({
-        message:
-          "Login simulated (DB not available in local setup, but it will work on the uni server).",
-        user: {
-          id: 1,
-          name: "Test User",
-          email,
-          is_admin: false,
-        },
-      });
-    }
-
-    // Generic local fallback: still establish a session so other routes work
-    req.session.userId = 1;
-    req.session.user = {
-      id: 1,
-      name: "Test User",
-      email,
-      is_admin: false,
-    };
-    return res.status(200).json({
-      message:
-        "Simulated on local machine (DB not connected here, but it will work on the uni server).",
-      user: req.session.user,
-    });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -444,3 +397,4 @@ router.post("/change-password", requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+

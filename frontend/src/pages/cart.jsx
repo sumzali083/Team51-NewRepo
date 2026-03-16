@@ -49,6 +49,8 @@ export default function Cart() {
     (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
+  const shipping = cart.length > 0 ? 8 : 0;
+  const grandTotal = total + shipping;
 
   return (
     <div className="page-padded" ref={revealRef}>
@@ -230,12 +232,12 @@ export default function Cart() {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, fontSize: 13 }}>
               <span style={{ color: "#888" }}>Shipping</span>
-              <span style={{ color: "#888" }}>Calculated at checkout</span>
+              <span style={{ color: "#fff" }}>£{shipping.toFixed(2)}</span>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, fontSize: 16, fontWeight: 700 }}>
               <span style={{ color: "#fff" }}>Total</span>
-              <span style={{ color: "#fff" }}>£{total.toFixed(2)}</span>
+              <span style={{ color: "#fff" }}>£{grandTotal.toFixed(2)}</span>
             </div>
 
             <button

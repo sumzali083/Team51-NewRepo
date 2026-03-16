@@ -97,6 +97,12 @@ router.post("/:productId", verifyUser, async (req, res) => {
     } catch (err) {
         console.error("Error creating review:", err);
 
+        if (err.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                message: "You have already reviewed this product."
+            });
+        }
+
         // Fallback for local setup without DB
         if (err.code === "PROTOCOL_ERROR" || err.code === "ETIMEDOUT") {
             return res.status(201).json({

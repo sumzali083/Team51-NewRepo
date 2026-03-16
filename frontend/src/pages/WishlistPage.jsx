@@ -94,7 +94,7 @@ export default function WishlistPage() {
                   ) : null}
                   <div className="card-body d-flex flex-column">
                     <h5 className="card-title">{item.name}</h5>
-                    <p className="card-text fw-bold">GBP {Number(item.price || 0).toFixed(2)}</p>
+                    <p className="card-text fw-bold">£{Number(item.price || 0).toFixed(2)}</p>
 
                     {hasStockInfo && (isSoldOut || isLowStock) && (
                       <div className="mb-2">
