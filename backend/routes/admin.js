@@ -223,12 +223,11 @@ router.get("/products", adminMiddleware, async (_req, res) => {
         p.created_at,
         GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
         GROUP_CONCAT(DISTINCT ps.size ORDER BY ps.size SEPARATOR '||') AS sizes,
-        GROUP_CONCAT(pc.color SEPARATOR '||') AS colors
+        (SELECT GROUP_CONCAT(color SEPARATOR '||') FROM product_colors WHERE product_id = p.id) AS colors
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN product_images pi ON pi.product_id = p.id
       LEFT JOIN product_sizes  ps ON ps.product_id = p.id
-      LEFT JOIN product_colors pc ON pc.product_id = p.id
       GROUP BY p.id, p.sku, p.name, p.price, ${opGroup} p.stock, p.category_id, c.name, p.description, p.created_at
       ORDER BY p.id DESC`
     );
