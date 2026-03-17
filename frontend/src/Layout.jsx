@@ -60,10 +60,10 @@ export function Layout() {
             <ul className="osai-nav-links">
               {[
                 { to: "/", label: "Home", end: true },
+                { to: "/allproducts", label: "All Products" },
                 { to: "/mens", label: "Mens" },
                 { to: "/womens", label: "Womens" },
                 { to: "/kids", label: "Kids" },
-                { to: "/allproducts", label: "All Products" },
                 { to: "/sale", label: "Sale" },
                 { to: "/contact", label: "Contact" },
                 { to: "/about", label: "About" },
