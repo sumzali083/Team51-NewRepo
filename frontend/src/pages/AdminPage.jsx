@@ -134,11 +134,14 @@ export default function AdminPage() {
     }
   };
 
-  const deleteMessage = async (id) => {
-    if (!window.confirm("Delete this contact message?")) return;
+  const deleteMessage = async (message) => {
+    const sender = message?.name || "this sender";
+    const email = message?.email || "unknown email";
+    if (!window.confirm(`Delete message from ${sender} (${email})? This cannot be undone.`)) return;
     try {
-      await api.delete(`/api/admin/messages/${id}`);
-      setMessages((prev) => prev.filter((m) => m.id !== id));
+      await api.delete(`/api/admin/messages/${message.id}`);
+      setMessages((prev) => prev.filter((m) => m.id !== message.id));
+      setSelectedMessage((prev) => (prev && prev.id === message.id ? null : prev));
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete message");
     }
@@ -163,6 +166,16 @@ export default function AdminPage() {
 
   const closeMessageModal = () => {
     setSelectedMessage(null);
+  };
+
+  const replyToMessage = (message) => {
+    const email = String(message?.email || "").trim();
+    if (!email) {
+      alert("No email found for this message.");
+      return;
+    }
+    const subject = encodeURIComponent("Regarding your message to OSAI");
+    window.location.href = `mailto:${email}?subject=${subject}`;
   };
 
   useEffect(() => {
@@ -1608,8 +1621,13 @@ export default function AdminPage() {
                               {m.status || "unread"}
                             </span>
                           </td>
-                          <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {m.message}
+                          <td
+                            style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                            title={m.message || ""}
+                          >
+                            {String(m.message || "").length > 80
+                              ? `${String(m.message || "").slice(0, 80)}...`
+                              : m.message}
                           </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
                             {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
@@ -1628,7 +1646,10 @@ export default function AdminPage() {
                                   Unarchive
                                 </button>
                               )}
-                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(m.id)}>
+                              <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(m)}>
+                                Reply
+                              </button>
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(m)}>
                                 Delete
                               </button>
                             </div>
@@ -1772,6 +1793,30 @@ export default function AdminPage() {
                 }}
               >
                 {selectedMessage.message || "(No message content)"}
+              </div>
+
+              <div className="d-flex gap-2 mt-3 flex-wrap">
+                <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(selectedMessage)}>
+                  Reply via Email
+                </button>
+                {(selectedMessage.status || "unread") !== "archived" ? (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => updateMessageStatus(selectedMessage.id, "archived")}
+                  >
+                    Archive
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => updateMessageStatus(selectedMessage.id, "unread")}
+                  >
+                    Unarchive
+                  </button>
+                )}
+                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(selectedMessage)}>
+                  Delete
+                </button>
               </div>
             </div>
           </div>
