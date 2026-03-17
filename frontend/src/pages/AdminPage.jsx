@@ -1589,6 +1589,7 @@ export default function AdminPage() {
                       <thead className="table-light">
                         <tr>
                           <th>ID</th>
+                          <th>Image</th>
                           <th>SKU</th>
                           <th>Name</th>
                           <th>Category</th>
@@ -1601,8 +1602,42 @@ export default function AdminPage() {
                         {outOfStockProducts.map((p) => (
                           <tr key={p.id}>
                             <td>{p.id}</td>
+                            <td>
+                              {Array.isArray(p.images) && p.images[0] ? (
+                                <img
+                                  src={p.images[0]}
+                                  alt={p.name || `Product ${p.id}`}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.03)",
+                                  }}
+                                />
+                              )}
+                            </td>
                             <td>{p.sku || "-"}</td>
-                            <td>{p.name}</td>
+                            <td>
+                              <a
+                                href={`/product/${encodeURIComponent(p.id)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "var(--text)", textDecoration: "underline", textUnderlineOffset: 3 }}
+                              >
+                                {p.name}
+                              </a>
+                            </td>
                             <td>{p.category || "-"}</td>
                             <td>£{Number(p.price || 0).toFixed(2)}</td>
                             <td style={{ width: 120 }}>
@@ -1629,7 +1664,7 @@ export default function AdminPage() {
                         ))}
                         {outOfStockProducts.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            <td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>
                               No out-of-stock products.
                             </td>
                           </tr>
@@ -1653,6 +1688,7 @@ export default function AdminPage() {
                       <thead className="table-light">
                         <tr>
                           <th>ID</th>
+                          <th>Image</th>
                           <th>SKU</th>
                           <th>Name</th>
                           <th>Category</th>
@@ -1665,8 +1701,42 @@ export default function AdminPage() {
                         {lowStockProducts.map((p) => (
                           <tr key={p.id}>
                             <td>{p.id}</td>
+                            <td>
+                              {Array.isArray(p.images) && p.images[0] ? (
+                                <img
+                                  src={p.images[0]}
+                                  alt={p.name || `Product ${p.id}`}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.03)",
+                                  }}
+                                />
+                              )}
+                            </td>
                             <td>{p.sku || "-"}</td>
-                            <td>{p.name}</td>
+                            <td>
+                              <a
+                                href={`/product/${encodeURIComponent(p.id)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "var(--text)", textDecoration: "underline", textUnderlineOffset: 3 }}
+                              >
+                                {p.name}
+                              </a>
+                            </td>
                             <td>{p.category || "-"}</td>
                             <td>£{Number(p.price || 0).toFixed(2)}</td>
                             <td style={{ width: 120 }}>
@@ -1693,7 +1763,7 @@ export default function AdminPage() {
                         ))}
                         {lowStockProducts.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            <td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>
                               No low-stock products.
                             </td>
                           </tr>
