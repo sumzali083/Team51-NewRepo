@@ -29,6 +29,7 @@ import { RequireAdmin } from "./components/RequireAdmin";
 import AdminPage from "./pages/AdminPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import RefundPage from "./pages/RefundPage";
+import AccountPage from "./pages/AccountPage";
 
 export default function App() {
   console.log("DEBUG: App.jsx is rendering");
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/orders" element={<OrderHistoryPage />} />
                 <Route path="/refunds" element={<RefundPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

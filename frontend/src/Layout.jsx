@@ -181,6 +181,10 @@ export function Layout() {
 
                       {/* Menu items */}
                       <div style={{ padding: "6px 0" }}>
+                        <NavLink to="/account" className="osai-dropdown-item">
+                          <i className="bi bi-person-lines-fill" />
+                          My Details
+                        </NavLink>
                         {user.is_admin && (
                           <NavLink to="/admin" className="osai-dropdown-item">
                             <i className="bi bi-speedometer2" />

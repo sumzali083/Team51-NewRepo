@@ -67,6 +67,8 @@ app.get("/api", (req, res) => {
       "POST /api/users/register",
       "POST /api/users/login",
       "GET /api/users/me",
+      "PUT /api/users/me",
+      "DELETE /api/users/me/details",
       "POST /api/users/logout",
       "GET /api/refunds/my",
       "POST /api/refunds",
