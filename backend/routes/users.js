@@ -10,6 +10,7 @@ const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
 let mailTransporter = null;
+let profileColsEnsured = false;
 
 function getResetBaseUrl(req) {
   const envUrl = process.env.PASSWORD_RESET_BASE_URL || process.env.FRONTEND_URL;
@@ -54,6 +55,40 @@ async function ensureForgotPasswordTable() {
       KEY idx_fp_expiry (token_expiry)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
   );
+}
+
+async function columnExists(tableName, colName) {
+  const [rows] = await db.query(
+    `SELECT 1
+       FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+        AND COLUMN_NAME = ?
+      LIMIT 1`,
+    [tableName, colName]
+  );
+  return rows.length > 0;
+}
+
+async function ensureUserProfileColumns() {
+  if (profileColsEnsured) return;
+
+  const columnsToAdd = [
+    ["phone", "VARCHAR(30) NULL"],
+    ["address_line1", "VARCHAR(255) NULL"],
+    ["address_line2", "VARCHAR(255) NULL"],
+    ["city", "VARCHAR(120) NULL"],
+    ["postcode", "VARCHAR(32) NULL"],
+  ];
+
+  for (const [col, definition] of columnsToAdd) {
+    const exists = await columnExists("users", col);
+    if (!exists) {
+      await db.query(`ALTER TABLE users ADD COLUMN ${col} ${definition}`);
+    }
+  }
+
+  profileColsEnsured = true;
 }
 
 // Limit login attempts
@@ -186,11 +221,171 @@ router.post("/login", loginLimiter, async (req, res) => {
  * GET /api/users/me
  * Returns current logged-in user from session
  */
-router.get("/me", (req, res) => {
-  if (req.session && req.session.user) {
-    return res.json({ user: req.session.user });
+router.get("/me", async (req, res) => {
+  if (!(req.session && req.session.userId)) {
+    return res.status(401).json({ message: "Not authenticated" });
   }
-  return res.status(401).json({ message: "Not authenticated" });
+
+  try {
+    await ensureUserProfileColumns();
+    const [rows] = await db.query(
+      `SELECT id, name, email, is_admin, phone, address_line1, address_line2, city, postcode
+         FROM users
+        WHERE id = ?
+        LIMIT 1`,
+      [req.session.userId]
+    );
+
+    if (!rows.length) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = {
+      id: rows[0].id,
+      name: rows[0].name,
+      email: rows[0].email,
+      is_admin: Number(rows[0].is_admin) === 1,
+      phone: rows[0].phone || "",
+      address_line1: rows[0].address_line1 || "",
+      address_line2: rows[0].address_line2 || "",
+      city: rows[0].city || "",
+      postcode: rows[0].postcode || "",
+    };
+
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      is_admin: user.is_admin,
+    };
+
+    return res.json({ user });
+  } catch (err) {
+    console.error("Error loading user profile:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * PUT /api/users/me
+ * Body: { name, email, phone, address_line1, address_line2, city, postcode }
+ */
+router.put("/me", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  const {
+    name,
+    email,
+    phone = "",
+    address_line1 = "",
+    address_line2 = "",
+    city = "",
+    postcode = "",
+  } = req.body || {};
+
+  const normalizedName = String(name || "").trim();
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedPhone = String(phone || "").trim();
+  const normalizedAddress1 = String(address_line1 || "").trim();
+  const normalizedAddress2 = String(address_line2 || "").trim();
+  const normalizedCity = String(city || "").trim();
+  const normalizedPostcode = String(postcode || "").trim();
+
+  if (!normalizedName || !normalizedEmail) {
+    return res.status(400).json({ message: "Name and email are required" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(normalizedEmail)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
+  if (normalizedName.length > 120) {
+    return res.status(400).json({ message: "Name is too long" });
+  }
+  if (normalizedPhone.length > 30) {
+    return res.status(400).json({ message: "Phone is too long" });
+  }
+  if (
+    normalizedAddress1.length > 255 ||
+    normalizedAddress2.length > 255 ||
+    normalizedCity.length > 120 ||
+    normalizedPostcode.length > 32
+  ) {
+    return res.status(400).json({ message: "One or more fields are too long" });
+  }
+
+  try {
+    await ensureUserProfileColumns();
+
+    const [existing] = await db.query(
+      "SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1",
+      [normalizedEmail, userId]
+    );
+    if (existing.length) {
+      return res.status(409).json({ message: "Email already in use" });
+    }
+
+    await db.query(
+      `UPDATE users
+          SET name = ?, email = ?, phone = ?, address_line1 = ?, address_line2 = ?, city = ?, postcode = ?
+        WHERE id = ?`,
+      [
+        normalizedName,
+        normalizedEmail,
+        normalizedPhone || null,
+        normalizedAddress1 || null,
+        normalizedAddress2 || null,
+        normalizedCity || null,
+        normalizedPostcode || null,
+        userId,
+      ]
+    );
+
+    const updatedUser = {
+      id: userId,
+      name: normalizedName,
+      email: normalizedEmail,
+      is_admin: !!req.session.user?.is_admin,
+      phone: normalizedPhone,
+      address_line1: normalizedAddress1,
+      address_line2: normalizedAddress2,
+      city: normalizedCity,
+      postcode: normalizedPostcode,
+    };
+
+    req.session.user = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      is_admin: updatedUser.is_admin,
+    };
+
+    return res.json({ message: "Profile updated", user: updatedUser });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * DELETE /api/users/me/details
+ * Clears optional personal detail fields for the logged in user.
+ */
+router.delete("/me/details", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  try {
+    await ensureUserProfileColumns();
+    await db.query(
+      `UPDATE users
+          SET phone = NULL, address_line1 = NULL, address_line2 = NULL, city = NULL, postcode = NULL
+        WHERE id = ?`,
+      [userId]
+    );
+    return res.json({ message: "Personal details cleared" });
+  } catch (err) {
+    console.error("Clear profile details error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 /**
