@@ -35,6 +35,17 @@ async function columnExists(table, column) {
   return _colCache[key];
 }
 
+async function ensureContactMessageStatusColumn() {
+  const hasStatus = await columnExists("contact_messages", "status");
+  if (hasStatus) return;
+
+  await db.query(
+    `ALTER TABLE contact_messages
+     ADD COLUMN status ENUM('unread', 'read', 'archived') NOT NULL DEFAULT 'unread'`
+  );
+  _colCache["contact_messages.status"] = true;
+}
+
 /* ======================================================
    USER MANAGEMENT
 ====================================================== */
@@ -568,8 +579,9 @@ router.put("/refunds/:id/status", adminMiddleware, async (req, res) => {
 // GET all messages
 router.get("/messages", adminMiddleware, async (req, res) => {
   try {
+    await ensureContactMessageStatusColumn();
     const [rows] = await db.query(
-      `SELECT id, name, email, message, created_at
+      `SELECT id, name, email, message, status, created_at
        FROM contact_messages
        ORDER BY created_at DESC`
     );
@@ -578,6 +590,33 @@ router.get("/messages", adminMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Admin get messages error:", err);
     res.status(500).json({ message: "Failed to fetch messages" });
+  }
+});
+
+// UPDATE message status
+router.put("/messages/:id/status", adminMiddleware, async (req, res) => {
+  try {
+    await ensureContactMessageStatusColumn();
+    const { id } = req.params;
+    const { status } = req.body || {};
+
+    if (!["unread", "read", "archived"].includes(status)) {
+      return res.status(400).json({ message: "Invalid message status" });
+    }
+
+    const [result] = await db.query(
+      "UPDATE contact_messages SET status = ? WHERE id = ?",
+      [status, id]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    res.json({ message: "Message status updated" });
+  } catch (err) {
+    console.error("Admin update message status error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
