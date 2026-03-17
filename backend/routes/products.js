@@ -17,7 +17,8 @@ function catFromCategoryName(categoryName) {
   if (s === "mens") return "men";
   if (s === "womens") return "women";
   if (s === "kids") return "kids";
-  if (s === "new arrivals") return "newarrivals";
+  if (s === "new arrivals") return "all";
+  if (s === "all products") return "all";
   if (s === "sale") return "sale";
   return s.replace(/\s+/g, "");
 }
@@ -98,11 +99,10 @@ router.get("/", async (req, res) => {
     where.push("p.original_price IS NOT NULL");
     where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     limitSql = "LIMIT 6";
-  } else if (cat === "newarrivals") {
-    // 6 most recently added products from real categories only (not "New Arrivals" or "Sale" DB categories)
+  } else if (cat === "all") {
+    // All products from real categories (Mens/Womens/Kids), no limit
     where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     orderBy = "ORDER BY p.id DESC";
-    limitSql = "LIMIT 6";
   } else if (cat) {
     // map frontend cat to category names in DB
     if (cat === "men") where.push("c.name = 'Mens'");

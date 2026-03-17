@@ -60,10 +60,10 @@ export function Layout() {
             <ul className="osai-nav-links">
               {[
                 { to: "/", label: "Home", end: true },
+                { to: "/allproducts", label: "All Products" },
                 { to: "/mens", label: "Mens" },
                 { to: "/womens", label: "Womens" },
                 { to: "/kids", label: "Kids" },
-                { to: "/newarrivals", label: "New Arrivals" },
                 { to: "/sale", label: "Sale" },
                 { to: "/contact", label: "Contact" },
                 { to: "/about", label: "About" },
@@ -87,7 +87,7 @@ export function Layout() {
                   { to: "/mens", label: "Mens" },
                   { to: "/womens", label: "Womens" },
                   { to: "/kids", label: "Kids" },
-                  { to: "/newarrivals", label: "New Arrivals" },
+                  { to: "/allproducts", label: "All Products" },
                   { to: "/sale", label: "Sale" },
                   { to: "/contact", label: "Contact" },
                   { to: "/about", label: "About" },
@@ -255,7 +255,7 @@ export function Layout() {
               <li><NavLink to="/mens">Mens</NavLink></li>
               <li><NavLink to="/womens">Womens</NavLink></li>
               <li><NavLink to="/kids">Kids</NavLink></li>
-              <li><NavLink to="/newarrivals">New Arrivals</NavLink></li>
+              <li><NavLink to="/allproducts">All Products</NavLink></li>
               <li><NavLink to="/sale">Sale</NavLink></li>
             </ul>
           </div>

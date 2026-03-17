@@ -46,7 +46,7 @@ export function CategoryPage({ cat, pageTitle }) {
       Mens: "men",
       Womens: "women",
       Kids: "kids",
-      "New Arrivals": "newarrivals",
+      "All Products": "all",
       Sale: "sale",
     }),
     []
@@ -73,8 +73,8 @@ export function CategoryPage({ cat, pageTitle }) {
   const localProductsForCategory = React.useMemo(() => {
     if (catKey === "sale")
       return PRODUCTS.filter((p) => p.originalPrice).slice(0, 6);
-    if (catKey === "newarrivals")
-      return PRODUCTS.filter((p) => p.isNewArrival).slice(0, 6);
+    if (catKey === "all")
+      return PRODUCTS;
     return PRODUCTS.filter((p) => p.cat === catKey);
   }, [catKey]);
 
