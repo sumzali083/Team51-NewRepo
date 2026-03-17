@@ -722,6 +722,17 @@ export default function AdminPage() {
     [pagedUsers, selectedUsers]
   );
 
+  const productLookup = useMemo(() => {
+    const map = new Map();
+    for (const p of products) {
+      map.set(String(p.id), p);
+      if (p.sku) map.set(String(p.sku), p);
+    }
+    return map;
+  }, [products]);
+
+  const getReviewProduct = (review) => productLookup.get(String(review?.product_id)) || null;
+
   const tabs = [
     { key: "dashboard", label: "Dashboard",        icon: "bi-speedometer2" },
     { key: "products",  label: "Products",          icon: "bi-box-seam" },
@@ -1808,7 +1819,34 @@ export default function AdminPage() {
                       {reviews.map((r) => (
                         <tr key={r.id}>
                           <td>{r.id}</td>
-                          <td style={{ color: "var(--sub)" }}>#{r.product_id}</td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              {getReviewProduct(r)?.images?.[0] ? (
+                                <img
+                                  src={getReviewProduct(r).images[0]}
+                                  alt={getReviewProduct(r)?.name || `Product ${r.product_id}`}
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.04)",
+                                  }}
+                                />
+                              )}
+                              <span style={{ color: "var(--sub)" }}>#{r.product_id}</span>
+                            </div>
+                          </td>
                           <td>{r.reviewer_name}</td>
                           <td>
                             <span style={{ color: "#fbbf24", fontFamily: "var(--font-display)", fontWeight: 600 }}>
