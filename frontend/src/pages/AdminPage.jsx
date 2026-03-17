@@ -38,6 +38,8 @@ export default function AdminPage() {
   const [bulkUserAction, setBulkUserAction] = useState("suspend");
   const [bulkUserReason, setBulkUserReason] = useState("");
   const [userSummary, setUserSummary] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserDraft, setEditUserDraft] = useState(null);
   const [loadingUserSummary, setLoadingUserSummary] = useState(false);
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -59,6 +61,7 @@ export default function AdminPage() {
   const [savingRefundId, setSavingRefundId] = useState(null);
   const [savingUserId, setSavingUserId] = useState(null);
   const [savingUserRoleId, setSavingUserRoleId] = useState(null);
+  const [savingUserProfileId, setSavingUserProfileId] = useState(null);
   const [runningBulkUsersAction, setRunningBulkUsersAction] = useState(false);
   const [actionMenuUserId, setActionMenuUserId] = useState(null);
   const [stockDraft, setStockDraft] = useState({});
@@ -454,6 +457,54 @@ export default function AdminPage() {
   };
 
   const closeUserSummary = () => setUserSummary(null);
+
+  const openUserEditor = (targetUser) => {
+    setEditingUser(targetUser);
+    setEditUserDraft({
+      name: targetUser?.name || "",
+      email: targetUser?.email || "",
+      phone: targetUser?.phone || "",
+      address_line1: targetUser?.address_line1 || "",
+      address_line2: targetUser?.address_line2 || "",
+      city: targetUser?.city || "",
+      postcode: targetUser?.postcode || "",
+    });
+  };
+
+  const closeUserEditor = () => {
+    setEditingUser(null);
+    setEditUserDraft(null);
+  };
+
+  const saveUserEditor = async () => {
+    if (!editingUser || !editUserDraft) return;
+    setSavingUserProfileId(editingUser.id);
+    try {
+      const res = await api.put(`/api/admin/users/${editingUser.id}/profile`, editUserDraft);
+      const updated = res.data?.user || {};
+      setUsers((prev) =>
+        prev.map((u) =>
+          Number(u.id) === Number(editingUser.id)
+            ? {
+                ...u,
+                name: updated.name ?? u.name,
+                email: updated.email ?? u.email,
+                phone: updated.phone ?? u.phone,
+                address_line1: updated.address_line1 ?? u.address_line1,
+                address_line2: updated.address_line2 ?? u.address_line2,
+                city: updated.city ?? u.city,
+                postcode: updated.postcode ?? u.postcode,
+              }
+            : u
+        )
+      );
+      closeUserEditor();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update user details");
+    } finally {
+      setSavingUserProfileId(null);
+    }
+  };
 
   const startEdit = (p) => {
     setEditingProductId(p.id);
@@ -2568,6 +2619,15 @@ export default function AdminPage() {
                                     onMouseDown={(e) => e.stopPropagation()}
                                   >
                                     <button
+                                      className="btn btn-sm btn-outline-light w-100 mb-2"
+                                      onClick={() => {
+                                        openUserEditor(u);
+                                        setActionMenuUserId(null);
+                                      }}
+                                    >
+                                      Edit Details
+                                    </button>
+                                    <button
                                       className="btn btn-sm btn-outline-info w-100 mb-2"
                                       onClick={() => {
                                         updateUserRole(u, Number(u.is_admin) !== 1);
@@ -2812,6 +2872,102 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingUser && editUserDraft && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeUserEditor}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Edit User #{editingUser.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserEditor}>
+                  Close
+                </button>
+              </div>
+
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Name</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.name}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Email</label>
+                  <input
+                    className="form-control"
+                    type="email"
+                    value={editUserDraft.email}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, email: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Phone</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.phone}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Postcode</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.postcode}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, postcode: e.target.value }))}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Address Line 1</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.address_line1}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, address_line1: e.target.value }))}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Address Line 2</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.address_line2}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, address_line2: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>City</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.city}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, city: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserEditor}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm btn-light"
+                  onClick={saveUserEditor}
+                  disabled={savingUserProfileId === editingUser.id}
+                >
+                  {savingUserProfileId === editingUser.id ? "Saving..." : "Save"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

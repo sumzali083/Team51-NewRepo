@@ -109,6 +109,24 @@ async function ensureUserManagementColumns() {
   }
 }
 
+async function ensureUserProfileColumns() {
+  const columnsToAdd = [
+    ["phone", "VARCHAR(30) NULL"],
+    ["address_line1", "VARCHAR(255) NULL"],
+    ["address_line2", "VARCHAR(255) NULL"],
+    ["city", "VARCHAR(120) NULL"],
+    ["postcode", "VARCHAR(32) NULL"],
+  ];
+
+  for (const [col, def] of columnsToAdd) {
+    const hasCol = await columnExists("users", col);
+    if (!hasCol) {
+      await db.query(`ALTER TABLE users ADD COLUMN ${col} ${def}`);
+      _colCache[`users.${col}`] = true;
+    }
+  }
+}
+
 /* ======================================================
    USER MANAGEMENT
 ====================================================== */
@@ -117,9 +135,11 @@ async function ensureUserManagementColumns() {
 router.get("/users", adminMiddleware, async (req, res) => {
   try {
     await ensureUserManagementColumns();
+    await ensureUserProfileColumns();
     const [rows] = await db.query(
       `SELECT
-        u.id, u.name, u.email, u.is_admin, u.created_at, u.is_suspended, u.suspended_at, u.suspension_reason,
+        u.id, u.name, u.email, u.phone, u.address_line1, u.address_line2, u.city, u.postcode,
+        u.is_admin, u.created_at, u.is_suspended, u.suspended_at, u.suspension_reason,
         (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
         (SELECT COUNT(*) FROM refund_requests rr WHERE rr.user_id = u.id) AS refund_count,
         (SELECT MAX(o.created_at) FROM orders o WHERE o.user_id = u.id) AS last_order_at
@@ -169,9 +189,11 @@ router.delete("/users/:id", adminMiddleware, async (req, res) => {
 router.get("/users/:id/summary", adminMiddleware, async (req, res) => {
   try {
     await ensureUserManagementColumns();
+    await ensureUserProfileColumns();
     const userId = Number(req.params.id);
     const [[userRow]] = await db.query(
-      `SELECT id, name, email, is_admin, is_suspended, suspended_at, suspension_reason, created_at
+      `SELECT id, name, email, phone, address_line1, address_line2, city, postcode,
+              is_admin, is_suspended, suspended_at, suspension_reason, created_at
        FROM users
        WHERE id = ?
        LIMIT 1`,
@@ -230,6 +252,94 @@ router.get("/users/:id/summary", adminMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Admin user summary error:", err);
     return res.status(500).json({ message: "Failed to fetch user summary" });
+  }
+});
+
+router.put("/users/:id/profile", adminMiddleware, async (req, res) => {
+  try {
+    await ensureUserProfileColumns();
+    const userId = Number(req.params.id);
+    const {
+      name,
+      email,
+      phone = "",
+      address_line1 = "",
+      address_line2 = "",
+      city = "",
+      postcode = "",
+    } = req.body || {};
+
+    const normalizedName = String(name || "").trim();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedPhone = String(phone || "").trim();
+    const normalizedAddress1 = String(address_line1 || "").trim();
+    const normalizedAddress2 = String(address_line2 || "").trim();
+    const normalizedCity = String(city || "").trim();
+    const normalizedPostcode = String(postcode || "").trim();
+
+    if (!normalizedName || !normalizedEmail) {
+      return res.status(400).json({ message: "Name and email are required" });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const [existsRows] = await db.query("SELECT id FROM users WHERE id = ? LIMIT 1", [userId]);
+    if (!existsRows.length) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const [emailTakenRows] = await db.query(
+      "SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1",
+      [normalizedEmail, userId]
+    );
+    if (emailTakenRows.length) {
+      return res.status(409).json({ message: "Email already in use" });
+    }
+
+    await db.query(
+      `UPDATE users
+          SET name = ?, email = ?, phone = ?, address_line1 = ?, address_line2 = ?, city = ?, postcode = ?
+        WHERE id = ?`,
+      [
+        normalizedName,
+        normalizedEmail,
+        normalizedPhone || null,
+        normalizedAddress1 || null,
+        normalizedAddress2 || null,
+        normalizedCity || null,
+        normalizedPostcode || null,
+        userId,
+      ]
+    );
+
+    await appendAdminAuditLog({
+      adminId: req.session.userId,
+      action: "user_profile_update",
+      targetType: "user",
+      targetId: userId,
+      details: JSON.stringify({
+        fields: ["name", "email", "phone", "address_line1", "address_line2", "city", "postcode"],
+      }),
+    });
+
+    return res.json({
+      message: "User details updated",
+      user: {
+        id: userId,
+        name: normalizedName,
+        email: normalizedEmail,
+        phone: normalizedPhone,
+        address_line1: normalizedAddress1,
+        address_line2: normalizedAddress2,
+        city: normalizedCity,
+        postcode: normalizedPostcode,
+      },
+    });
+  } catch (err) {
+    console.error("Admin update user profile error:", err);
+    return res.status(500).json({ message: "Failed to update user details" });
   }
 });
 
