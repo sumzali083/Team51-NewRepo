@@ -17,6 +17,16 @@ export default function AdminPage() {
   const [reports, setReports] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [orderDateFilter, setOrderDateFilter] = useState("all");
+  const [orderSortBy, setOrderSortBy] = useState("newest");
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [selectedOrders, setSelectedOrders] = useState({});
+  const [bulkOrderStatus, setBulkOrderStatus] = useState("processing");
+  const [runningBulkOrderAction, setRunningBulkOrderAction] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [refunds, setRefunds] = useState([]);
   const [users, setUsers] = useState([]);
   const [userAuditLog, setUserAuditLog] = useState([]);
@@ -134,7 +144,9 @@ export default function AdminPage() {
 
   const updateOrderStatus = async (orderId) => {
     const status = orderStatusDraft[orderId];
+    const current = orders.find((o) => Number(o.id) === Number(orderId));
     if (!status) return;
+    if (current && String(current.status || "") === String(status)) return;
     setSavingOrderId(orderId);
     try {
       await api.put(`/api/admin/orders/${orderId}/status`, { status });
@@ -240,6 +252,10 @@ export default function AdminPage() {
   }, [messageSearch, messageStatusFilter]);
 
   useEffect(() => {
+    setOrdersPage(1);
+  }, [orderSearch, orderStatusFilter, orderDateFilter, orderSortBy]);
+
+  useEffect(() => {
     setUsersPage(1);
   }, [usersSearch, userRoleFilter, userStatusFilter]);
 
@@ -333,6 +349,54 @@ export default function AdminPage() {
       setSavingUserRoleId(null);
     }
   };
+
+  const toggleOrderSelection = (orderId) => {
+    setSelectedOrders((prev) => ({ ...prev, [orderId]: !prev[orderId] }));
+  };
+
+  const selectedOrderIds = useMemo(
+    () => Object.keys(selectedOrders).filter((id) => selectedOrders[id]).map((id) => Number(id)),
+    [selectedOrders]
+  );
+
+  const runBulkOrderStatus = async () => {
+    if (!selectedOrderIds.length) {
+      alert("Select at least one order first.");
+      return;
+    }
+    if (!window.confirm(`Update ${selectedOrderIds.length} selected orders to ${bulkOrderStatus}?`)) return;
+    setRunningBulkOrderAction(true);
+    try {
+      await api.post("/api/admin/orders/bulk-status", { orderIds: selectedOrderIds, status: bulkOrderStatus });
+      setOrders((prev) =>
+        prev.map((o) => (selectedOrderIds.includes(Number(o.id)) ? { ...o, status: bulkOrderStatus } : o))
+      );
+      setOrderStatusDraft((prev) => {
+        const next = { ...prev };
+        for (const id of selectedOrderIds) next[id] = bulkOrderStatus;
+        return next;
+      });
+      setSelectedOrders({});
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to bulk update orders");
+    } finally {
+      setRunningBulkOrderAction(false);
+    }
+  };
+
+  const openOrderDetails = async (orderId) => {
+    setLoadingOrderDetails(true);
+    try {
+      const res = await api.get(`/api/admin/orders/${orderId}/details`);
+      setSelectedOrderDetails(res.data || null);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to load order details");
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
+  const closeOrderDetails = () => setSelectedOrderDetails(null);
 
   const openReviewModal = (review) => setSelectedReview(review);
   const closeReviewModal = () => setSelectedReview(null);
@@ -727,6 +791,60 @@ export default function AdminPage() {
   const allPagedUsersSelected = useMemo(
     () => pagedUsers.length > 0 && pagedUsers.every((u) => selectedUsers[u.id]),
     [pagedUsers, selectedUsers]
+  );
+
+  const filteredOrders = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase();
+    const now = Date.now();
+    return orders.filter((o) => {
+      const status = String(o.status || "pending").toLowerCase();
+      if (orderStatusFilter !== "all" && status !== orderStatusFilter) return false;
+
+      if (orderDateFilter !== "all") {
+        const created = o.created_at ? new Date(o.created_at).getTime() : NaN;
+        if (!Number.isFinite(created)) return false;
+        const days = orderDateFilter === "7d" ? 7 : orderDateFilter === "30d" ? 30 : 90;
+        if (now - created > days * 24 * 60 * 60 * 1000) return false;
+      }
+
+      if (!q) return true;
+      return (
+        String(o.id || "").toLowerCase().includes(q) ||
+        String(o.name || "").toLowerCase().includes(q) ||
+        String(o.email || "").toLowerCase().includes(q)
+      );
+    });
+  }, [orders, orderSearch, orderStatusFilter, orderDateFilter]);
+
+  const sortedOrders = useMemo(() => {
+    const arr = [...filteredOrders];
+    if (orderSortBy === "newest") {
+      arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (orderSortBy === "oldest") {
+      arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    } else if (orderSortBy === "highest") {
+      arr.sort((a, b) => Number(b.total_price || 0) - Number(a.total_price || 0));
+    } else if (orderSortBy === "pending_first") {
+      arr.sort((a, b) => {
+        const ap = String(a.status || "") === "pending" ? 0 : 1;
+        const bp = String(b.status || "") === "pending" ? 0 : 1;
+        return ap - bp || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+    return arr;
+  }, [filteredOrders, orderSortBy]);
+
+  const ordersPageSize = 10;
+  const ordersTotalPages = Math.max(1, Math.ceil(sortedOrders.length / ordersPageSize));
+  const safeOrdersPage = Math.min(ordersPage, ordersTotalPages);
+  const pagedOrders = useMemo(() => {
+    const start = (safeOrdersPage - 1) * ordersPageSize;
+    return sortedOrders.slice(start, start + ordersPageSize);
+  }, [sortedOrders, safeOrdersPage]);
+
+  const allPagedOrdersSelected = useMemo(
+    () => pagedOrders.length > 0 && pagedOrders.every((o) => selectedOrders[o.id]),
+    [pagedOrders, selectedOrders]
   );
 
   const productLookup = useMemo(() => {
@@ -1593,12 +1711,95 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Orders</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{orders.length} orders</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredOrders.length} orders</span>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Search order id, customer, email"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={orderStatusFilter}
+                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 170 }}
+                    value={orderDateFilter}
+                    onChange={(e) => setOrderDateFilter(e.target.value)}
+                  >
+                    <option value="all">All time</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={orderSortBy}
+                    onChange={(e) => setOrderSortBy(e.target.value)}
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="highest">Highest value</option>
+                    <option value="pending_first">Pending first</option>
+                  </select>
+                </div>
+                <div
+                  className="d-flex gap-2 flex-wrap align-items-center p-2 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{selectedOrderIds.length} selected</span>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={bulkOrderStatus}
+                    onChange={(e) => setBulkOrderStatus(e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <button
+                    className="btn btn-sm btn-outline-light"
+                    onClick={runBulkOrderStatus}
+                    disabled={runningBulkOrderAction || selectedOrderIds.length === 0}
+                  >
+                    {runningBulkOrderAction ? "Running..." : "Run Bulk Update"}
+                  </button>
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
                     <thead className="table-light">
                       <tr>
+                        <th style={{ width: 42 }}>
+                          <input
+                            type="checkbox"
+                            checked={allPagedOrdersSelected}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedOrders((prev) => {
+                                const next = { ...prev };
+                                for (const row of pagedOrders) next[row.id] = checked;
+                                return next;
+                              });
+                            }}
+                          />
+                        </th>
                         <th>ID</th>
                         <th>Customer</th>
                         <th>Email</th>
@@ -1606,16 +1807,24 @@ export default function AdminPage() {
                         <th>Current Status</th>
                         <th style={{ minWidth: 170 }}>Update Status</th>
                         <th>Date</th>
+                        <th>Details</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o) => (
+                      {pagedOrders.map((o) => (
                         <tr key={o.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedOrders[o.id]}
+                              onChange={() => toggleOrderSelection(o.id)}
+                            />
+                          </td>
                           <td>#{o.id}</td>
                           <td>{o.name}</td>
                           <td style={{ color: "var(--sub)" }}>{o.email}</td>
-                          <td>£{Number(o.total_price || 0).toFixed(2)}</td>
+                          <td>GBP {Number(o.total_price || 0).toFixed(2)}</td>
                           <td>
                             <span className={`osai-status osai-status-${orderStatusDraft[o.id] || "pending"}`}>
                               {orderStatusDraft[o.id] || "pending"}
@@ -1638,25 +1847,53 @@ export default function AdminPage() {
                             </select>
                           </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
-                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}
+                          </td>
+                          <td>
+                            <button className="btn btn-sm btn-outline-light" onClick={() => openOrderDetails(o.id)}>
+                              View
+                            </button>
                           </td>
                           <td>
                             <button
                               className="btn btn-sm btn-dark"
                               onClick={() => updateOrderStatus(o.id)}
-                              disabled={savingOrderId === o.id}
+                              disabled={savingOrderId === o.id || String(orderStatusDraft[o.id] || "") === String(o.status || "")}
                             >
                               {savingOrderId === o.id ? "Saving..." : "Save"}
                             </button>
                           </td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
-                        <tr><td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>No orders yet.</td></tr>
+                      {pagedOrders.length === 0 && (
+                        <tr><td colSpan={10} className="text-center" style={{ color: "var(--sub)" }}>No orders yet.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
+                {filteredOrders.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      Page {safeOrdersPage} of {ordersTotalPages}
+                    </span>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeOrdersPage <= 1}
+                        onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeOrdersPage >= ordersTotalPages}
+                        onClick={() => setOrdersPage((p) => Math.min(ordersTotalPages, p + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2348,6 +2585,81 @@ export default function AdminPage() {
           )}
         </section>
       </div>
+
+      {selectedOrderDetails && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeOrderDetails}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(900px, 96vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">
+                  Order #{selectedOrderDetails.order?.id}
+                </h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeOrderDetails}>
+                  Close
+                </button>
+              </div>
+              {loadingOrderDetails ? (
+                <div style={{ color: "var(--sub)" }}>Loading...</div>
+              ) : (
+                <>
+                  <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                    <div><strong style={{ color: "var(--text)" }}>Customer:</strong> {selectedOrderDetails.order?.name || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Email:</strong> {selectedOrderDetails.order?.email || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Status:</strong> {selectedOrderDetails.order?.status || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Total:</strong> GBP {Number(selectedOrderDetails.order?.total_price || 0).toFixed(2)}</div>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Product</th>
+                          <th>SKU</th>
+                          <th>Qty</th>
+                          <th>Price Each</th>
+                          <th>Line Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(selectedOrderDetails.items || []).map((it) => (
+                          <tr key={it.id}>
+                            <td>
+                              <div className="d-flex align-items-center gap-2">
+                                {it.product_image ? (
+                                  <img
+                                    src={it.product_image}
+                                    alt={it.product_name || `Product ${it.product_id}`}
+                                    style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)" }}
+                                  />
+                                ) : null}
+                                <span>{it.product_name || `#${it.product_id}`}</span>
+                              </div>
+                            </td>
+                            <td>{it.sku || "-"}</td>
+                            <td>{it.quantity}</td>
+                            <td>GBP {Number(it.price_each || 0).toFixed(2)}</td>
+                            <td>GBP {(Number(it.price_each || 0) * Number(it.quantity || 0)).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        {(!selectedOrderDetails.items || selectedOrderDetails.items.length === 0) && (
+                          <tr><td colSpan={5} className="text-center" style={{ color: "var(--sub)" }}>No order items found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {userSummary && (
         <div
