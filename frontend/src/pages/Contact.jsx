@@ -121,13 +121,13 @@ export default function Contact() {
     <div
       ref={revealRef}
       style={{
-      minHeight: "80vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      padding: "60px 24px 80px",
-    }}>
-      {/* ── Large heading ── */}
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "60px 24px 80px",
+      }}
+    >
       <h1 style={{
         fontFamily: "'Barlow Condensed', sans-serif",
         fontSize: "clamp(56px, 11vw, 120px)",
@@ -143,7 +143,6 @@ export default function Contact() {
         Get In Touch
       </h1>
 
-      {/* ── Card ── */}
       <div style={{
         width: "100%",
         maxWidth: 620,
@@ -153,7 +152,6 @@ export default function Contact() {
         padding: "32px 32px 28px",
         ...formSlideFadeIn,
       }}>
-        {/* Card header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <h3 style={{ color: "#fff", fontWeight: 600, margin: 0, fontSize: 18 }}>
             General
@@ -181,7 +179,6 @@ export default function Contact() {
           </button>
         </div>
 
-        {/* Alert */}
         {alert && (
           <div
             role="alert"
@@ -203,7 +200,6 @@ export default function Contact() {
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* NAME + Email — two columns */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
               <label style={LABEL} htmlFor="contact-name">Name</label>
@@ -234,7 +230,6 @@ export default function Contact() {
             </div>
           </div>
 
-          {/* Subject */}
           <div style={{ marginBottom: 16 }}>
             <label style={LABEL} htmlFor="contact-subject">Subject</label>
             <input
@@ -249,7 +244,6 @@ export default function Contact() {
             />
           </div>
 
-          {/* Message */}
           <div style={{ marginBottom: 24 }}>
             <label style={LABEL} htmlFor="contact-message">Message</label>
             <textarea
@@ -265,7 +259,6 @@ export default function Contact() {
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -291,7 +284,6 @@ export default function Contact() {
         </form>
       </div>
 
-      {/* ── Map Section ── */}
       <div style={{
         width: "100%",
         maxWidth: 620,
@@ -327,7 +319,7 @@ export default function Contact() {
           onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
         >
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2428.6848396569256!2d-1.8945!3d52.5077!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48709b4b4b7b7b7b%3A0x7b7b7b7b7b7b7b7b!2s134a%20Aston%20Rd%2C%20Birmingham%20B6%204BY!5e0!3m2!1sen!2suk!4v1234567890"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2952.0411732404946!2d-1.8915321809846204!3d52.485890998229785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4870bc9ae4f2e4b3%3A0x9a670ba18e08a084!2sAston%20University!5e1!3m2!1sen!2suk!4v1773782375811!5m2!1sen!2suk"
             width="100%"
             height="100%"
             style={{
@@ -335,7 +327,7 @@ export default function Contact() {
               borderRadius: 12,
               pointerEvents: "none",
             }}
-            allowFullScreen=""
+            allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title="Our Location - 134a Aston Road, Birmingham, UK"
@@ -353,3 +345,4 @@ export default function Contact() {
     </div>
   );
 }
+```
