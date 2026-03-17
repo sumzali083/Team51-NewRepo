@@ -47,7 +47,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 mb-5">
       <nav aria-label="breadcrumb">
         <ol className="breadcrumb">
           <li className="breadcrumb-item">
