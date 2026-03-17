@@ -53,6 +53,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [dashboardRange, setDashboardRange] = useState("30d");
+  const [inventorySearch, setInventorySearch] = useState("");
   const [savingStockId, setSavingStockId] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [savingRefundId, setSavingRefundId] = useState(null);
@@ -131,6 +132,8 @@ export default function AdminPage() {
   const updateStock = async (productId) => {
     const value = Number(stockDraft[productId]);
     if (!Number.isInteger(value) || value < 0) return;
+    const current = products.find((p) => Number(p.id) === Number(productId));
+    if (current && Number(current.stock ?? 0) === value) return;
     setSavingStockId(productId);
     try {
       await api.put(`/api/admin/products/${productId}/stock`, { stock: value });
@@ -651,6 +654,16 @@ export default function AdminPage() {
       }),
     [products, LOW_STOCK_LIMIT]
   );
+
+  const filteredInventoryProducts = useMemo(() => {
+    const q = inventorySearch.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) =>
+      String(p.sku || "").toLowerCase().includes(q) ||
+      String(p.name || "").toLowerCase().includes(q) ||
+      String(p.category || "").toLowerCase().includes(q)
+    );
+  }, [products, inventorySearch]);
 
   const inRange = (dateValue, rangeKey) => {
     if (!dateValue) return false;
@@ -1522,7 +1535,16 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Inventory</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{products.length} products</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredInventoryProducts.length} products</span>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 320 }}
+                    value={inventorySearch}
+                    onChange={(e) => setInventorySearch(e.target.value)}
+                    placeholder="Search SKU, name, category"
+                  />
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
@@ -1538,7 +1560,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map((p) => (
+                      {filteredInventoryProducts.map((p) => (
                         <tr key={p.id}>
                           <td>{p.id}</td>
                           <td>{p.sku || "-"}</td>
@@ -1560,13 +1582,20 @@ export default function AdminPage() {
                             <button
                               className="btn btn-sm btn-dark"
                               onClick={() => updateStock(p.id)}
-                              disabled={savingStockId === p.id}
+                              disabled={savingStockId === p.id || Number(stockDraft[p.id] ?? 0) === Number(p.stock ?? 0)}
                             >
                               {savingStockId === p.id ? "Saving..." : "Save"}
                             </button>
                           </td>
                         </tr>
                       ))}
+                      {filteredInventoryProducts.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            No inventory items match your search.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
