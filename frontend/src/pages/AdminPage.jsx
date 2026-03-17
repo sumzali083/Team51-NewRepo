@@ -3,6 +3,14 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
+const REFUND_TRANSITIONS = {
+  pending: new Set(["pending", "approved", "rejected"]),
+  approved: new Set(["approved", "processing", "rejected"]),
+  processing: new Set(["processing", "refunded", "rejected"]),
+  rejected: new Set(["rejected"]),
+  refunded: new Set(["refunded"]),
+};
+
 export default function AdminPage() {
   const LOW_STOCK_LIMIT = 5;
   const { user } = useContext(AuthContext);
@@ -29,6 +37,8 @@ export default function AdminPage() {
   const [refundStatusDraft, setRefundStatusDraft] = useState({});
   const [refundAdminNoteDraft, setRefundAdminNoteDraft] = useState({});
   const [refundInstructionLinkDraft, setRefundInstructionLinkDraft] = useState({});
+  const [refundAmountDraft, setRefundAmountDraft] = useState({});
+  const [refundReferenceDraft, setRefundReferenceDraft] = useState({});
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
@@ -74,6 +84,8 @@ export default function AdminPage() {
       setRefundStatusDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.status || "pending"])));
       setRefundAdminNoteDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.admin_note || ""])));
       setRefundInstructionLinkDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.instruction_link || ""])));
+      setRefundAmountDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.refund_amount == null ? "" : String(r.refund_amount)])));
+      setRefundReferenceDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.refund_reference || ""])));
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to fetch admin data");
     } finally {
@@ -117,14 +129,31 @@ export default function AdminPage() {
     const status = refundStatusDraft[refundId];
     const adminNote = refundAdminNoteDraft[refundId] || "";
     const instructionLink = refundInstructionLinkDraft[refundId] || "";
+    const refundAmount = refundAmountDraft[refundId] || "";
+    const refundReference = refundReferenceDraft[refundId] || "";
     if (!status) return;
 
     setSavingRefundId(refundId);
     try {
-      await api.put(`/api/admin/refunds/${refundId}/status`, { status, adminNote, instructionLink });
+      await api.put(`/api/admin/refunds/${refundId}/status`, {
+        status,
+        adminNote,
+        instructionLink,
+        refundAmount,
+        refundReference,
+      });
       setRefunds((prev) =>
         prev.map((r) =>
-          r.id === refundId ? { ...r, status, admin_note: adminNote, instruction_link: instructionLink } : r
+          r.id === refundId
+            ? {
+                ...r,
+                status,
+                admin_note: adminNote,
+                instruction_link: instructionLink,
+                refund_amount: status === "refunded" ? refundAmount : null,
+                refund_reference: status === "refunded" ? refundReference : null,
+              }
+            : r
         )
       );
     } catch (err) {
@@ -132,6 +161,10 @@ export default function AdminPage() {
     } finally {
       setSavingRefundId(null);
     }
+  };
+
+  const getAllowedRefundStatuses = (currentStatus) => {
+    return REFUND_TRANSITIONS[currentStatus || "pending"] || REFUND_TRANSITIONS.pending;
   };
 
   const deleteMessage = async (message) => {
@@ -1433,6 +1466,8 @@ export default function AdminPage() {
                         <th style={{ minWidth: 170 }}>Status</th>
                         <th>Admin Note</th>
                         <th>Instructions Link / QR URL</th>
+                        <th>Refund Amount</th>
+                        <th>Refund Reference</th>
                         <th>Date</th>
                         <th>Action</th>
                       </tr>
@@ -1460,11 +1495,15 @@ export default function AdminPage() {
                                   setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
                                 }
                               >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="processing">Processing</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="refunded">Refunded</option>
+                                {["pending", "approved", "processing", "rejected", "refunded"].map((nextStatus) => (
+                                  <option
+                                    key={nextStatus}
+                                    value={nextStatus}
+                                    disabled={!getAllowedRefundStatuses(r.status || "pending").has(nextStatus)}
+                                  >
+                                    {nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1)}
+                                  </option>
+                                ))}
                               </select>
                             </div>
                           </td>
@@ -1488,6 +1527,29 @@ export default function AdminPage() {
                               }
                             />
                           </td>
+                          <td style={{ minWidth: 140 }}>
+                            <input
+                              className="form-control form-control-sm"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={refundAmountDraft[r.id] || ""}
+                              onChange={(e) =>
+                                setRefundAmountDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                            />
+                          </td>
+                          <td style={{ minWidth: 170 }}>
+                            <input
+                              className="form-control form-control-sm"
+                              placeholder="Payment ref/txn id"
+                              value={refundReferenceDraft[r.id] || ""}
+                              onChange={(e) =>
+                                setRefundReferenceDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                              }
+                            />
+                          </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
                             {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
                           </td>
@@ -1504,7 +1566,7 @@ export default function AdminPage() {
                       ))}
                       {refunds.length === 0 && (
                         <tr>
-                          <td colSpan={10} className="text-center" style={{ color: "var(--sub)" }}>
+                          <td colSpan={12} className="text-center" style={{ color: "var(--sub)" }}>
                             No refund requests yet.
                           </td>
                         </tr>
