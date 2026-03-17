@@ -239,6 +239,21 @@ export default function AdminPage() {
     setUsersPage(1);
   }, [usersSearch, userRoleFilter, userStatusFilter]);
 
+  useEffect(() => {
+    const closeMenu = () => setActionMenuUserId(null);
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setActionMenuUserId(null);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("scroll", closeMenu, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("scroll", closeMenu, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
   const deleteReview = async (id) => {
     if (!window.confirm("Delete this review?")) return;
     try {
@@ -2076,12 +2091,13 @@ export default function AdminPage() {
                               >
                                 View
                               </button>
-                              <div style={{ position: "relative" }}>
+                              <div style={{ position: "relative" }} onMouseDown={(e) => e.stopPropagation()}>
                                 <button
                                   className="btn btn-sm btn-outline-secondary"
                                   onClick={() =>
                                     setActionMenuUserId((prev) => (prev === u.id ? null : u.id))
                                   }
+                                  onMouseDown={(e) => e.stopPropagation()}
                                 >
                                   Actions
                                 </button>
@@ -2098,6 +2114,7 @@ export default function AdminPage() {
                                       border: "1px solid var(--line)",
                                       boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
                                     }}
+                                    onMouseDown={(e) => e.stopPropagation()}
                                   >
                                     <button
                                       className="btn btn-sm btn-outline-info w-100 mb-2"
