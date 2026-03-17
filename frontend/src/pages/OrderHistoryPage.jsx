@@ -3,13 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
-function refundBadgeClass(status) {
-  if (status === "refunded") return "text-bg-success";
-  if (status === "approved" || status === "processing") return "text-bg-info";
-  if (status === "rejected") return "text-bg-danger";
-  return "text-bg-secondary";
-}
-
 function refundButtonLabel(status) {
   if (status === "pending") return "Refund requested";
   if (status === "approved" || status === "processing") return "Refund in progress";
@@ -32,13 +25,55 @@ function itemImage(item) {
 }
 
 function statusPillClass(status) {
-  if (status === "delivered" || status === "completed" || status === "refunded") return "text-bg-success";
-  if (status === "processing" || status === "pending") return "text-bg-warning";
-  if (status === "cancelled" || status === "rejected") return "text-bg-danger";
-  return "text-bg-secondary";
+  if (status === "delivered" || status === "completed" || status === "refunded") return "ok";
+  if (status === "processing" || status === "pending") return "warn";
+  if (status === "cancelled" || status === "rejected") return "bad";
+  return "neutral";
 }
 
 const STATUS_TABS = ["all", "pending", "processing", "completed", "cancelled", "refunded"];
+
+function tabButtonStyle(active) {
+  return {
+    border: "1px solid rgba(255,255,255,0.22)",
+    background: active ? "rgba(255,255,255,0.12)" : "transparent",
+    color: "#fff",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "8px 12px",
+  };
+}
+
+function statusPillStyle(kind) {
+  if (kind === "ok") {
+    return {
+      background: "rgba(56, 161, 105, 0.18)",
+      color: "#9ef0bf",
+      border: "1px solid rgba(56, 161, 105, 0.45)",
+    };
+  }
+  if (kind === "warn") {
+    return {
+      background: "rgba(214, 158, 46, 0.18)",
+      color: "#ffd98c",
+      border: "1px solid rgba(214, 158, 46, 0.45)",
+    };
+  }
+  if (kind === "bad") {
+    return {
+      background: "rgba(229, 62, 62, 0.15)",
+      color: "#ff9a9a",
+      border: "1px solid rgba(229, 62, 62, 0.45)",
+    };
+  }
+  return {
+    background: "rgba(255,255,255,0.08)",
+    color: "#d1d5db",
+    border: "1px solid rgba(255,255,255,0.22)",
+  };
+}
 
 export default function OrderHistoryPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -128,7 +163,8 @@ export default function OrderHistoryPage() {
               {STATUS_TABS.map((status) => (
                 <button
                   key={status}
-                  className={`btn btn-sm ${activeStatus === status ? "btn-light" : "btn-outline-light"}`}
+                  className="btn btn-sm"
+                  style={tabButtonStyle(activeStatus === status)}
                   onClick={() => setActiveStatus(status)}
                 >
                   {status === "all" ? "All Orders" : status.charAt(0).toUpperCase() + status.slice(1)}
@@ -176,7 +212,8 @@ export default function OrderHistoryPage() {
                                 height: 64,
                                 objectFit: "cover",
                                 borderRadius: 8,
-                                border: "1px solid rgba(255,255,255,0.15)",
+                                border: "1px solid rgba(255,255,255,0.10)",
+                                background: "rgba(255,255,255,0.03)",
                                 flexShrink: 0,
                               }}
                             />
@@ -201,7 +238,18 @@ export default function OrderHistoryPage() {
 
                         <div className="col-lg-2 col-6">
                           <small style={{ color: "var(--sub)", display: "block" }}>Status</small>
-                          <span className={`badge ${statusPillClass(status)}`}>{status}</span>
+                          <span
+                            className="badge"
+                            style={{
+                              ...statusPillStyle(statusPillClass(status)),
+                              textTransform: "uppercase",
+                              letterSpacing: "0.06em",
+                              fontSize: 10,
+                              fontWeight: 700,
+                            }}
+                          >
+                            {status}
+                          </span>
                         </div>
 
                         <div className="col-lg-2 col-6 d-flex flex-wrap gap-2 justify-content-lg-end">
@@ -222,7 +270,16 @@ export default function OrderHistoryPage() {
 
                       {order.refund && (
                         <div className="mt-3 d-flex align-items-center gap-2 flex-wrap">
-                          <span className={`badge ${refundBadgeClass(order.refund.status)}`}>
+                          <span
+                            className="badge"
+                            style={{
+                              ...statusPillStyle(statusPillClass(order.refund.status)),
+                              textTransform: "uppercase",
+                              letterSpacing: "0.06em",
+                              fontSize: 10,
+                              fontWeight: 700,
+                            }}
+                          >
                             Refund: {order.refund.status}
                           </span>
                           {order.refund.admin_note && (
