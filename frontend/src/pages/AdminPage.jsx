@@ -19,6 +19,16 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [refunds, setRefunds] = useState([]);
   const [users, setUsers] = useState([]);
+  const [userAuditLog, setUserAuditLog] = useState([]);
+  const [usersSearch, setUsersSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [userStatusFilter, setUserStatusFilter] = useState("all");
+  const [usersPage, setUsersPage] = useState(1);
+  const [selectedUsers, setSelectedUsers] = useState({});
+  const [bulkUserAction, setBulkUserAction] = useState("suspend");
+  const [bulkUserReason, setBulkUserReason] = useState("");
+  const [userSummary, setUserSummary] = useState(null);
+  const [loadingUserSummary, setLoadingUserSummary] = useState(false);
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [messageSearch, setMessageSearch] = useState("");
@@ -32,6 +42,8 @@ export default function AdminPage() {
   const [savingStockId, setSavingStockId] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [savingRefundId, setSavingRefundId] = useState(null);
+  const [savingUserId, setSavingUserId] = useState(null);
+  const [runningBulkUsersAction, setRunningBulkUsersAction] = useState(false);
   const [stockDraft, setStockDraft] = useState({});
   const [orderStatusDraft, setOrderStatusDraft] = useState({});
   const [refundStatusDraft, setRefundStatusDraft] = useState({});
@@ -56,7 +68,7 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [reportsRes, productsRes, ordersRes, refundsRes, usersRes, messagesRes, reviewsRes, categoriesRes] = await Promise.all([
+      const [reportsRes, productsRes, ordersRes, refundsRes, usersRes, messagesRes, reviewsRes, categoriesRes, auditRes] = await Promise.all([
         api.get("/api/admin/reports"),
         api.get("/api/admin/products"),
         api.get("/api/admin/orders"),
@@ -65,6 +77,7 @@ export default function AdminPage() {
         api.get("/api/admin/messages"),
         api.get("/api/admin/reviews"),
         api.get("/api/admin/categories").catch(() => ({ data: [] })),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
       ]);
 
       setReports(reportsRes.data || null);
@@ -72,6 +85,7 @@ export default function AdminPage() {
       setOrders(ordersRes.data || []);
       setRefunds(refundsRes.data || []);
       setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
       setMessages(messagesRes.data || []);
       setReviews(reviewsRes.data || []);
       const cats = categoriesRes.data || [];
@@ -219,6 +233,10 @@ export default function AdminPage() {
     setMessagePage(1);
   }, [messageSearch, messageStatusFilter]);
 
+  useEffect(() => {
+    setUsersPage(1);
+  }, [usersSearch, userRoleFilter, userStatusFilter]);
+
   const deleteReview = async (id) => {
     if (!window.confirm("Delete this review?")) return;
     try {
@@ -242,6 +260,89 @@ export default function AdminPage() {
       alert(err?.response?.data?.message || "Failed to delete user");
     }
   };
+
+  const updateUserSuspension = async (targetUser, suspended) => {
+    if (Number(targetUser?.id) === Number(user?.id)) {
+      alert("You cannot change your own admin account status.");
+      return;
+    }
+    const reason = suspended
+      ? (window.prompt("Reason for suspension (optional):", "") || "")
+      : "";
+    setSavingUserId(targetUser.id);
+    try {
+      await api.put(`/api/admin/users/${targetUser.id}/suspend`, { suspended, reason });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUser.id
+            ? {
+                ...u,
+                is_suspended: suspended ? 1 : 0,
+                suspended_at: suspended ? new Date().toISOString() : null,
+                suspension_reason: suspended ? (reason || "Suspended by admin") : null,
+              }
+            : u
+        )
+      );
+      const auditRes = await api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] }));
+      setUserAuditLog(auditRes.data || []);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update user suspension");
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const toggleUserSelection = (targetId) => {
+    setSelectedUsers((prev) => ({ ...prev, [targetId]: !prev[targetId] }));
+  };
+
+  const selectedUserIds = useMemo(
+    () => Object.keys(selectedUsers).filter((id) => selectedUsers[id]).map((id) => Number(id)),
+    [selectedUsers]
+  );
+
+  const runBulkUserAction = async () => {
+    if (!selectedUserIds.length) {
+      alert("Select at least one user first.");
+      return;
+    }
+    if (!window.confirm(`Run ${bulkUserAction} for ${selectedUserIds.length} users?`)) return;
+    setRunningBulkUsersAction(true);
+    try {
+      await api.post("/api/admin/users/bulk-action", {
+        userIds: selectedUserIds,
+        action: bulkUserAction,
+        reason: bulkUserReason,
+      });
+      const [usersRes, auditRes] = await Promise.all([
+        api.get("/api/admin/users"),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+      ]);
+      setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
+      setSelectedUsers({});
+      setBulkUserReason("");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Bulk action failed");
+    } finally {
+      setRunningBulkUsersAction(false);
+    }
+  };
+
+  const openUserSummary = async (targetUser) => {
+    setLoadingUserSummary(true);
+    try {
+      const res = await api.get(`/api/admin/users/${targetUser.id}/summary`);
+      setUserSummary(res.data || null);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to load user summary");
+    } finally {
+      setLoadingUserSummary(false);
+    }
+  };
+
+  const closeUserSummary = () => setUserSummary(null);
 
   const startEdit = (p) => {
     setEditingProductId(p.id);
@@ -554,6 +655,35 @@ export default function AdminPage() {
     const start = (safeMessagePage - 1) * messagePageSize;
     return filteredMessages.slice(start, start + messagePageSize);
   }, [filteredMessages, safeMessagePage]);
+
+  const filteredUsers = useMemo(() => {
+    const q = usersSearch.trim().toLowerCase();
+    return users.filter((u) => {
+      const role = Number(u.is_admin) === 1 ? "admin" : "customer";
+      const status = Number(u.is_suspended) === 1 ? "suspended" : "active";
+      if (userRoleFilter !== "all" && role !== userRoleFilter) return false;
+      if (userStatusFilter !== "all" && status !== userStatusFilter) return false;
+      if (!q) return true;
+      return (
+        String(u.name || "").toLowerCase().includes(q) ||
+        String(u.email || "").toLowerCase().includes(q) ||
+        String(u.id || "").toLowerCase().includes(q)
+      );
+    });
+  }, [users, usersSearch, userRoleFilter, userStatusFilter]);
+
+  const usersPageSize = 10;
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPageSize));
+  const safeUsersPage = Math.min(usersPage, usersTotalPages);
+  const pagedUsers = useMemo(() => {
+    const start = (safeUsersPage - 1) * usersPageSize;
+    return filteredUsers.slice(start, start + usersPageSize);
+  }, [filteredUsers, safeUsersPage]);
+
+  const allPagedUsersSelected = useMemo(
+    () => pagedUsers.length > 0 && pagedUsers.every((u) => selectedUsers[u.id]),
+    [pagedUsers, selectedUsers]
+  );
 
   const tabs = [
     { key: "dashboard", label: "Dashboard",        icon: "bi-speedometer2" },
@@ -1795,23 +1925,107 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Users</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{users.length} accounts</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredUsers.length} accounts</span>
                 </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={usersSearch}
+                    onChange={(e) => setUsersSearch(e.target.value)}
+                    placeholder="Search id, name, email"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={userRoleFilter}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
+                  >
+                    <option value="all">All roles</option>
+                    <option value="customer">Customers</option>
+                    <option value="admin">Admins</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={userStatusFilter}
+                    onChange={(e) => setUserStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All status</option>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+
+                <div
+                  className="d-flex gap-2 flex-wrap align-items-center p-2 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{selectedUserIds.length} selected</span>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={bulkUserAction}
+                    onChange={(e) => setBulkUserAction(e.target.value)}
+                  >
+                    <option value="suspend">Suspend</option>
+                    <option value="unsuspend">Unsuspend</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={bulkUserReason}
+                    onChange={(e) => setBulkUserReason(e.target.value)}
+                    placeholder="Bulk reason (optional)"
+                  />
+                  <button
+                    className="btn btn-sm btn-outline-light"
+                    onClick={runBulkUserAction}
+                    disabled={runningBulkUsersAction || selectedUserIds.length === 0}
+                  >
+                    {runningBulkUsersAction ? "Running..." : "Run Bulk Action"}
+                  </button>
+                </div>
+
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
                     <thead className="table-light">
                       <tr>
+                        <th style={{ width: 42 }}>
+                          <input
+                            type="checkbox"
+                            checked={allPagedUsersSelected}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedUsers((prev) => {
+                                const next = { ...prev };
+                                for (const row of pagedUsers) next[row.id] = checked;
+                                return next;
+                              });
+                            }}
+                          />
+                        </th>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Status</th>
                         <th>Joined</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => (
+                      {pagedUsers.map((u) => (
                         <tr key={u.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedUsers[u.id]}
+                              onChange={() => toggleUserSelection(u.id)}
+                              disabled={Number(u.id) === Number(user?.id)}
+                            />
+                          </td>
                           <td>{u.id}</td>
                           <td>{u.name}</td>
                           <td style={{ color: "var(--sub)" }}>{u.email}</td>
@@ -1822,31 +2036,171 @@ export default function AdminPage() {
                               <span className="badge text-bg-secondary">Customer</span>
                             )}
                           </td>
+                          <td>
+                            {Number(u.is_suspended) === 1 ? (
+                              <span className="badge text-bg-danger">Suspended</span>
+                            ) : (
+                              <span className="badge text-bg-success">Active</span>
+                            )}
+                          </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
-                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}
                           </td>
                           <td>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => deleteUser(u.id)}
-                              disabled={Number(u.id) === Number(user?.id)}
-                            >
-                              Delete
-                            </button>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button
+                                className="btn btn-sm btn-outline-light"
+                                onClick={() => openUserSummary(u)}
+                              >
+                                View
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-warning"
+                                onClick={() => updateUserSuspension(u, Number(u.is_suspended) !== 1)}
+                                disabled={Number(u.id) === Number(user?.id) || savingUserId === u.id}
+                              >
+                                {savingUserId === u.id ? "Saving..." : Number(u.is_suspended) === 1 ? "Unsuspend" : "Suspend"}
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => deleteUser(u.id)}
+                                disabled={Number(u.id) === Number(user?.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {users.length === 0 && (
-                        <tr><td colSpan={6} className="text-center" style={{ color: "var(--sub)" }}>No users found.</td></tr>
+                      {pagedUsers.length === 0 && (
+                        <tr><td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>No users found.</td></tr>
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {filteredUsers.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      Page {safeUsersPage} of {usersTotalPages}
+                    </span>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeUsersPage <= 1}
+                        onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeUsersPage >= usersTotalPages}
+                        onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="osai-admin-tab-header" style={{ marginBottom: 10 }}>
+                    <h5 className="osai-admin-section-title" style={{ fontSize: 16 }}>Admin Audit Log</h5>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>When</th>
+                          <th>Admin</th>
+                          <th>Action</th>
+                          <th>Target</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userAuditLog.map((a) => (
+                          <tr key={a.id}>
+                            <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                              {a.created_at ? new Date(a.created_at).toLocaleString() : "-"}
+                            </td>
+                            <td>{a.admin_name || "Admin"}</td>
+                            <td>{a.action}</td>
+                            <td>{a.target_type}{a.target_id ? ` #${a.target_id}` : ""}</td>
+                            <td style={{ maxWidth: 360, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {a.details || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                        {userAuditLog.length === 0 && (
+                          <tr><td colSpan={5} className="text-center" style={{ color: "var(--sub)" }}>No admin actions yet.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </section>
       </div>
+
+      {userSummary && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeUserSummary}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">User Summary #{userSummary.user?.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserSummary}>
+                  Close
+                </button>
+              </div>
+              {loadingUserSummary ? (
+                <div style={{ color: "var(--sub)" }}>Loading...</div>
+              ) : (
+                <div className="row g-3">
+                  <div className="col-12 col-md-6">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Name</div>
+                    <div>{userSummary.user?.name || "-"}</div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Email</div>
+                    <div>{userSummary.user?.email || "-"}</div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Orders</div>
+                    <div>{Number(userSummary.orders?.total_orders || 0)}</div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Total Spend</div>
+                    <div>GBP {Number(userSummary.orders?.total_spend || 0).toFixed(2)}</div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Refund Requests</div>
+                    <div>{Number(userSummary.refunds?.total_refunds || 0)}</div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Pending Refunds</div>
+                    <div>{Number(userSummary.refunds?.pending_refunds || 0)}</div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div style={{ color: "var(--sub)", fontSize: 12 }}>Contact Messages</div>
+                    <div>{Number(userSummary.messages?.total_messages || 0)}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedMessage && (
         <div
