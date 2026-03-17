@@ -3,15 +3,16 @@ const db = require("../config/db");
 
 async function adminMiddleware(req, res, next) {
   try {
-    const userId = req.session?.userId; // fixed bug (use session)
+    const userId = req.session?.userId;
 
+    // check authentication
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
     // check user in database
     const [rows] = await db.query(
-      "SELECT is_admin FROM users WHERE id = ?",
+      "SELECT id, is_admin FROM users WHERE id = ?",
       [userId]
     );
 
@@ -19,16 +20,21 @@ async function adminMiddleware(req, res, next) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    if (rows[0].is_admin !== 1) {
+    const user = rows[0];
+
+    // admin check (safe for 0/1 values)
+    if (!user.is_admin) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
-    // user is admin
-    next();
+    // attach user (optional, non-breaking improvement)
+    req.user = user;
 
+    next();
   } catch (err) {
-    console.error("Admin middleware error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Admin middleware error:", err.code || err.message);
+
+    return res.status(500).json({ message: "Server error" });
   }
 }
 
