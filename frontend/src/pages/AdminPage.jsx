@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [loadingUserSummary, setLoadingUserSummary] = useState(false);
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
   const [messageSearch, setMessageSearch] = useState("");
   const [messageStatusFilter, setMessageStatusFilter] = useState("all");
   const [messagePage, setMessagePage] = useState(1);
@@ -332,6 +333,9 @@ export default function AdminPage() {
       setSavingUserRoleId(null);
     }
   };
+
+  const openReviewModal = (review) => setSelectedReview(review);
+  const closeReviewModal = () => setSelectedReview(null);
 
   const toggleUserSelection = (targetId) => {
     setSelectedUsers((prev) => ({ ...prev, [targetId]: !prev[targetId] }));
@@ -1928,9 +1932,14 @@ export default function AdminPage() {
                             {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteReview(r.id)}>
-                              Delete
-                            </button>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button className="btn btn-sm btn-outline-light" onClick={() => openReviewModal(r)}>
+                                View
+                              </button>
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteReview(r.id)}>
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -2392,6 +2401,57 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedReview && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeReviewModal}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Review #{selectedReview.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeReviewModal}>
+                  Close
+                </button>
+              </div>
+              <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                <div><strong style={{ color: "var(--text)" }}>Product:</strong> #{selectedReview.product_id}</div>
+                <div><strong style={{ color: "var(--text)" }}>Reviewer:</strong> {selectedReview.reviewer_name || "-"}</div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Rating:</strong>{" "}
+                  <span style={{ color: "#fbbf24" }}>
+                    {"★".repeat(Number(selectedReview.rating || 0))}
+                    {"☆".repeat(Math.max(0, 5 - Number(selectedReview.rating || 0)))}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Date:</strong>{" "}
+                  {selectedReview.created_at ? new Date(selectedReview.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+              <div
+                className="p-3 rounded-2"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--line)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  maxHeight: "45vh",
+                  overflowY: "auto",
+                }}
+              >
+                {selectedReview.comment || "(No comment content)"}
+              </div>
             </div>
           </div>
         </div>
