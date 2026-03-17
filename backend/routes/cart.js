@@ -5,6 +5,29 @@ const router = express.Router();
 
 // Table name for cart items
 const TABLE_NAME = "basket_items";
+let _hasProductSizeStock = null;
+
+async function ensureProductSizeStockColumn() {
+  const [tableRows] = await db.query("SHOW TABLES LIKE 'product_sizes'");
+  if (!tableRows.length) return;
+  if (_hasProductSizeStock === null) {
+    const [rows] = await db.query(
+      `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_sizes' AND COLUMN_NAME = 'stock' LIMIT 1`
+    );
+    _hasProductSizeStock = rows.length > 0;
+  }
+  if (!_hasProductSizeStock) {
+    await db.query("ALTER TABLE product_sizes ADD COLUMN stock INT NOT NULL DEFAULT 0");
+    _hasProductSizeStock = true;
+    await db.query(
+      `UPDATE product_sizes ps
+       JOIN products p ON p.id = ps.product_id
+       SET ps.stock = COALESCE(p.stock, 0)
+       WHERE ps.stock IS NULL OR ps.stock = 0`
+    );
+  }
+}
 
 // Ensure color/size/selected_image_url columns exist (run once on startup)
 (async () => {
@@ -48,6 +71,7 @@ const getUserId = (req, res, next) => {
  */
 router.post("/", getUserId, async (req, res) => {
   try {
+    await ensureProductSizeStockColumn();
     const userId = req.userId;
     const { productId, quantity, color = null, size = null, selectedImageUrl = null } = req.body;
     const qtyToAdd = Number(quantity);
@@ -91,6 +115,25 @@ router.post("/", getUserId, async (req, res) => {
     if (availableStock <= 0) {
       return res.status(409).json({ message: "This item is sold out" });
     }
+    if (size) {
+      const [sizeRows] = await db.query(
+        "SELECT stock FROM product_sizes WHERE product_id = ? AND size = ? LIMIT 1",
+        [realProductId, size]
+      );
+      if (!sizeRows.length) {
+        return res.status(409).json({ message: "Selected size is unavailable" });
+      }
+      const availableSizeStock = Number(sizeRows[0].stock || 0);
+      if (availableSizeStock <= 0) {
+        return res.status(409).json({ message: "Selected size is sold out" });
+      }
+      if (qtyToAdd > availableSizeStock) {
+        return res.status(409).json({
+          message: `Only ${availableSizeStock} left in size ${size}`,
+          availableStock: availableSizeStock,
+        });
+      }
+    }
 
     // === STEP 3: CHECK IF ALREADY IN CART (match by product + color + size) ===
     const [existingRows] = await db.query(
@@ -108,6 +151,19 @@ router.post("/", getUserId, async (req, res) => {
         message: `Only ${availableStock} left in stock`,
         availableStock,
       });
+    }
+    if (size) {
+      const [sizeRows] = await db.query(
+        "SELECT stock FROM product_sizes WHERE product_id = ? AND size = ? LIMIT 1",
+        [realProductId, size]
+      );
+      const availableSizeStock = sizeRows.length ? Number(sizeRows[0].stock || 0) : 0;
+      if (newQty > availableSizeStock) {
+        return res.status(409).json({
+          message: `Only ${availableSizeStock} left in size ${size}`,
+          availableStock: availableSizeStock,
+        });
+      }
     }
 
     if (existingRows.length > 0) {
@@ -186,6 +242,7 @@ router.get("/", getUserId, async (req, res) => {
  */
 router.put("/:itemId", getUserId, async (req, res) => {
   try {
+    await ensureProductSizeStockColumn();
     const { itemId } = req.params;
     const { quantity } = req.body;
     const userId = req.userId;
@@ -224,6 +281,23 @@ router.put("/:itemId", getUserId, async (req, res) => {
         message: availableStock <= 0 ? "This item is sold out" : `Only ${availableStock} left in stock`,
         availableStock,
       });
+    }
+
+    const selectedSize = existing[0].size;
+    if (selectedSize) {
+      const [sizeRows] = await db.query(
+        "SELECT stock FROM product_sizes WHERE product_id = ? AND size = ? LIMIT 1",
+        [productId, selectedSize]
+      );
+      const availableSizeStock = sizeRows.length ? Number(sizeRows[0].stock || 0) : 0;
+      if (Number(quantity) > availableSizeStock) {
+        return res.status(409).json({
+          message: availableSizeStock <= 0
+            ? `Size ${selectedSize} is sold out`
+            : `Only ${availableSizeStock} left in size ${selectedSize}`,
+          availableStock: availableSizeStock,
+        });
+      }
     }
 
     // Update quantity
