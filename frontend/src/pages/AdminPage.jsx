@@ -759,6 +759,10 @@ export default function AdminPage() {
     [rangeOrders]
   );
 
+  const stockFlow7d = useMemo(() => {
+    return Array.isArray(reports?.productFlow7d) ? reports.productFlow7d : [];
+  }, [reports]);
+
   const needsActionItems = useMemo(() => {
     const pendingRefunds = refunds.filter((r) => (r.status || "pending") === "pending").length;
     const unreadMessages = messages.filter((m) => (m.status || "unread") === "unread").length;
@@ -1065,22 +1069,30 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="row g-2">
-                    <div className="col-md-4">
+                    <div className="col-lg-3 col-md-6">
                       <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Orders</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeOrders.length}</div>
                       </div>
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-lg-3 col-md-6">
                       <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Refund Requests</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeRefunds.length}</div>
                       </div>
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-lg-3 col-md-6">
                       <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Revenue</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>GBP {rangeRevenue.toFixed(2)}</div>
+                      </div>
+                    </div>
+                    <div className="col-lg-3 col-md-6">
+                      <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
+                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Stock Flow (7D)</div>
+                        <div style={{ fontSize: 15, fontWeight: 700 }}>
+                          +{Number(reports?.totalIncomingUnits7d || 0)} / -{Number(reports?.totalOutgoingUnits7d || 0)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3027,10 +3039,51 @@ export default function AdminPage() {
                   {savingUserProfileId === editingUser.id ? "Saving..." : "Save"}
                 </button>
               </div>
+                </div>
+              </div>
+
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="osai-admin-tab-header">
+                    <h4 className="osai-admin-section-title">Stock Movement (Last 7 Days)</h4>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      +{Number(reports?.totalIncomingUnits7d || 0)} incoming / -{Number(reports?.totalOutgoingUnits7d || 0)} outgoing
+                    </span>
+                  </div>
+                  {stockFlow7d.length === 0 ? (
+                    <p className="mb-0" style={{ color: "var(--sub)", fontSize: 13 }}>
+                      No stock movements recorded yet.
+                    </p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle">
+                        <thead className="table-light">
+                          <tr>
+                            <th>SKU</th>
+                            <th>Product</th>
+                            <th>Incoming</th>
+                            <th>Outgoing</th>
+                            <th>Net</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockFlow7d.map((row) => (
+                            <tr key={`flow-${row.product_id}`}>
+                              <td>{row.sku || "-"}</td>
+                              <td>{row.name || `#${row.product_id}`}</td>
+                              <td style={{ color: "#34d399", fontWeight: 700 }}>+{Number(row.incoming_units || 0)}</td>
+                              <td style={{ color: "#f87171", fontWeight: 700 }}>-{Number(row.outgoing_units || 0)}</td>
+                              <td style={{ fontWeight: 700 }}>{Number(row.net_units || 0)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
       {selectedReview && (
         <div

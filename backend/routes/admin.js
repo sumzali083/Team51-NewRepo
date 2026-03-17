@@ -13,6 +13,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
+const { ensureStockMovementsTable, recordStockMovement } = require("../services/stockMovements");
 
 const router = express.Router();
 
@@ -654,6 +655,7 @@ router.get("/low-stock", adminMiddleware, async (req, res) => {
 
 router.get("/reports", adminMiddleware, async (req, res) => {
   try {
+    await ensureStockMovementsTable();
     const [[productCount]] = await db.query(
       "SELECT COUNT(*) AS totalProducts FROM products"
     );
@@ -668,6 +670,28 @@ router.get("/reports", adminMiddleware, async (req, res) => {
 
     const [[lowStock]] = await db.query(
       "SELECT COUNT(*) AS lowStockCount FROM products WHERE stock <= 5"
+    );
+    const [[movementTotals]] = await db.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN movement_type = 'incoming' AND created_at >= (NOW() - INTERVAL 7 DAY) THEN quantity ELSE 0 END), 0) AS incoming_7d,
+         COALESCE(SUM(CASE WHEN movement_type = 'outgoing' AND created_at >= (NOW() - INTERVAL 7 DAY) THEN quantity ELSE 0 END), 0) AS outgoing_7d
+       FROM stock_movements`
+    );
+    const [productFlow7d] = await db.query(
+      `SELECT
+         p.id AS product_id,
+         p.sku,
+         p.name,
+         COALESCE(SUM(CASE WHEN sm.movement_type = 'incoming' THEN sm.quantity ELSE 0 END), 0) AS incoming_units,
+         COALESCE(SUM(CASE WHEN sm.movement_type = 'outgoing' THEN sm.quantity ELSE 0 END), 0) AS outgoing_units
+       FROM products p
+       LEFT JOIN stock_movements sm
+         ON sm.product_id = p.id
+        AND sm.created_at >= (NOW() - INTERVAL 7 DAY)
+       GROUP BY p.id, p.sku, p.name
+       HAVING incoming_units > 0 OR outgoing_units > 0
+       ORDER BY (incoming_units + outgoing_units) DESC
+       LIMIT 20`
     );
     let refundCount = { totalRefundRequests: 0 };
     let pendingRefundCount = { pendingRefundRequests: 0 };
@@ -688,6 +712,16 @@ router.get("/reports", adminMiddleware, async (req, res) => {
       totalOrders: orderCount.totalOrders,
       totalRevenue: revenue.totalRevenue || 0,
       lowStockCount: lowStock.lowStockCount,
+      totalIncomingUnits7d: Number(movementTotals.incoming_7d || 0),
+      totalOutgoingUnits7d: Number(movementTotals.outgoing_7d || 0),
+      productFlow7d: (productFlow7d || []).map((r) => ({
+        product_id: Number(r.product_id),
+        sku: r.sku,
+        name: r.name,
+        incoming_units: Number(r.incoming_units || 0),
+        outgoing_units: Number(r.outgoing_units || 0),
+        net_units: Number(r.incoming_units || 0) - Number(r.outgoing_units || 0),
+      })),
       totalRefundRequests: refundCount.totalRefundRequests,
       pendingRefundRequests: pendingRefundCount.pendingRefundRequests
     });
