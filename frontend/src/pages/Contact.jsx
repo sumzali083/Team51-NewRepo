@@ -330,7 +330,7 @@ export default function Contact() {
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            title="Aston University Location"
+            title="Our Location - 134a Aston Road, Birmingham, UK"
           />
         </div>
         <p style={{
