@@ -85,15 +85,50 @@ export default function WishlistPage() {
             const isSoldOut = hasStockInfo && stock <= 0;
             const isLowStock = hasStockInfo && stock > 0 && stock <= 5;
 
+            const price = Number(item.price || 0);
+            const originalPrice = item.originalPrice ? Number(item.originalPrice) : null;
+            const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : null;
+
             return (
               <motion.div key={item.id} className="col-md-4" variants={cardVariants}>
                 <div className="card h-100 shadow-sm">
-                  {item.image || item.images?.[0] ? (
-                    <img src={item.image || item.images?.[0]} className="card-img-top" alt={item.name} />
-                  ) : null}
+                  {/* Image with sale badge */}
+                  <div style={{ position: "relative" }}>
+                    {item.image || item.images?.[0] ? (
+                      <Link to={`/product/${item.id}`}>
+                        <img src={item.image || item.images?.[0]} className="card-img-top" alt={item.name} />
+                      </Link>
+                    ) : null}
+                    {discountPct && (
+                      <span style={{
+                        position: "absolute", top: 10, left: 10,
+                        background: "#e53935", color: "#fff",
+                        fontSize: 11, fontWeight: 700, padding: "3px 8px",
+                        borderRadius: 3, letterSpacing: "0.04em",
+                      }}>-{discountPct}%</span>
+                    )}
+                  </div>
+
                   <div className="card-body d-flex flex-column">
-                    <h5 className="card-title">{item.name}</h5>
-                    <p className="card-text fw-bold">£{Number(item.price || 0).toFixed(2)}</p>
+                    <Link to={`/product/${item.id}`} className="text-decoration-none">
+                      <h5 className="card-title">{item.name}</h5>
+                    </Link>
+
+                    {/* Price — sale or normal */}
+                    <div style={{ marginBottom: 8 }}>
+                      {originalPrice ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ color: "#888", fontSize: 13, textDecoration: "line-through" }}>
+                            £{originalPrice.toFixed(2)}
+                          </span>
+                          <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>
+                            £{price.toFixed(2)}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="card-text fw-bold mb-0">£{price.toFixed(2)}</p>
+                      )}
+                    </div>
 
                     {hasStockInfo && (isSoldOut || isLowStock) && (
                       <div className="mb-2">
