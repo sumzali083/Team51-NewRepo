@@ -165,9 +165,9 @@ export default function AdminPage() {
   //  FEEDBACK FILTER (LIKE REVIEWS SEARCH)
   const filteredFeedback = useMemo(() => {
     return feedback.filter((f) =>
-      f.name.toLowerCase().includes(feedbackSearch.toLowerCase()) ||
-      f.email.toLowerCase().includes(feedbackSearch.toLowerCase()) ||
-      f.comments.toLowerCase().includes(feedbackSearch.toLowerCase())
+      (f.name || "").toLowerCase().includes(feedbackSearch.toLowerCase()) ||
+      (f.email || "").toLowerCase().includes(feedbackSearch.toLowerCase()) ||
+      (f.comments || "").toLowerCase().includes(feedbackSearch.toLowerCase())
     );
   }, [feedback, feedbackSearch]);
   
