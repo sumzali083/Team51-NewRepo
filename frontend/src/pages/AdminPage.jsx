@@ -2236,6 +2236,7 @@ export default function AdminPage() {
           )}
 
           {activeTab === "inventory" && (
+            <>
             <div className="card border-0 shadow-sm">
               <div className="card-body">
                 <div className="osai-admin-tab-header">
@@ -2411,9 +2412,8 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+            </>
           )}
-
-          {activeTab === "stockAlerts" && (
             <div className="d-flex flex-column gap-3">
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
