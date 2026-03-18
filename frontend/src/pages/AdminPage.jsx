@@ -88,7 +88,7 @@ export default function AdminPage() {
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
   const [productDraft, setProductDraft] = useState({
-    sku: "", name: "", category_id: 0, price: "", original_price: "", stock: 0,
+    sku: "", name: "", category_id: 0, price: "", original_price: "", onSale: false, stock: 0,
     description: "", sizes: [], sizeStocks: {}, colors: ["", ""], imageFiles: [null, null, null],
   });
   const [editingProductId, setEditingProductId] = useState(null);
@@ -753,7 +753,7 @@ export default function AdminPage() {
         name: name.trim(),
         category_id: Number(category_id),
         price: Number(price),
-        original_price: productDraft.original_price ? Number(productDraft.original_price) : null,
+        original_price: productDraft.onSale && productDraft.original_price ? Number(productDraft.original_price) : null,
         stock: Number(stock) || 0,
         description: description.trim(),
         sizes,
@@ -762,7 +762,7 @@ export default function AdminPage() {
         images: uploadedUrls,
       });
       setProductDraft({
-        sku: "", name: "", category_id: categories[0]?.id || 0, price: "", original_price: "", stock: 0,
+        sku: "", name: "", category_id: categories[0]?.id || 0, price: "", original_price: "", onSale: false, stock: 0,
         description: "", sizes: [], sizeStocks: {}, colors: ["", ""], imageFiles: [null, null, null],
       });
       setShowAddProduct(false);
@@ -1350,7 +1350,7 @@ export default function AdminPage() {
                           value={productDraft.category_id}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, category_id: Number(e.target.value) }))}
                         >
-                          {categories.map((c) => (
+                          {categories.filter(c => ["Mens","Womens","Kids"].includes(c.name)).map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
                         </select>
@@ -1358,38 +1358,83 @@ export default function AdminPage() {
                       <div className="col-md-3">
                         <label className="form-label">Price (GBP) *</label>
                         <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
+                          type="number" min="0.01" step="0.01"
                           className="form-control form-control-sm"
                           placeholder="29.99"
                           value={productDraft.price}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, price: e.target.value }))}
                         />
                       </div>
-                      <div className="col-md-3">
-                        <label className="form-label">Original Price <small style={{ color: "var(--muted)" }}>(sale items)</small></label>
-                        <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          className="form-control form-control-sm"
-                          placeholder="49.99"
-                          value={productDraft.original_price}
-                          onChange={(e) => setProductDraft((prev) => ({ ...prev, original_price: e.target.value }))}
-                        />
-                      </div>
                       <div className="col-md-2">
                         <label className="form-label">Stock</label>
                         <input
-                          type="number"
-                          min="0"
+                          type="number" min="0"
                           className="form-control form-control-sm"
                           placeholder="0"
                           value={productDraft.stock}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, stock: e.target.value }))}
                         />
                       </div>
+
+                      {/* On Sale toggle */}
+                      <div className="col-12">
+                        <div
+                          onClick={() => setProductDraft((prev) => ({ ...prev, onSale: !prev.onSale, original_price: "" }))}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer",
+                            padding: "10px 16px", borderRadius: 6,
+                            border: `1px solid ${productDraft.onSale ? "#e53935" : "rgba(255,255,255,0.12)"}`,
+                            background: productDraft.onSale ? "rgba(229,57,53,0.1)" : "rgba(255,255,255,0.03)",
+                            userSelect: "none",
+                          }}
+                        >
+                          <div style={{
+                            width: 36, height: 20, borderRadius: 10, position: "relative",
+                            background: productDraft.onSale ? "#e53935" : "rgba(255,255,255,0.15)",
+                            transition: "background 0.2s",
+                            flexShrink: 0,
+                          }}>
+                            <div style={{
+                              position: "absolute", top: 3, left: productDraft.onSale ? 19 : 3,
+                              width: 14, height: 14, borderRadius: "50%", background: "#fff",
+                              transition: "left 0.2s",
+                            }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: productDraft.onSale ? "#fff" : "#aaa" }}>
+                              On Sale
+                            </div>
+                            <div style={{ fontSize: 11, color: "#666", marginTop: 1 }}>
+                              Product will appear on the Sale page
+                            </div>
+                          </div>
+                          {productDraft.onSale && (
+                            <span style={{
+                              marginLeft: 4, background: "#e53935", color: "#fff",
+                              fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, letterSpacing: "0.08em",
+                            }}>SALE</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Original price — only shown when On Sale is active */}
+                      {productDraft.onSale && (
+                        <div className="col-md-4">
+                          <label className="form-label">
+                            Original Price <small style={{ color: "var(--muted)" }}>(before sale)</small>
+                          </label>
+                          <input
+                            type="number" min="0.01" step="0.01"
+                            className="form-control form-control-sm"
+                            placeholder="49.99"
+                            value={productDraft.original_price}
+                            onChange={(e) => setProductDraft((prev) => ({ ...prev, original_price: e.target.value }))}
+                          />
+                          <small style={{ color: "#666", fontSize: 11 }}>
+                            The price before the discount — shown as strikethrough on the product
+                          </small>
+                        </div>
+                      )}
 
                       <div className="col-12">
                         <label className="form-label">Description</label>
@@ -1583,7 +1628,7 @@ export default function AdminPage() {
                         <label className="form-label">Category *</label>
                         <select className="form-select form-select-sm" value={editDraft.category_id}
                           onChange={(e) => setEditDraft((p) => ({ ...p, category_id: Number(e.target.value) }))}>
-                          {categories.map((c) => (
+                          {categories.filter(c => ["Mens","Womens","Kids"].includes(c.name)).map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
                         </select>
