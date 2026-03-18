@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [feedbackSearch, setFeedbackSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [messageSearch, setMessageSearch] = useState("");
   const [messageStatusFilter, setMessageStatusFilter] = useState("all");
   const [messagePage, setMessagePage] = useState(1);
@@ -475,6 +476,8 @@ export default function AdminPage() {
 
   const openReviewModal = (review) => setSelectedReview(review);
   const closeReviewModal = () => setSelectedReview(null);
+  const openFeedbackModal = (feedbackItem) => setSelectedFeedback(feedbackItem);
+  const closeFeedbackModal = () => setSelectedFeedback(null);
 
   const toggleUserSelection = (targetId) => {
     setSelectedUsers((prev) => ({ ...prev, [targetId]: !prev[targetId] }));
@@ -2685,6 +2688,9 @@ export default function AdminPage() {
                           </td>
                           <td>
                             <div className="d-flex gap-2 flex-wrap">
+                              <button className="btn btn-sm btn-outline-light" onClick={() => openFeedbackModal(f)}>
+                                View
+                              </button>
                               <button className="btn btn-sm btn-outline-danger" onClick={() => deleteFeedback(f.id)}>
                                 Delete
                               </button>
@@ -3502,6 +3508,53 @@ export default function AdminPage() {
                 }}
               >
                 {selectedReview.comment || "(No comment content)"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedFeedback && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 2000 }}
+          onClick={closeFeedbackModal}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(720px, 92vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Feedback #{selectedFeedback.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeFeedbackModal}>Close</button>
+              </div>
+              <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                <div><strong style={{ color: "var(--text)" }}>Name:</strong> {selectedFeedback.name || "-"}</div>
+                <div><strong style={{ color: "var(--text)" }}>Email:</strong> {selectedFeedback.email || "-"}</div>
+                <div><strong style={{ color: "var(--text)" }}>Rating:</strong>{" "}
+                  <span style={{ color: "#fbbf24" }}>
+                    {"★".repeat(Number(selectedFeedback.rating || 0))}
+                    {"☆".repeat(Math.max(0, 5 - Number(selectedFeedback.rating || 0)))}
+                  </span>
+                </div>
+                <div><strong style={{ color: "var(--text)" }}>Date:</strong>{" "}
+                  {selectedFeedback.created_at ? new Date(selectedFeedback.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+              <div
+                className="p-3 rounded-2"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--line)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  maxHeight: "45vh",
+                  overflowY: "auto",
+                }}
+              >
+                {selectedFeedback.comments || "(No comment content)"}
               </div>
             </div>
           </div>
