@@ -55,7 +55,7 @@ export default function AdminPage() {
   const [selectedReview, setSelectedReview] = useState(null);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [messageSearch, setMessageSearch] = useState("");
-  const [messageStatusFilter, setMessageStatusFilter] = useState("all");
+  const [messageStatusFilter, setMessageStatusFilter] = useState("active");
   const [messagePage, setMessagePage] = useState(1);
   const [reviewSearch, setReviewSearch] = useState("");
   const [reviewRatingFilter, setReviewRatingFilter] = useState("all");
@@ -1131,7 +1131,11 @@ export default function AdminPage() {
     const q = messageSearch.trim().toLowerCase();
     return messages.filter((m) => {
       const status = (m.status || "unread").toLowerCase();
-      if (messageStatusFilter !== "all" && status !== messageStatusFilter) return false;
+      if (messageStatusFilter === "active" && status === "archived") return false;
+      if (messageStatusFilter === "archived" && status !== "archived") return false;
+      if (!["all", "active", "archived"].includes(messageStatusFilter) && status !== messageStatusFilter) {
+        return false;
+      }
       if (!q) return true;
 
       return (
@@ -1149,6 +1153,15 @@ export default function AdminPage() {
     const start = (safeMessagePage - 1) * messagePageSize;
     return filteredMessages.slice(start, start + messagePageSize);
   }, [filteredMessages, safeMessagePage]);
+
+  const archivedMessagesCount = useMemo(
+    () => messages.filter((m) => (m.status || "unread").toLowerCase() === "archived").length,
+    [messages]
+  );
+  const activeMessagesCount = useMemo(
+    () => messages.filter((m) => (m.status || "unread").toLowerCase() !== "archived").length,
+    [messages]
+  );
 
   const filteredUsers = useMemo(() => {
     const q = usersSearch.trim().toLowerCase();
@@ -2989,7 +3002,35 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Contact Messages</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredMessages.length} messages</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                    {filteredMessages.length} shown ({messages.length} total)
+                  </span>
+                </div>
+                <div
+                  className="d-flex gap-2 flex-wrap mb-3"
+                  style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)", padding: 8 }}
+                >
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "active" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("active")}
+                  >
+                    Active ({activeMessagesCount})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "archived" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("archived")}
+                  >
+                    Archived ({archivedMessagesCount})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "all" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("all")}
+                  >
+                    All ({messages.length})
+                  </button>
                 </div>
                 <div className="d-flex gap-2 flex-wrap mb-3">
                   <input
@@ -3005,6 +3046,7 @@ export default function AdminPage() {
                     value={messageStatusFilter}
                     onChange={(e) => setMessageStatusFilter(e.target.value)}
                   >
+                    <option value="active">Active (not archived)</option>
                     <option value="all">All statuses</option>
                     <option value="unread">Unread</option>
                     <option value="read">Read</option>
@@ -3052,17 +3094,19 @@ export default function AdminPage() {
                                 View
                               </button>
                               {(m.status || "unread") !== "archived" ? (
-                                <button className="btn btn-sm btn-outline-secondary" onClick={() => updateMessageStatus(m.id, "archived")}>
-                                  Archive
-                                </button>
+                                <>
+                                  <button className="btn btn-sm btn-outline-secondary" onClick={() => updateMessageStatus(m.id, "archived")}>
+                                    Archive
+                                  </button>
+                                  <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(m)}>
+                                    Reply
+                                  </button>
+                                </>
                               ) : (
                                 <button className="btn btn-sm btn-outline-secondary" onClick={() => updateMessageStatus(m.id, "unread")}>
                                   Unarchive
                                 </button>
                               )}
-                              <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(m)}>
-                                Reply
-                              </button>
                               <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(m)}>
                                 Delete
                               </button>
@@ -3961,9 +4005,11 @@ export default function AdminPage() {
               </div>
 
               <div className="d-flex gap-2 mt-3 flex-wrap">
-                <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(selectedMessage)}>
-                  Reply via Email
-                </button>
+                {(selectedMessage.status || "unread") !== "archived" ? (
+                  <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(selectedMessage)}>
+                    Reply via Email
+                  </button>
+                ) : null}
                 {(selectedMessage.status || "unread") !== "archived" ? (
                   <button
                     className="btn btn-sm btn-outline-secondary"
