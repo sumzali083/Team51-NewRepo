@@ -63,11 +63,12 @@ export default function Cart() {
         marginBottom: 32,
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         paddingBottom: 24,
+        color: "var(--text)",
         ...titleSlideFadeIn,
       }}>
         Your Basket
         {cart.length > 0 && (
-          <span style={{ fontSize: "0.4em", color: "#888", marginLeft: 16, fontFamily: "Inter,sans-serif", letterSpacing: "0.1em" }}>
+          <span style={{ fontSize: "0.4em", color: "var(--sub)", marginLeft: 16, fontFamily: "Inter,sans-serif", letterSpacing: "0.1em" }}>
             {cart.reduce((s, i) => s + (i.quantity || 0), 0)} item{cart.reduce((s, i) => s + (i.quantity || 0), 0) !== 1 ? "s" : ""}
           </span>
         )}
@@ -75,7 +76,7 @@ export default function Cart() {
 
       {cart.length === 0 ? (
         <div style={{ textAlign: "center", padding: "80px 0", ...contentSlideFadeIn }}>
-          <p style={{ color: "#888", marginBottom: 24, fontSize: 16 }}>Your basket is empty.</p>
+          <p style={{ color: "var(--sub)", marginBottom: 24, fontSize: 16 }}>Your basket is empty.</p>
           <Link to="/" className="osai-cta-primary">Continue Shopping →</Link>
         </div>
       ) : (
@@ -117,46 +118,46 @@ export default function Cart() {
                   {/* Product info */}
                   <div>
                     <Link to={`/product/${encodeURIComponent(item.id)}`}
-                      style={{ color: "#fff", fontWeight: 600, fontSize: 15, display: "block", marginBottom: 6, textDecoration: "none" }}>
+                      style={{ color: "var(--text)", fontWeight: 600, fontSize: 15, display: "block", marginBottom: 6, textDecoration: "none" }}>
                       {item.name}
                     </Link>
 
                     <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap" }}>
                       {item.size && (
-                        <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                          Size: <span style={{ color: "#ccc" }}>{item.size}</span>
+                        <span style={{ fontSize: 11, color: "var(--sub)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                          Size: <span style={{ color: "var(--text)" }}>{item.size}</span>
                         </span>
                       )}
                       {item.color && (
-                        <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                          Colour: <span style={{ color: "#ccc" }}>{item.color}</span>
+                        <span style={{ fontSize: 11, color: "var(--sub)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                          Colour: <span style={{ color: "var(--text)" }}>{item.color}</span>
                         </span>
                       )}
                     </div>
 
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>
                       £{priceNum.toFixed(2)}
                     </div>
 
                     {/* Qty stepper */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <span style={{ fontSize: 11, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase" }}>Qty</span>
+                      <span style={{ fontSize: 11, color: "var(--sub)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Qty</span>
                       <button
                         onClick={() => changeQuantity(item.id, Math.max(1, qtyNum - 1))}
                         style={{
                           width: 28, height: 28, border: "1px solid rgba(255,255,255,0.15)",
-                          background: "transparent", color: "#fff", cursor: "pointer",
+                          background: "transparent", color: "var(--text)", cursor: "pointer",
                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
                         }}
                       >−</button>
-                      <span style={{ minWidth: 24, textAlign: "center", color: "#fff", fontSize: 14, fontWeight: 600 }}>
+                      <span style={{ minWidth: 24, textAlign: "center", color: "var(--text)", fontSize: 14, fontWeight: 600 }}>
                         {qtyNum}
                       </span>
                       <button
                         onClick={() => changeQuantity(item.id, qtyNum + 1)}
                         style={{
                           width: 28, height: 28, border: "1px solid rgba(255,255,255,0.15)",
-                          background: "transparent", color: "#fff", cursor: "pointer",
+                          background: "transparent", color: "var(--text)", cursor: "pointer",
                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
                         }}
                       >+</button>
@@ -166,7 +167,7 @@ export default function Cart() {
                       onClick={() => removeFromCart(item.id)}
                       style={{
                         background: "transparent", border: "none", padding: 0,
-                        fontSize: 11, color: "#666", cursor: "pointer",
+                        fontSize: 11, color: "var(--muted)", cursor: "pointer",
                         letterSpacing: "0.08em", textTransform: "uppercase",
                         textDecoration: "underline", textUnderlineOffset: 3,
                       }}
@@ -176,7 +177,7 @@ export default function Cart() {
                   </div>
 
                   {/* Line total */}
-                  <div style={{ fontWeight: 700, color: "#fff", fontSize: 15, whiteSpace: "nowrap", paddingTop: 2 }}>
+                  <div style={{ fontWeight: 700, color: "var(--text)", fontSize: 15, whiteSpace: "nowrap", paddingTop: 2 }}>
                     £{(priceNum * qtyNum).toFixed(2)}
                   </div>
                 </div>
@@ -212,11 +213,11 @@ export default function Cart() {
                 display: "flex", justifyContent: "space-between", alignItems: "flex-start",
                 marginBottom: 10, fontSize: 13, gap: 12,
               }}>
-                <span style={{ color: "#888", flex: 1, lineHeight: 1.4 }}>
+                <span style={{ color: "#b8b8b8", flex: 1, lineHeight: 1.4 }}>
                   {item.name}
-                  {item.size && <span style={{ display: "block", fontSize: 11, color: "#555" }}>Size: {item.size}</span>}
-                  {item.color && <span style={{ display: "block", fontSize: 11, color: "#555" }}>Colour: {item.color}</span>}
-                  <span style={{ display: "block", fontSize: 11, color: "#555" }}>x{item.quantity}</span>
+                  {item.size && <span style={{ display: "block", fontSize: 11, color: "#666" }}>Size: {item.size}</span>}
+                  {item.color && <span style={{ display: "block", fontSize: 11, color: "#666" }}>Colour: {item.color}</span>}
+                  <span style={{ display: "block", fontSize: 11, color: "#666" }}>x{item.quantity}</span>
                 </span>
                 <span style={{ color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
                   £{(Number(item.price) * Number(item.quantity)).toFixed(2)}
@@ -242,7 +243,14 @@ export default function Cart() {
 
             <button
               className="osai-cta-primary"
-              style={{ width: "100%", justifyContent: "center", cursor: "pointer" }}
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                cursor: "pointer",
+                background: "#111",
+                color: "#f2f2f2",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
               onClick={() => navigate("/checkout")}
             >
               Proceed to Checkout →
