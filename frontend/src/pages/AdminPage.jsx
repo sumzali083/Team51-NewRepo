@@ -621,8 +621,10 @@ export default function AdminPage() {
     try {
       const res = await api.get(`/api/admin/orders/${orderId}/details`);
       setSelectedOrderDetails(res.data || null);
+      return true;
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to load order details");
+      return false;
     } finally {
       setLoadingOrderDetails(false);
     }
@@ -696,7 +698,8 @@ export default function AdminPage() {
   };
 
   const loadUserOrdersPage = async (targetUserId, page) => {
-    const normalizedPage = Math.max(1, Number(page || 1));
+    const parsedPage = Number.parseInt(String(page || "1"), 10);
+    const normalizedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
     setLoadingUserOrders(true);
     try {
       const res = await api.get(`/api/admin/users/${targetUserId}/orders`, {
@@ -713,8 +716,8 @@ export default function AdminPage() {
   };
 
   const openOrderDetailsFromUserSummary = async (orderId) => {
-    closeUserSummary();
-    await openOrderDetails(orderId);
+    const opened = await openOrderDetails(orderId);
+    if (opened) closeUserSummary();
   };
 
   const closeUserSummary = () => {
