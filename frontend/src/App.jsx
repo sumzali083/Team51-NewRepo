@@ -30,6 +30,10 @@ import AdminPage from "./pages/AdminPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import RefundPage from "./pages/RefundPage";
 import AccountPage from "./pages/AccountPage";
+import FAQPage from "./pages/FAQPage";
+import ReturnsPolicyPage from "./pages/ReturnsPolicyPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 
 export default function App() {
   console.log("DEBUG: App.jsx is rendering");
@@ -58,6 +62,10 @@ export default function App() {
                 <Route path="/orders" element={<OrderHistoryPage />} />
                 <Route path="/refunds" element={<RefundPage />} />
                 <Route path="/account" element={<AccountPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/returns-policy" element={<ReturnsPolicyPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

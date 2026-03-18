@@ -673,8 +673,11 @@ select:focus, .btn:focus { box-shadow: var(--focus) }
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 40px;
+}
+@media (max-width: 1000px) {
+  .osai-footer-inner { grid-template-columns: 1fr 1fr; gap: 28px }
 }
 @media (max-width: 768px) {
   .osai-footer-inner { grid-template-columns: 1fr; gap: 32px }

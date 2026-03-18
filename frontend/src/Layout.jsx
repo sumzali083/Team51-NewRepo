@@ -272,6 +272,16 @@ export function Layout() {
               <li>134a Aston Road, Birmingham, UK</li>
             </ul>
           </div>
+
+          <div className="osai-footer-col">
+            <h5>Help & Policies</h5>
+            <ul>
+              <li><NavLink to="/faq">FAQs</NavLink></li>
+              <li><NavLink to="/returns-policy">Returns Policy</NavLink></li>
+              <li><NavLink to="/privacy-policy">Privacy Policy</NavLink></li>
+              <li><NavLink to="/terms">Terms & Conditions</NavLink></li>
+            </ul>
+          </div>
         </div>
 
         <div className="osai-footer-bottom">
