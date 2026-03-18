@@ -816,10 +816,10 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                           {originalPrice ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                               <span style={{ color: "#888", fontSize: 12, textDecoration: "line-through" }}>£{originalPrice.toFixed(2)}</span>
-                              <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>£{price.toFixed(2)}</span>
+                              <span style={{ color: "var(--text)", fontWeight: 700, fontSize: 15 }}>£{price.toFixed(2)}</span>
                             </div>
                           ) : (
-                            <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>£{price.toFixed(2)}</span>
+                            <span style={{ color: "var(--text)", fontWeight: 700, fontSize: 15 }}>£{price.toFixed(2)}</span>
                           )}
                         </div>
 
