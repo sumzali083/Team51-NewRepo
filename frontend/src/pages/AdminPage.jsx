@@ -568,9 +568,6 @@ export default function AdminPage() {
     try {
       const res = await api.get("/api/admin/products/export.csv", {
         responseType: "blob",
-        params: {
-          q: inventorySearch,
-        },
       });
 
       const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });

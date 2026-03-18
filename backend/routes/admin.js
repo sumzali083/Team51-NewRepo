@@ -215,6 +215,14 @@ router.get("/users/export.csv", adminMiddleware, async (req, res) => {
   try {
     await ensureUserManagementColumns();
     await ensureUserProfileColumns();
+    let refundCountSelect = "0 AS refund_count";
+    try {
+      await ensureRefundsTable();
+      refundCountSelect = "(SELECT COUNT(*) FROM refund_requests rr WHERE rr.user_id = u.id) AS refund_count";
+    } catch (_err) {
+      // Keep users export available even if refund tables are not ready.
+      refundCountSelect = "0 AS refund_count";
+    }
 
     const q = String(req.query.q || "").trim();
     const role = String(req.query.role || "all").toLowerCase();
@@ -254,7 +262,7 @@ router.get("/users/export.csv", adminMiddleware, async (req, res) => {
          u.is_suspended,
          u.created_at,
          (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS order_count,
-         (SELECT COUNT(*) FROM refund_requests rr WHERE rr.user_id = u.id) AS refund_count,
+         ${refundCountSelect},
          (SELECT MAX(o.created_at) FROM orders o WHERE o.user_id = u.id) AS last_order_at
        FROM users u
        ${whereClause}
