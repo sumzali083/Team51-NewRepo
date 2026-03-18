@@ -102,14 +102,19 @@ export default function AdminPage() {
   const [editDraft, setEditDraft] = useState(null);
   const [savingEditId, setSavingEditId] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [toast, setToast] = useState(null);
+  const [toastQueue, setToastQueue] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [promptDialog, setPromptDialog] = useState(null);
   const [promptValue, setPromptValue] = useState("");
 
   const showToast = (message, type = "error") => {
     if (!message) return;
-    setToast({ message, type, ts: Date.now() });
+    const item = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      message,
+      type,
+    };
+    setToastQueue((prev) => [...prev, item].slice(-6));
   };
 
   const confirmAction = ({ title = "Confirm Action", message, confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false }) =>
@@ -136,11 +141,26 @@ export default function AdminPage() {
     setPromptValue("");
   };
 
+  const activeToast = toastQueue[0] || null;
+  const dismissActiveToast = () => {
+    setToastQueue((prev) => prev.slice(1));
+  };
+
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 4200);
+    if (!activeToast) return;
+    const duration =
+      activeToast.type === "success"
+        ? 2600
+        : activeToast.type === "info"
+          ? 3200
+          : activeToast.type === "warning"
+            ? 3800
+            : 4500;
+    const timer = setTimeout(() => {
+      setToastQueue((prev) => prev.slice(1));
+    }, duration);
     return () => clearTimeout(timer);
-  }, [toast]);
+  }, [activeToast]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -4252,7 +4272,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {toast && (
+      {activeToast && (
         <div
           className="position-fixed"
           style={{ right: 20, bottom: 20, zIndex: 2200, maxWidth: 360 }}
@@ -4261,30 +4281,41 @@ export default function AdminPage() {
             className="card border-0 shadow-sm"
             style={{
               background:
-                toast.type === "warning"
-                  ? "rgba(245, 158, 11, 0.15)"
-                  : toast.type === "success"
-                    ? "rgba(16, 185, 129, 0.15)"
-                    : "rgba(239, 68, 68, 0.15)",
-              border: "1px solid var(--line)",
+                activeToast.type === "warning"
+                  ? "rgba(245, 158, 11, 0.16)"
+                  : activeToast.type === "success"
+                    ? "rgba(16, 185, 129, 0.16)"
+                    : activeToast.type === "info"
+                      ? "rgba(59, 130, 246, 0.16)"
+                      : "rgba(239, 68, 68, 0.16)",
+              border:
+                activeToast.type === "warning"
+                  ? "1px solid rgba(245, 158, 11, 0.45)"
+                  : activeToast.type === "success"
+                    ? "1px solid rgba(16, 185, 129, 0.45)"
+                    : activeToast.type === "info"
+                      ? "1px solid rgba(59, 130, 246, 0.45)"
+                      : "1px solid rgba(239, 68, 68, 0.45)",
             }}
           >
             <div className="card-body py-2 px-3 d-flex align-items-start gap-2">
               <i
                 className={`bi ${
-                  toast.type === "warning"
+                  activeToast.type === "warning"
                     ? "bi-exclamation-triangle"
-                    : toast.type === "success"
+                    : activeToast.type === "success"
                       ? "bi-check-circle"
+                      : activeToast.type === "info"
+                        ? "bi-info-circle"
                       : "bi-x-octagon"
                 }`}
                 style={{ marginTop: 1 }}
               />
-              <div style={{ color: "var(--text)", fontSize: 13, lineHeight: 1.35 }}>{toast.message}</div>
+              <div style={{ color: "var(--text)", fontSize: 13, lineHeight: 1.35 }}>{activeToast.message}</div>
               <button
                 className="btn btn-sm btn-outline-secondary ms-auto"
                 style={{ padding: "0 6px", lineHeight: 1.2 }}
-                onClick={() => setToast(null)}
+                onClick={dismissActiveToast}
               >
                 x
               </button>
