@@ -1461,12 +1461,15 @@ export default function AdminPage() {
     borderRadius: "var(--radius)",
     minHeight: 104,
     width: "100%",
-    background: "rgba(255,255,255,0.01)",
-    padding: 12,
+    background: "rgba(255,255,255,0.03)",
+    color: "var(--text)",
+    padding: 14,
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     textAlign: "left",
+    cursor: "pointer",
+    transition: "border-color .18s ease, background-color .18s ease",
   };
 
   if (loading) {
@@ -1577,49 +1580,49 @@ export default function AdminPage() {
                     <div className="col-lg-3 col-md-6">
                       <button
                         type="button"
-                        className="btn p-0"
+                        className="w-100 text-start"
                         style={overviewCardStyle}
                         onClick={() => setActiveTab("orders")}
                         title="Open orders"
                       >
-                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Orders</div>
-                        <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeOrders.length}</div>
+                        <div style={{ color: "var(--sub)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Orders</div>
+                        <div style={{ fontSize: 34, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>{rangeOrders.length}</div>
                       </button>
                     </div>
                     <div className="col-lg-3 col-md-6">
                       <button
                         type="button"
-                        className="btn p-0"
+                        className="w-100 text-start"
                         style={overviewCardStyle}
                         onClick={() => setActiveTab("refunds")}
                         title="Open refunds"
                       >
-                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Refund Requests</div>
-                        <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeRefunds.length}</div>
+                        <div style={{ color: "var(--sub)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Refund Requests</div>
+                        <div style={{ fontSize: 34, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>{rangeRefunds.length}</div>
                       </button>
                     </div>
                     <div className="col-lg-3 col-md-6">
                       <button
                         type="button"
-                        className="btn p-0"
+                        className="w-100 text-start"
                         style={overviewCardStyle}
                         onClick={() => setActiveTab("orders")}
                         title="Open orders and revenue data"
                       >
-                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Revenue</div>
-                        <div style={{ fontSize: 24, fontWeight: 700 }}>GBP {rangeRevenue.toFixed(2)}</div>
+                        <div style={{ color: "var(--sub)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Revenue</div>
+                        <div style={{ fontSize: 34, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>GBP {rangeRevenue.toFixed(2)}</div>
                       </button>
                     </div>
                     <div className="col-lg-3 col-md-6">
                       <button
                         type="button"
-                        className="btn p-0"
+                        className="w-100 text-start"
                         style={overviewCardStyle}
                         onClick={() => setActiveTab("inventory")}
                         title="Open inventory stock flow context"
                       >
-                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Stock Flow (7D)</div>
-                        <div style={{ fontSize: 15, fontWeight: 700 }}>
+                        <div style={{ color: "var(--sub)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Stock Flow (7D)</div>
+                        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>
                           +{Number(reports?.totalIncomingUnits7d || 0)} / -{Number(reports?.totalOutgoingUnits7d || 0)}
                         </div>
                       </button>
