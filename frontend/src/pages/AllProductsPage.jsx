@@ -137,7 +137,7 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
-export function FilteredProductPage({ cat = "all", pageTitle = "All Products", showCategory = true }) {
+export function FilteredProductPage({ cat = "all", pageTitle = "All Products", showCategory = true, showSale = true }) {
   const { addToCart } = useContext(CartContext);
   const { addToWishlist } = useContext(WishlistContext);
 
@@ -325,7 +325,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
       </AccordionSection>
 
       {/* Sale */}
-      <AccordionSection title="Sale & Offers" badge={saleOnly ? 1 : null}>
+      {showSale && <AccordionSection title="Sale & Offers" badge={saleOnly ? 1 : null}>
         <button
           onClick={() => setSaleOnly(o => !o)}
           style={{
@@ -342,7 +342,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
             fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, letterSpacing: "0.08em",
           }}>SALE</span>
         </button>
-      </AccordionSection>
+      </AccordionSection>}
 
       {/* Size */}
       <AccordionSection title="Size" badge={selectedSizes.length || null}>
