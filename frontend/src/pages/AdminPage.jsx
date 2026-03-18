@@ -188,6 +188,7 @@ export default function AdminPage() {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmDialog, promptDialog]);
 
   const loadAll = async () => {
@@ -617,7 +618,7 @@ export default function AdminPage() {
         const parsed = JSON.parse(text);
         if (parsed?.message) return String(parsed.message);
         return text || fallbackMessage;
-      } catch (_) {
+      } catch {
         return fallbackMessage;
       }
     }
@@ -625,7 +626,7 @@ export default function AdminPage() {
       try {
         const parsed = JSON.parse(data);
         if (parsed?.message) return String(parsed.message);
-      } catch (_) {}
+      } catch { /* ignore parse error */ }
       return data || fallbackMessage;
     }
     if (data?.message) return String(data.message);
@@ -949,7 +950,6 @@ export default function AdminPage() {
       setIncomingQty("1");
       setIncomingNote("");
       setIncomingSize("");
-      await loadAll();
       showToast("Incoming stock processed.", "success");
     } catch (err) {
       showToast(err?.response?.data?.message || "Failed to process incoming stock", "error");
@@ -1163,7 +1163,7 @@ export default function AdminPage() {
       { label: "Feedback", value: feedback.length, tab: "feedback" },
       { label: "Reviews", value: reviews.length, tab: "reviews" },
     ];
-  }, [messages.length, orders.length, products.length, refunds.length, reports, reviews.length]);
+  }, [messages.length, orders.length, products.length, refunds.length, reports, reviews.length, feedback.length]);
 
   const outOfStockProducts = useMemo(
     () => products.filter((p) => Number(p.stock ?? 0) === 0),
@@ -1440,6 +1440,7 @@ export default function AdminPage() {
         String(product?.sku || "").toLowerCase().includes(q)
       );
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviews, reviewSearch, reviewRatingFilter, reviewDateFilter, productLookup]);
 
   const tabs = [
@@ -2367,6 +2368,47 @@ export default function AdminPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+
+            <div className="card border-0 shadow-sm mt-3">
+              <div className="card-body">
+                <div className="osai-admin-tab-header">
+                  <h4 className="osai-admin-section-title">Stock Movement (Last 7 Days)</h4>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                    +{Number(reports?.totalIncomingUnits7d || 0)} incoming / -{Number(reports?.totalOutgoingUnits7d || 0)} outgoing
+                  </span>
+                </div>
+                {stockFlow7d.length === 0 ? (
+                  <p className="mb-0" style={{ color: "var(--sub)", fontSize: 13 }}>
+                    No stock movements recorded yet.
+                  </p>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>SKU</th>
+                          <th>Product</th>
+                          <th>Incoming</th>
+                          <th>Outgoing</th>
+                          <th>Net</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockFlow7d.map((row) => (
+                          <tr key={`flow-${row.product_id}`}>
+                            <td>{row.sku || "-"}</td>
+                            <td>{row.name || `#${row.product_id}`}</td>
+                            <td style={{ color: "#34d399", fontWeight: 700 }}>+{Number(row.incoming_units || 0)}</td>
+                            <td style={{ color: "#f87171", fontWeight: 700 }}>-{Number(row.outgoing_units || 0)}</td>
+                            <td style={{ fontWeight: 700 }}>{Number(row.net_units || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -3971,49 +4013,6 @@ export default function AdminPage() {
                 >
                   {savingUserProfileId === editingUser.id ? "Saving..." : "Save"}
                 </button>
-              </div>
-                </div>
-              </div>
-
-              <div className="card border-0 shadow-sm">
-                <div className="card-body">
-                  <div className="osai-admin-tab-header">
-                    <h4 className="osai-admin-section-title">Stock Movement (Last 7 Days)</h4>
-                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
-                      +{Number(reports?.totalIncomingUnits7d || 0)} incoming / -{Number(reports?.totalOutgoingUnits7d || 0)} outgoing
-                    </span>
-                  </div>
-                  {stockFlow7d.length === 0 ? (
-                    <p className="mb-0" style={{ color: "var(--sub)", fontSize: 13 }}>
-                      No stock movements recorded yet.
-                    </p>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="table table-sm align-middle">
-                        <thead className="table-light">
-                          <tr>
-                            <th>SKU</th>
-                            <th>Product</th>
-                            <th>Incoming</th>
-                            <th>Outgoing</th>
-                            <th>Net</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {stockFlow7d.map((row) => (
-                            <tr key={`flow-${row.product_id}`}>
-                              <td>{row.sku || "-"}</td>
-                              <td>{row.name || `#${row.product_id}`}</td>
-                              <td style={{ color: "#34d399", fontWeight: 700 }}>+{Number(row.incoming_units || 0)}</td>
-                              <td style={{ color: "#f87171", fontWeight: 700 }}>-{Number(row.outgoing_units || 0)}</td>
-                              <td style={{ fontWeight: 700 }}>{Number(row.net_units || 0)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           )}
