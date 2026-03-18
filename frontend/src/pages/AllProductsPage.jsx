@@ -205,6 +205,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
 
   const [products, setProducts]     = useState([]);
   const [loading, setLoading]       = useState(true);
+  const shuffleSeed = useRef(Math.random());
   const [hoveredId, setHoveredId]   = useState(null);
   const [cartMsg, setCartMsg]       = useState("");
   const [cartMsgType, setCartMsgType] = useState("success");
@@ -304,6 +305,12 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
     else if (sortBy === "price-high-low") list.sort((a, b) => Number(b.price) - Number(a.price));
     else if (sortBy === "newest") list.sort((a, b) => Number(b.db_id || b.id) - Number(a.db_id || a.id));
     else if (sortBy === "rating") list.sort((a, b) => Number(b.avg_rating || 0) - Number(a.avg_rating || 0));
+    else list.sort((a, b) => {
+      const seed = shuffleSeed.current;
+      const ha = Math.sin((a.db_id || a.id || 0) + seed * 1000) * 10000;
+      const hb = Math.sin((b.db_id || b.id || 0) + seed * 1000) * 10000;
+      return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
+    });
 
     return list;
   }, [products, selectedGenders, saleOnly, sliderMin, sliderMax, sliderBound, selectedSizes, selectedColors, minRating, sortBy]);
