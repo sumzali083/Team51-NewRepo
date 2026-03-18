@@ -134,9 +134,29 @@ export default function Cart() {
                       )}
                     </div>
 
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
-                      £{priceNum.toFixed(2)}
-                    </div>
+                    {item.originalPrice ? (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ color: "#888", fontSize: 13, textDecoration: "line-through" }}>
+                            £{Number(item.originalPrice).toFixed(2)}
+                          </span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
+                            £{priceNum.toFixed(2)}
+                          </span>
+                          <span style={{
+                            background: "#e53935", color: "#fff",
+                            fontSize: 11, fontWeight: 700, padding: "2px 6px",
+                            borderRadius: 3, letterSpacing: "0.04em",
+                          }}>
+                            -{Math.round((1 - priceNum / Number(item.originalPrice)) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 12 }}>
+                        £{priceNum.toFixed(2)}
+                      </div>
+                    )}
 
                     {/* Qty stepper */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>

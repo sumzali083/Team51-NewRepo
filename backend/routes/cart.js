@@ -215,6 +215,7 @@ router.get("/", getUserId, async (req, res) => {
         b.selected_image_url,
         p.name,
         p.price,
+        p.original_price,
         p.stock,
         p.sku,
         COALESCE(

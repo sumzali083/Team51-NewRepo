@@ -51,6 +51,7 @@ export function CartProvider(props) {
         id: item.product_id,
         name: item.name,
         price: parseFloat(item.price),
+        originalPrice: item.original_price ? Number(item.original_price) : null,
         image: normalizeImage(item.image_url),
         quantity: item.quantity,
         stock: Number(item.stock ?? 0),
