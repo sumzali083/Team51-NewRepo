@@ -2492,7 +2492,7 @@ export default function AdminPage() {
                     <option value="cancelled">Cancelled</option>
                   </select>
                   <button
-                    className="btn btn-sm btn-outline-light"
+                    className="btn btn-sm btn-outline-dark"
                     onClick={runBulkOrderStatus}
                     disabled={runningBulkOrderAction || selectedOrderIds.length === 0}
                   >
@@ -2567,7 +2567,7 @@ export default function AdminPage() {
                             {o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-outline-light" onClick={() => openOrderDetails(o.id)}>
+                            <button className="btn btn-sm btn-outline-dark" onClick={() => openOrderDetails(o.id)}>
                               View
                             </button>
                           </td>
@@ -2664,7 +2664,7 @@ export default function AdminPage() {
                             </td>
                             <td>
                               <button
-                                className="btn btn-sm btn-outline-light"
+                                className="btn btn-sm btn-outline-dark"
                                 onClick={() => toggleRefundExpanded(r.id)}
                               >
                                 {isOpen ? "Hide" : "View"}
@@ -2887,7 +2887,7 @@ export default function AdminPage() {
                           </td>
                           <td>
                             <div className="d-flex gap-2 flex-wrap">
-                              <button className="btn btn-sm btn-outline-light" onClick={() => openReviewModal(r)}>
+                              <button className="btn btn-sm btn-outline-dark" onClick={() => openReviewModal(r)}>
                                 View
                               </button>
                               <button className="btn btn-sm btn-outline-danger" onClick={() => deleteReview(r.id)}>
@@ -2973,7 +2973,7 @@ export default function AdminPage() {
                           </td>
                           <td>
                             <div className="d-flex gap-2 flex-wrap">
-                              <button className="btn btn-sm btn-outline-light" onClick={() => openFeedbackModal(f)}>
+                              <button className="btn btn-sm btn-outline-dark" onClick={() => openFeedbackModal(f)}>
                                 View
                               </button>
                               <button className="btn btn-sm btn-outline-danger" onClick={() => deleteFeedback(f.id)}>
@@ -3090,7 +3090,7 @@ export default function AdminPage() {
                           </td>
                           <td>
                             <div className="d-flex gap-2 flex-wrap">
-                              <button className="btn btn-sm btn-outline-light" onClick={() => openMessage(m)}>
+                              <button className="btn btn-sm btn-outline-dark" onClick={() => openMessage(m)}>
                                 View
                               </button>
                               {(m.status || "unread") !== "archived" ? (
@@ -3293,7 +3293,7 @@ export default function AdminPage() {
                     placeholder="Bulk reason (optional)"
                   />
                   <button
-                    className="btn btn-sm btn-outline-light"
+                    className="btn btn-sm btn-outline-dark"
                     onClick={runBulkUserAction}
                     disabled={runningBulkUsersAction || selectedUserIds.length === 0}
                   >
@@ -3362,7 +3362,7 @@ export default function AdminPage() {
                           <td>
                             <div className="d-flex gap-2 align-items-center">
                               <button
-                                className="btn btn-sm btn-outline-light"
+                                className="btn btn-sm btn-outline-dark"
                                 onClick={() => openUserSummary(u)}
                               >
                                 View
@@ -3393,7 +3393,7 @@ export default function AdminPage() {
                                     onMouseDown={(e) => e.stopPropagation()}
                                   >
                                     <button
-                                      className="btn btn-sm btn-outline-light w-100 mb-2"
+                                      className="btn btn-sm btn-outline-dark w-100 mb-2"
                                       onClick={() => {
                                         openUserEditor(u);
                                         setActionMenuUserId(null);
@@ -3685,7 +3685,7 @@ export default function AdminPage() {
                                 <td>{o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}</td>
                                 <td>
                                   <button
-                                    className="btn btn-sm btn-outline-light"
+                                    className="btn btn-sm btn-outline-dark"
                                     onClick={() => openOrderDetailsFromUserSummary(o.id)}
                                   >
                                     View

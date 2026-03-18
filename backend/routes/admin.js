@@ -339,7 +339,7 @@ router.get("/users/:id/summary", adminMiddleware, async (req, res) => {
     const [[userRow]] = await db.query(
       `SELECT id, name, email, phone, address_line1, address_line2, city, postcode,
               is_admin, is_suspended, suspended_at, suspension_reason, created_at
-       FROM users
+       FROM users  
        WHERE id = ?
        LIMIT 1`,
       [userId]
