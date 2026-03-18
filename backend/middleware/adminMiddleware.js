@@ -1,6 +1,20 @@
 // backend/middleware/adminMiddleware.js
 const db = require("../config/db");
 
+function normalizeTinyIntFlag(value) {
+  if (Buffer.isBuffer(value)) {
+    return value.length > 0 && value[0] === 1;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "1" || normalized === "true";
+  }
+  return Number(value) === 1;
+}
+
 async function adminMiddleware(req, res, next) {
   try {
     const userId = Number(req.session?.userId);
@@ -23,11 +37,11 @@ async function adminMiddleware(req, res, next) {
     const user = rows[0];
 
     // strict admin check to avoid truthy edge-cases (e.g. string/buffer values)
-    if (Number(user.is_admin) !== 1) {
+    if (!normalizeTinyIntFlag(user.is_admin)) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
-    const mustChangePassword = Number(user.must_change_password) === 1;
+    const mustChangePassword = normalizeTinyIntFlag(user.must_change_password);
     if (mustChangePassword) {
       return res.status(403).json({
         message: "Password change required before using admin features.",
