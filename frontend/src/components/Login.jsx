@@ -64,6 +64,10 @@ export function Login({ initialEmail = "" }) {
         sessionStorage.setItem("user", JSON.stringify(user));
 
         setTimeout(() => {
+          if (user.must_change_password) {
+            navigate("/account/change-password");
+            return;
+          }
           navigate("/");
         }, 600);
       }

@@ -12,7 +12,7 @@ async function adminMiddleware(req, res, next) {
 
     // check user in database
     const [rows] = await db.query(
-      "SELECT id, is_admin FROM users WHERE id = ?",
+      "SELECT id, is_admin, must_change_password FROM users WHERE id = ?",
       [userId]
     );
 
@@ -25,6 +25,13 @@ async function adminMiddleware(req, res, next) {
     // admin check (safe for 0/1 values)
     if (!user.is_admin) {
       return res.status(403).json({ message: "Admin access required" });
+    }
+
+    if (Number(user.must_change_password) === 1) {
+      return res.status(403).json({
+        message: "Password change required before using admin features.",
+        code: "PASSWORD_CHANGE_REQUIRED",
+      });
     }
 
     // attach user (optional, non-breaking improvement)
