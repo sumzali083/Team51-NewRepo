@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [refunds, setRefunds] = useState([]);
   const [users, setUsers] = useState([]);
   const [userAuditLog, setUserAuditLog] = useState([]);
+  const [adminRoleRequests, setAdminRoleRequests] = useState([]);
   const [usersSearch, setUsersSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [userStatusFilter, setUserStatusFilter] = useState("all");
@@ -67,6 +68,7 @@ export default function AdminPage() {
   const [savingUserRoleId, setSavingUserRoleId] = useState(null);
   const [savingUserProfileId, setSavingUserProfileId] = useState(null);
   const [runningBulkUsersAction, setRunningBulkUsersAction] = useState(false);
+  const [reviewingRoleRequestId, setReviewingRoleRequestId] = useState(null);
   const [actionMenuUserId, setActionMenuUserId] = useState(null);
   const [stockDraft, setStockDraft] = useState({});
   const [incomingProductId, setIncomingProductId] = useState("");
@@ -107,7 +109,8 @@ export default function AdminPage() {
         reviewsRes,
         feedbackRes, //  ADDED
         categoriesRes,
-        auditRes
+        auditRes,
+        roleReqRes
       ] = await Promise.all([
         api.get("/api/admin/reports"),
         api.get("/api/admin/products"),
@@ -119,6 +122,7 @@ export default function AdminPage() {
         api.get("/api/admin/feedback"), //  ADDED
         api.get("/api/admin/categories").catch(() => ({ data: [] })),
         api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+        api.get("/api/admin/admin-role-requests").catch(() => ({ data: [] })),
       ]);
 
       setReports(reportsRes.data || null);
@@ -127,6 +131,7 @@ export default function AdminPage() {
       setRefunds(refundsRes.data || []);
       setUsers(usersRes.data || []);
       setUserAuditLog(auditRes.data || []);
+      setAdminRoleRequests(roleReqRes.data || []);
       setMessages(messagesRes.data || []);
       setReviews(reviewsRes.data || []);
       setFeedback(feedbackRes.data || []);
@@ -387,6 +392,26 @@ export default function AdminPage() {
       alert(err?.response?.data?.message || "Failed to update user role");
     } finally {
       setSavingUserRoleId(null);
+    }
+  };
+
+  const reviewAdminRoleRequest = async (requestId, decision) => {
+    if (!["approved", "rejected"].includes(decision)) return;
+    setReviewingRoleRequestId(requestId);
+    try {
+      await api.put(`/api/admin/admin-role-requests/${requestId}`, { decision });
+      const [requestsRes, usersRes, auditRes] = await Promise.all([
+        api.get("/api/admin/admin-role-requests").catch(() => ({ data: [] })),
+        api.get("/api/admin/users").catch(() => ({ data: [] })),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+      ]);
+      setAdminRoleRequests(requestsRes.data || []);
+      setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to process admin request");
+    } finally {
+      setReviewingRoleRequestId(null);
     }
   };
 
@@ -2700,6 +2725,83 @@ export default function AdminPage() {
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
                   </select>
+                </div>
+
+                <div
+                  className="p-3 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="mb-0" style={{ fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      Admin Access Requests
+                    </h6>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      {adminRoleRequests.filter((r) => r.status === "pending").length} pending
+                    </span>
+                  </div>
+                  {adminRoleRequests.length === 0 ? (
+                    <div style={{ color: "var(--sub)", fontSize: 13 }}>No admin access requests yet.</div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminRoleRequests.slice(0, 12).map((reqRow) => (
+                            <tr key={`role-req-${reqRow.id}`}>
+                              <td>#{reqRow.id}</td>
+                              <td>{reqRow.name || "-"}</td>
+                              <td style={{ color: "var(--sub)" }}>{reqRow.email || "-"}</td>
+                              <td style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {reqRow.reason || "-"}
+                              </td>
+                              <td>
+                                <span className={`osai-status osai-status-${reqRow.status || "pending"}`}>
+                                  {reqRow.status || "pending"}
+                                </span>
+                              </td>
+                              <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                                {reqRow.created_at ? new Date(reqRow.created_at).toLocaleDateString() : "-"}
+                              </td>
+                              <td>
+                                {reqRow.status === "pending" ? (
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      className="btn btn-sm btn-outline-success"
+                                      onClick={() => reviewAdminRoleRequest(reqRow.id, "approved")}
+                                      disabled={reviewingRoleRequestId === reqRow.id}
+                                    >
+                                      {reviewingRoleRequestId === reqRow.id ? "Saving..." : "Approve"}
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => reviewAdminRoleRequest(reqRow.id, "rejected")}
+                                      disabled={reviewingRoleRequestId === reqRow.id}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                                    {reqRow.reviewed_at ? `Reviewed ${new Date(reqRow.reviewed_at).toLocaleDateString()}` : "Reviewed"}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
                 <div

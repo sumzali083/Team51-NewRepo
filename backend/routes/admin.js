@@ -143,6 +143,30 @@ async function ensureUserProfileColumns() {
   }
 }
 
+async function ensureAuthColumnsAndRoleRequests() {
+  const hasMustChangePassword = await columnExists("users", "must_change_password");
+  if (!hasMustChangePassword) {
+    await db.query("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0");
+    _colCache["users.must_change_password"] = true;
+  }
+
+  await db.query(
+    `CREATE TABLE IF NOT EXISTS admin_role_requests (
+      id INT NOT NULL AUTO_INCREMENT,
+      user_id INT NOT NULL,
+      reason VARCHAR(500) NULL,
+      status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+      reviewed_by INT NULL,
+      reviewed_at DATETIME NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_admin_role_requests_user (user_id),
+      KEY idx_admin_role_requests_status (status),
+      KEY idx_admin_role_requests_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
+  );
+}
+
 /* ======================================================
    USER MANAGEMENT
 ====================================================== */
@@ -514,6 +538,93 @@ router.get("/users/audit-log", adminMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Admin audit log error:", err);
     return res.status(500).json({ message: "Failed to fetch audit log" });
+  }
+});
+
+router.get("/admin-role-requests", adminMiddleware, async (_req, res) => {
+  try {
+    await ensureAuthColumnsAndRoleRequests();
+    const [rows] = await db.query(
+      `SELECT
+         r.id, r.user_id, r.reason, r.status, r.reviewed_by, r.reviewed_at, r.created_at,
+         u.name, u.email,
+         reviewer.name AS reviewer_name
+       FROM admin_role_requests r
+       JOIN users u ON u.id = r.user_id
+       LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+       ORDER BY
+         CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END,
+         r.created_at DESC`
+    );
+    return res.json(rows);
+  } catch (err) {
+    console.error("Admin role requests fetch error:", err);
+    return res.status(500).json({ message: "Failed to fetch admin role requests" });
+  }
+});
+
+router.put("/admin-role-requests/:id", adminMiddleware, async (req, res) => {
+  const requestId = Number(req.params.id);
+  const { decision } = req.body || {};
+  if (!["approved", "rejected"].includes(decision)) {
+    return res.status(400).json({ message: "decision must be approved or rejected" });
+  }
+
+  let conn;
+  try {
+    await ensureAuthColumnsAndRoleRequests();
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    const [[requestRow]] = await conn.query(
+      `SELECT id, user_id, status
+       FROM admin_role_requests
+       WHERE id = ?
+       LIMIT 1`,
+      [requestId]
+    );
+    if (!requestRow) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Request not found" });
+    }
+    if (requestRow.status !== "pending") {
+      await conn.rollback();
+      return res.status(400).json({ message: "Request already reviewed" });
+    }
+
+    await conn.query(
+      `UPDATE admin_role_requests
+       SET status = ?, reviewed_by = ?, reviewed_at = NOW()
+       WHERE id = ?`,
+      [decision, req.session.userId, requestId]
+    );
+
+    if (decision === "approved") {
+      await conn.query(
+        "UPDATE users SET is_admin = 1, must_change_password = 1 WHERE id = ?",
+        [requestRow.user_id]
+      );
+    }
+
+    await conn.commit();
+
+    await appendAdminAuditLog({
+      adminId: req.session.userId,
+      action: decision === "approved" ? "admin_role_request_approved" : "admin_role_request_rejected",
+      targetType: "user",
+      targetId: requestRow.user_id,
+      details: JSON.stringify({ requestId }),
+    });
+
+    return res.json({ message: decision === "approved" ? "Admin request approved" : "Admin request rejected" });
+  } catch (err) {
+    if (conn) {
+      try { await conn.rollback(); } catch (_) {}
+    }
+    console.error("Admin role request decision error:", err);
+    return res.status(500).json({ message: "Failed to process request" });
+  } finally {
+    if (conn) conn.release();
   }
 });
 

@@ -44,6 +44,9 @@ const initialForm = {
 export default function AccountPage() {
   const { user, checkAuth } = useContext(AuthContext);
   const [form, setForm] = useState(initialForm);
+  const [adminRequest, setAdminRequest] = useState(null);
+  const [adminRequestReason, setAdminRequestReason] = useState("");
+  const [submittingAdminRequest, setSubmittingAdminRequest] = useState(false);
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -65,6 +68,7 @@ export default function AccountPage() {
           city: u.city || "",
           postcode: u.postcode || "",
         });
+        setAdminRequest(u.admin_role_request || null);
       } catch (err) {
         if (mounted) setError(err?.response?.data?.message || "Failed to load account details.");
       }
@@ -114,6 +118,27 @@ export default function AccountPage() {
       setError(err?.response?.data?.message || "Failed to clear personal details.");
     } finally {
       setClearing(false);
+    }
+  };
+
+  const submitAdminRequest = async () => {
+    setNotice("");
+    setError("");
+    setSubmittingAdminRequest(true);
+    try {
+      await api.post("/api/users/admin-request", {
+        reason: adminRequestReason.trim(),
+      });
+      const res = await api.get("/api/users/me");
+      const fresh = res.data?.user || {};
+      setAdminRequest(fresh.admin_role_request || null);
+      setAdminRequestReason("");
+      setNotice("Admin access request submitted.");
+      await checkAuth();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to submit admin request.");
+    } finally {
+      setSubmittingAdminRequest(false);
     }
   };
 
@@ -183,6 +208,58 @@ export default function AccountPage() {
             </button>
           </div>
         </form>
+
+        {!user?.is_admin && (
+          <div style={{ marginTop: 28, paddingTop: 22, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Admin Access Request</h3>
+            {adminRequest ? (
+              <div
+                style={{
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  borderRadius: 10,
+                  padding: 12,
+                  background: "rgba(255,255,255,0.03)",
+                  marginBottom: 12,
+                }}
+              >
+                <div style={{ fontSize: 12, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Latest Request
+                </div>
+                <div style={{ marginTop: 6, fontWeight: 700 }}>
+                  Status: {(adminRequest.status || "pending").toUpperCase()}
+                </div>
+                <div style={{ marginTop: 4, color: "#bbb", fontSize: 13 }}>
+                  Submitted: {adminRequest.created_at ? new Date(adminRequest.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: "#aaa", marginBottom: 12 }}>
+                Need admin privileges? Submit a request for current admins to review.
+              </p>
+            )}
+            <label style={labelStyle} htmlFor="admin-request-reason">Reason (optional)</label>
+            <textarea
+              id="admin-request-reason"
+              style={{ ...inputStyle, minHeight: 90, resize: "vertical" }}
+              value={adminRequestReason}
+              onChange={(e) => setAdminRequestReason(e.target.value)}
+              placeholder="Explain why you need admin access."
+            />
+            <button
+              type="button"
+              className="btn btn-outline-light"
+              style={{ marginTop: 10 }}
+              onClick={submitAdminRequest}
+              disabled={submittingAdminRequest || (adminRequest && adminRequest.status === "pending")}
+            >
+              {submittingAdminRequest
+                ? "Submitting..."
+                : (adminRequest && adminRequest.status === "pending")
+                  ? "Request Pending"
+                  : "Request Admin Access"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
