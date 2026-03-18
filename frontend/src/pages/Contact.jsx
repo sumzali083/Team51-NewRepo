@@ -135,7 +135,7 @@ export default function Contact() {
         textTransform: "uppercase",
         letterSpacing: "-0.01em",
         lineHeight: 0.92,
-        color: "#fff",
+        color: "var(--text-primary)",
         marginBottom: 48,
         textAlign: "center",
         ...titleSlideFadeIn,
@@ -259,6 +259,7 @@ export default function Contact() {
               onChange={handleChange}
               rows={8}
               placeholder="Enter message"
+              className="contact-message-input"
               style={{ ...INPUT, resize: "vertical", minHeight: 180 }}
               onFocus={e => (e.target.style.borderColor = "rgba(255,255,255,0.35)")}
               onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
@@ -267,14 +268,12 @@ export default function Contact() {
 
           {/* Submit */}
           <button
+            className="contact-submit-btn basket-match-btn"
             type="submit"
             disabled={loading}
             style={{
               width: "100%",
               padding: "14px",
-              background: loading ? "#ccc" : "#fff",
-              color: "#000",
-              border: "none",
               borderRadius: 4,
               fontWeight: 700,
               fontSize: 13,
@@ -283,8 +282,6 @@ export default function Contact() {
               cursor: loading ? "not-allowed" : "pointer",
               transition: "background 0.18s ease",
             }}
-            onMouseEnter={e => { if (!loading) e.target.style.background = "#e0e0e0"; }}
-            onMouseLeave={e => { if (!loading) e.target.style.background = "#fff"; }}
           >
             {loading ? "Sending…" : "Submit"}
           </button>
@@ -304,7 +301,7 @@ export default function Contact() {
           fontSize: 18,
           marginBottom: 20,
           textAlign: "center",
-        }}>
+        }} className="contact-location-title">
           Our Location
         </h2>
         <div 
