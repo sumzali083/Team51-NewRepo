@@ -325,7 +325,7 @@ const CheckoutPage = () => {
               </div>
 
               {checkoutError && (
-                <div className="co-error-box">
+                <div style={{ color: "#f87171", marginBottom: 16, fontSize: 13 }}>
                   {checkoutError}
                 </div>
               )}

@@ -23,7 +23,7 @@ export default function LoginPage() {
         textTransform: "uppercase",
         letterSpacing: "-0.01em",
         lineHeight: 0.92,
-        color: "var(--text-primary)",
+        color: "#fff",
         marginBottom: 40,
         textAlign: "center",
       }}>
@@ -48,12 +48,11 @@ export default function LoginPage() {
             onClick={() => setMode(key)}
             style={{
               padding: "10px 36px",
-              background: mode === key ? "#000" : "#141414",
-              color: "#fff",
+              background: mode === key ? "#fff" : "transparent",
+              color: mode === key ? "#000" : "#888",
               border: "none",
               fontSize: 11,
               fontWeight: 700,
-              opacity: mode === key ? 1 : 0.82,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               cursor: "pointer",

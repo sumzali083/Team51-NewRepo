@@ -22,13 +22,6 @@ const galleryImages = [
 const s3 = {
   card: { position: "relative", overflow: "hidden", height: 440, cursor: "pointer", transition: "flex 0.5s ease" },
   img: { width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "filter 0.4s ease" },
-  overlay: {
-    position: "absolute",
-    inset: 0,
-    background:
-      "linear-gradient(180deg, var(--hero-overlay-start) 0%, var(--hero-overlay-mid) 40%, var(--hero-overlay-bottom) 75%, var(--hero-overlay-end) 100%)",
-    pointerEvents: "none",
-  },
   label: { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: 20, gap: 8 },
   name: { fontFamily: "'Barlow Condensed',sans-serif", fontSize: "clamp(20px,3vw,32px)", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", transition: "all 0.3s ease" },
   sub: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)" },
@@ -78,7 +71,7 @@ export function HomePage() {
       <HeroCarouselNew />
 
       {/* ── Category strip ── */}
-      <section style={{ background: "var(--bg-main)", borderBottom: "1px solid var(--border)" }}>
+      <section style={{ background: "#000", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", gap: 6 }}>
           {categories.map((cat, i) => (
             <NavLink
@@ -97,10 +90,9 @@ export function HomePage() {
                 alt={cat.label}
                 style={{
                   ...s3.img,
-                  filter: "brightness(1)",
+                  filter: hoveredCategory === i ? "brightness(0.75)" : "brightness(0.45)",
                 }}
               />
-              <div style={s3.overlay} />
               <div style={s3.label}>
                 <span
                   style={{
@@ -122,17 +114,14 @@ export function HomePage() {
       <section
         ref={welcomeRef}
         style={{
-        background: "var(--bg-story-section, var(--bg-story, var(--bg-main)))",
-        width: "100%",
+        background: "#000",
+        padding: "100px 24px",
+        display: "flex",
+        gap: 80,
+        maxWidth: 1200,
+        margin: "0 auto",
+        alignItems: "flex-start",
       }}>
-        <div style={{
-          padding: "100px 24px",
-          display: "flex",
-          gap: 80,
-          maxWidth: 1200,
-          margin: "0 auto",
-          alignItems: "flex-start",
-        }}>
         <div style={{ flex: "0 0 auto" }}>
           <h1 style={{
             fontFamily: "'Barlow Condensed', sans-serif",
@@ -141,21 +130,21 @@ export function HomePage() {
             lineHeight: 0.9,
             letterSpacing: "-0.02em",
             textTransform: "uppercase",
-            color: "var(--text-primary)",
+            color: "#fff",
             margin: 0,
           }}>
             <span style={{ display: "block", ...fromLeft }}>Wear</span>
-            <span style={{ display: "block", color: "var(--earth-shade, var(--text-ghost, var(--text-muted)))", ...fromRight, transitionDelay: "0.12s" }}>Your</span>
+            <span style={{ display: "block", color: "rgba(255,255,255,0.25)", ...fromRight, transitionDelay: "0.12s" }}>Your</span>
             <span style={{ display: "block", ...fromLeft, transitionDelay: "0.22s" }}>Story.</span>
           </h1>
         </div>
         <div style={{ paddingTop: 16, maxWidth: 480, ...bodyReveal }}>
-          <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>
             OSAI is one of the leading companies in the fashion industry.
             Pure fashion created from the finest Japanese fibers — hand-woven
             and tailor-made for every body type.
           </p>
-          <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.8, marginBottom: 36 }}>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.8, marginBottom: 36 }}>
             From kids to adults, daily wear to timeless pieces, we have it all.
             You will always find something for everyone with us.
           </p>
@@ -164,8 +153,7 @@ export function HomePage() {
             style={{
               display: "inline-block",
               padding: "12px 32px",
-              border: "1px solid #000",
-              background: "#000",
+              border: "1px solid rgba(255,255,255,0.3)",
               color: "#fff",
               fontSize: 11,
               letterSpacing: "0.18em",
@@ -174,19 +162,16 @@ export function HomePage() {
               transition: "background 0.2s, border-color 0.2s",
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = "var(--text-ghost, #5a5a5a)";
-              e.currentTarget.style.borderColor = "var(--text-ghost, #5a5a5a)";
-              e.currentTarget.style.color = "#000";
+              e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)";
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = "#000";
-              e.currentTarget.style.borderColor = "#000";
-              e.currentTarget.style.color = "#fff";
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
             }}
           >
             Our Story →
           </NavLink>
-        </div>
         </div>
       </section>
 
@@ -200,7 +185,7 @@ export function HomePage() {
               fontSize: 11,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "var(--text-muted)",
+              color: "rgba(255,255,255,0.4)",
               transition: "color 0.15s",
             }}
           >

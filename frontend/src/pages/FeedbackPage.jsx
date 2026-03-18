@@ -102,7 +102,7 @@ export default function FeedbackPage() {
         textTransform: "uppercase",
         letterSpacing: "-0.01em",
         lineHeight: 0.92,
-        color: "var(--text-primary)",
+        color: "#fff",
         marginBottom: 48,
         textAlign: "center",
       }}>
@@ -197,7 +197,7 @@ export default function FeedbackPage() {
                       cursor: "pointer",
                       padding: "4px 2px",
                       fontSize: 28,
-                      color: filled ? "#d4af37" : "#333",
+                      color: filled ? "#fff" : "#333",
                       transition: "color 0.12s ease",
                       lineHeight: 1,
                     }}
@@ -224,7 +224,6 @@ export default function FeedbackPage() {
               onChange={handleChange}
               rows={6}
               placeholder="Share your thoughts…"
-              className="feedback-comment-input"
               style={{ ...INPUT, resize: "vertical", minHeight: 140 }}
               onFocus={e => (e.target.style.borderColor = "rgba(255,255,255,0.35)")}
               onBlur={e  => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
@@ -234,12 +233,14 @@ export default function FeedbackPage() {
           {/* Actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 4 }}>
             <button
-              className="basket-match-btn"
               type="submit"
               disabled={loading}
               style={{
                 flex: 1,
                 padding: "14px",
+                background: loading ? "#ccc" : "#fff",
+                color: "#000",
+                border: "none",
                 borderRadius: 4,
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
@@ -249,6 +250,8 @@ export default function FeedbackPage() {
                 cursor: loading ? "not-allowed" : "pointer",
                 transition: "background 0.18s ease",
               }}
+              onMouseEnter={e => { if (!loading) e.target.style.background = "#e0e0e0"; }}
+              onMouseLeave={e => { if (!loading) e.target.style.background = "#fff"; }}
             >
               {loading ? "Sending…" : "Submit Feedback"}
             </button>

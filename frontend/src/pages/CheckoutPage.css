@@ -20,14 +20,10 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #111;
+  color: #888;
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--earth-shade, #a66737);
-  border: 1px solid var(--earth-shade, #a66737);
-  border-radius: 6px;
-  padding: 8px 12px;
 }
 
 /* ── Step indicator ── */
@@ -208,17 +204,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.co-error-box {
-  background: #ef4444;
-  color: #000;
-  border: 1px solid #dc2626;
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 /* Primary CTA button */
@@ -405,97 +390,3 @@
   transition: background 0.18s ease;
 }
 .co-confirmed-btn:hover { background: #e0e0e0 }
-
-/* ── Light mode checkout mapping (keep dark mode unchanged) ─────────────── */
-[data-theme="light"] .co-topbar {
-  border-bottom: 1px solid rgba(17,17,17,0.12);
-}
-
-[data-theme="light"] .co-topbar-secure {
-  color: #111;
-}
-
-[data-theme="light"] .co-step {
-  color: #666;
-}
-
-[data-theme="light"] .co-step.active {
-  color: #111;
-}
-
-[data-theme="light"] .co-step-num {
-  border-color: #666;
-  color: #111;
-}
-
-[data-theme="light"] .co-step.active .co-step-num {
-  background: #111;
-  color: #fff;
-  border-color: #111;
-}
-
-[data-theme="light"] .co-step-divider {
-  background: rgba(17,17,17,0.18);
-}
-
-[data-theme="light"] .co-section-heading {
-  color: #111;
-}
-
-[data-theme="light"] .co-toggle-row {
-  border-color: rgba(17,17,17,0.18);
-}
-
-[data-theme="light"] .co-toggle {
-  color: #666;
-}
-
-[data-theme="light"] .co-toggle-active {
-  background: #111;
-  color: #fff;
-}
-
-[data-theme="light"] .co-label {
-  color: #555;
-}
-
-[data-theme="light"] .co-input {
-  background: #f2f2f2;
-  border: 1px solid rgba(17,17,17,0.18);
-  color: #111;
-}
-
-[data-theme="light"] .co-input::placeholder {
-  color: #666;
-}
-
-[data-theme="light"] .co-input:focus {
-  border-color: #111;
-  background: #fff;
-}
-
-[data-theme="light"] .co-summary-pill {
-  background: rgba(17,17,17,0.04);
-  border: 1px solid rgba(17,17,17,0.12);
-}
-
-[data-theme="light"] .co-summary-pill span,
-[data-theme="light"] .co-summary-pill button {
-  color: #111 !important;
-}
-
-[data-theme="light"] .co-secure-note {
-  color: #555;
-}
-
-[data-theme="light"] .co-btn-primary {
-  background: #111;
-  color: var(--earth-shade, #a66737);
-  border: 1px solid var(--earth-shade, #a66737);
-}
-
-[data-theme="light"] .co-btn-primary:hover {
-  background: var(--earth-shade, #a66737);
-  color: #111;
-  border-color: var(--earth-shade, #a66737);
-}

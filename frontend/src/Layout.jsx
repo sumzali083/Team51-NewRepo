@@ -10,7 +10,6 @@ export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,6 +18,7 @@ export function Layout() {
     setProfileOpen(false);
   }, [location.pathname]);
 
+  // Close profile dropdown on outside click
   useEffect(() => {
     function handleOutside(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -28,11 +28,6 @@ export function Layout() {
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
   const { user, logout } = useContext(AuthContext);
 
   const handleLogout = async () => {
@@ -52,10 +47,6 @@ export function Layout() {
 
   const wishlistCtx = useContext(WishlistContext);
   const totalFav = wishlistCtx?.wishlist?.length || 0;
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
 
   return (
     <>
@@ -115,16 +106,6 @@ export function Layout() {
             )}
 
             <div className="osai-nav-actions">
-              <button
-                type="button"
-                className="osai-theme-toggle"
-                onClick={toggleTheme}
-                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              >
-                <span>{theme === "dark" ? "☀ Light" : "🌙 Dark"}</span>
-              </button>
-
               <form className="osai-search" onSubmit={handleSearchSubmit}>
                 <input
                   type="search"
@@ -137,6 +118,7 @@ export function Layout() {
                   <i className="bi bi-search" />
                 </button>
               </form>
+
               <NavLink
                 to="/wishlist"
                 className="osai-action-btn"
