@@ -1374,6 +1374,45 @@ router.delete("/messages/:id", adminMiddleware, async (req, res) => {
 });
 
 /* ======================================================
+    FEEDBACK (fixed)
+====================================================== */
+
+router.get("/feedback", adminMiddleware, async (_req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, name, email, rating, comments, created_at
+       FROM feedback
+       ORDER BY created_at DESC`
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Admin get feedback error:", err);
+    res.status(500).json({ message: "Failed to fetch feedback" });
+  }
+});
+
+// DELETE feedback
+router.delete("/feedback/:id", adminMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [result] = await db.query(
+      "DELETE FROM feedback WHERE id = ?",
+      [id]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: "Feedback not found" });
+    }
+
+    res.json({ message: "Feedback deleted" });
+  } catch (err) {
+    console.error("Admin delete feedback error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+/* ======================================================
    REVIEWS
 ====================================================== */
 
