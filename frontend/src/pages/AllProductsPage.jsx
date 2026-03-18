@@ -101,7 +101,7 @@ function AccordionSection({ title, badge, children, defaultOpen = false }) {
         style={{
           width: "100%", display: "flex", justifyContent: "space-between",
           alignItems: "center", padding: "15px 0", background: "none",
-          border: "none", cursor: "pointer", color: "#fff",
+          border: "none", cursor: "pointer", color: FILTER_ACCENT,
           fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
         }}
       >
@@ -109,7 +109,7 @@ function AccordionSection({ title, badge, children, defaultOpen = false }) {
           {title}
           {badge ? (
             <span style={{
-              background: "#fff", color: "#000", borderRadius: "50%",
+              background: FILTER_ACCENT, color: "#111", borderRadius: "50%",
               width: 18, height: 18, display: "inline-flex", alignItems: "center",
               justifyContent: "center", fontSize: 10, fontWeight: 700,
             }}>{badge}</span>
@@ -148,12 +148,12 @@ function DualRangeSlider({ min, max, minVal, maxVal, onMinChange, onMaxChange })
         .osai-range-slider::-webkit-slider-thumb {
           -webkit-appearance: none; appearance: none;
           width: 16px; height: 16px; border-radius: 3px;
-          background: #111; border: 2px solid #fff;
+          background: #111; border: 2px solid var(--filter-accent, #fff);
           cursor: pointer; pointer-events: all;
         }
         .osai-range-slider::-moz-range-thumb {
           width: 16px; height: 16px; border-radius: 3px;
-          background: #111; border: 2px solid #fff;
+          background: #111; border: 2px solid var(--filter-accent, #fff);
           cursor: pointer; pointer-events: all; box-sizing: border-box;
         }
       `}</style>
@@ -167,7 +167,7 @@ function DualRangeSlider({ min, max, minVal, maxVal, onMinChange, onMaxChange })
         }} />
         <div ref={fillRef} style={{
           position: "absolute", top: "50%", height: 2,
-          background: "#fff", transform: "translateY(-50%)", borderRadius: 1,
+          background: FILTER_ACCENT, transform: "translateY(-50%)", borderRadius: 1,
         }} />
         <input
           type="range" className="osai-range-slider"
@@ -371,7 +371,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "15px 0", borderBottom: "1px solid rgba(255,255,255,0.07)",
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: FILTER_ACCENT }}>
           Filters {activeFilters > 0 && <span style={{ color: "#666" }}>({activeFilters})</span>}
         </span>
         {activeFilters > 0 && (
@@ -427,7 +427,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
             padding: "10px 12px", cursor: "pointer", borderRadius: FILTER_RADIUS,
             border: `1px solid ${saleOnly ? "#e53935" : "rgba(255,255,255,0.12)"}`,
             background: saleOnly ? "rgba(229,57,53,0.12)" : "transparent",
-            color: saleOnly ? "#fff" : "#888",
+            color: saleOnly ? FILTER_ACCENT : "#888",
           }}
         >
           <span style={{ fontSize: 13, fontWeight: saleOnly ? 600 : 400 }}>On Sale Only</span>
@@ -517,16 +517,16 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                     width: 32, height: 32, borderRadius: "50%", display: "block",
                     background: swatchBg,
                     border: active
-                      ? "2px solid #fff"
+                      ? `2px solid ${FILTER_ACCENT}`
                       : light
                         ? "1px solid rgba(255,255,255,0.35)"
                         : "1px solid rgba(255,255,255,0.12)",
-                    boxShadow: active ? "0 0 0 2px rgba(255,255,255,0.25)" : "none",
+                    boxShadow: active ? `0 0 0 2px color-mix(in srgb, ${FILTER_ACCENT} 25%, transparent)` : "none",
                     transition: "all 0.15s",
                     flexShrink: 0,
                   }} />
                   <span style={{
-                    fontSize: 9, color: active ? "#fff" : "#888",
+                    fontSize: 9, color: active ? FILTER_ACCENT : "#888",
                     textAlign: "center", lineHeight: 1.2,
                     fontFamily: "var(--font-body)", letterSpacing: "0.02em",
                     wordBreak: "break-word", maxWidth: 52,
@@ -614,13 +614,13 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                     width: "100%", textAlign: "left", minHeight: 44,
                     background: sortBy === value ? "rgba(255,255,255,0.08)" : "transparent",
                     border: "none", padding: "12px 16px", cursor: "pointer",
-                    color: sortBy === value ? "#fff" : "#888",
+                    color: sortBy === value ? FILTER_ACCENT : "#888",
                     fontFamily: "var(--font-body)", fontSize: 13,
                     fontWeight: sortBy === value ? 600 : 400,
                     display: "flex", alignItems: "center", gap: 8,
                   }}
                 >
-                  {sortBy === value && <span style={{ width: 3, height: 12, background: "#fff", borderRadius: 2, display: "inline-block", flexShrink: 0 }} />}
+                  {sortBy === value && <span style={{ width: 3, height: 12, background: FILTER_ACCENT, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />}
                   {label}
                 </button>
               ))}
@@ -664,7 +664,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
             }}>
               <span style={{
                 fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700,
-                letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff",
+                letterSpacing: "0.1em", textTransform: "uppercase", color: FILTER_ACCENT,
               }}>
                 Filters {activeFilters > 0 && <span style={{ color: "#888" }}>({activeFilters})</span>}
               </span>
@@ -731,7 +731,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
               background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: FILTER_RADIUS, padding: "0 18px",
             }}>
-              <div style={{ padding: "15px 0 0", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>
+              <div style={{ padding: "15px 0 0", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: FILTER_ACCENT }}>
                 Sort By
               </div>
               <div style={{ padding: "10px 0 14px", display: "flex", flexDirection: "column", gap: 2 }}>
@@ -740,12 +740,12 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                     style={{
                       textAlign: "left", background: sortBy === value ? "rgba(255,255,255,0.06)" : "transparent",
                       border: "none", padding: "7px 0", cursor: "pointer",
-                      color: sortBy === value ? "#fff" : "#666",
+                      color: sortBy === value ? FILTER_ACCENT : "#666",
                       fontWeight: sortBy === value ? 600 : 400,
                       fontSize: 12, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 8,
                     }}
                   >
-                    {sortBy === value && <span style={{ width: 3, height: 12, background: "#fff", borderRadius: 2, display: "inline-block" }} />}
+                    {sortBy === value && <span style={{ width: 3, height: 12, background: FILTER_ACCENT, borderRadius: 2, display: "inline-block" }} />}
                     {label}
                   </button>
                 ))}
