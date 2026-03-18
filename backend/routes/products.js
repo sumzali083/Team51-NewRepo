@@ -49,7 +49,8 @@ function buildBaseSelect(includeOriginalPrice) {
     p.description AS \`desc\`,
     GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
     GROUP_CONCAT(DISTINCT ps.size ORDER BY ps.size SEPARATOR '||') AS sizes,
-    GROUP_CONCAT(DISTINCT pc.color ORDER BY pc.color SEPARATOR '||') AS colors
+    GROUP_CONCAT(DISTINCT pc.color ORDER BY pc.color SEPARATOR '||') AS colors,
+    ROUND((SELECT AVG(r.rating) FROM reviews r WHERE r.product_id = p.id), 1) AS avg_rating
   FROM products p
   JOIN categories c ON p.category_id = c.id
   LEFT JOIN product_images pi ON pi.product_id = p.id
@@ -71,6 +72,8 @@ function buildProductRow(r) {
     images: splitList(r.images),
     sizes: splitList(r.sizes),
     colors: splitList(r.colors),
+    avg_rating: r.avg_rating != null ? Number(r.avg_rating) : null,
+    category: r.category_name,
   };
 }
 
