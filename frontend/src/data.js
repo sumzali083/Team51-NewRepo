@@ -8,7 +8,6 @@ export const PRODUCTS = [
     cat: "men",
     name: "AeroFlex Running Tee",
     price: 29.99,
-    originalPrice: 49.99,
     images: ["/assets/men/aeroflex-tee-1.jpg", "/assets/men/aeroflex-tee-2.jpg"],
     desc: "Featherlight training tee with breathable mesh zones.",
     sizes: ["S", "M", "L", "XL"],
@@ -31,7 +30,6 @@ export const PRODUCTS = [
     cat: "men",
     name: "Therma+ Hoodie",
     price: 49.0,
-    originalPrice: 75.0,
     images: [
       "/assets/men/hoodie-therma-1.jpg",
       "/assets/men/hoodie-therma-2.jpg",
@@ -60,7 +58,6 @@ export const PRODUCTS = [
     cat: "men",
     name: "All-Weather Jacket",
     price: 89.0,
-    isNewArrival: true,
     images: [
       "/assets/men/jacket-allweather-1.jpg",
       "/assets/men/jacket-allweather-2.jpg",
@@ -75,7 +72,6 @@ export const PRODUCTS = [
     cat: "men",
     name: "Everyday Crew Socks (3-pack)",
     price: 12.0,
-    isNewArrival: true,
     images: [
       "/assets/men/socks-everyday-1.jpg",
       "/assets/men/socks-everyday-2.jpg",
@@ -91,7 +87,6 @@ export const PRODUCTS = [
     cat: "women",
     name: "AirLite Crop Tee",
     price: 27.99,
-    originalPrice: 44.99,
     images: [
       "/assets/women/croptee-airlite-1.jpg",
       "/assets/women/croptee-airlite-2.jpg",
@@ -107,7 +102,6 @@ export const PRODUCTS = [
     cat: "women",
     name: "Sculpt Leggings 7/8",
     price: 42.0,
-    isNewArrival: true,
     images: [
       "/assets/women/leggings-sculpt-1.jpg",
       "/assets/women/leggings-sculpt-2.jpg",
@@ -136,7 +130,6 @@ export const PRODUCTS = [
     cat: "women",
     name: "Trail Windbreaker",
     price: 79.0,
-    isNewArrival: true,
     images: [
       "/assets/women/jacket-trailwind-1.jpg",
       "/assets/women/jacket-trailwind-2.jpg",
@@ -166,7 +159,6 @@ export const PRODUCTS = [
     cat: "women",
     name: "Cloud Fleece Joggers",
     price: 44.0,
-    originalPrice: 69.0,
     images: [
       "/assets/women/joggers-cloudfleece-1.jpg",
       "/assets/women/joggers-cloudfleece-2.jpg",
@@ -182,7 +174,6 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Galaxy Graphic Tee",
     price: 14.99,
-    originalPrice: 24.99,
     images: [
       "/assets/kids/tee-galaxy-1.jpg",
       "/assets/kids/tee-galaxy-2.jpg",
@@ -212,7 +203,6 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Bright Day Hoodie",
     price: 24.99,
-    originalPrice: 39.99,
     images: [
       "/assets/kids/hoodie-brightday-1.jpg",
       "/assets/kids/hoodie-brightday-2.jpg",
@@ -241,7 +231,6 @@ export const PRODUCTS = [
     cat: "kids",
     name: "All-Weather Shell",
     price: 34.99,
-    isNewArrival: true,
     images: [
       "/assets/kids/jacket-shell-1.jpg",
       "/assets/kids/jacket-shell-2.jpg",
@@ -257,7 +246,6 @@ export const PRODUCTS = [
     cat: "kids",
     name: "Everyday Trainer Socks (5-pack)",
     price: 10.0,
-    isNewArrival: true,
     images: [
       "/assets/kids/socks-trainer-1.jpg",
       "/assets/kids/socks-trainer-2.jpg",
@@ -268,5 +256,3 @@ export const PRODUCTS = [
   },
 
 ];
-// Sale page    → products with originalPrice set (m-001, m-003, w-001, w-006, k-001, k-003)
-// New Arrivals → products with isNewArrival: true (m-005, m-006, w-002, w-004, k-005, k-006)

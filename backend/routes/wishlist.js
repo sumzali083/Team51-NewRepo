@@ -36,6 +36,7 @@ router.get("/", requireAuth, async (req, res) => {
         p.sku AS sku,
         p.name,
         p.price,
+        p.original_price,
         COALESCE(
           (SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.sort_order ASC LIMIT 1),
           p.image_url,

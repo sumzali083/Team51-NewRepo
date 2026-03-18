@@ -1,6 +1,5 @@
-import React from "react";
-import { CategoryPage } from "../CategoryPage";
+import { FilteredProductPage } from "./AllProductsPage";
 
 export function MensPage() {
-  return <CategoryPage cat="men" pageTitle="Mens" />;
+  return <FilteredProductPage cat="men" pageTitle="Mens" showCategory={false} showSale={false} />;
 }

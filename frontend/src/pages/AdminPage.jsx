@@ -3,34 +3,100 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
+const REFUND_TRANSITIONS = {
+  pending: new Set(["pending", "approved", "rejected"]),
+  approved: new Set(["approved", "processing", "rejected"]),
+  processing: new Set(["processing", "refunded", "rejected"]),
+  rejected: new Set(["rejected"]),
+  refunded: new Set(["refunded"]),
+};
+
 export default function AdminPage() {
   const LOW_STOCK_LIMIT = 5;
   const { user } = useContext(AuthContext);
+
   const [reports, setReports] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [orderDateFilter, setOrderDateFilter] = useState("all");
+  const [orderSortBy, setOrderSortBy] = useState("newest");
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [selectedOrders, setSelectedOrders] = useState({});
+  const [bulkOrderStatus, setBulkOrderStatus] = useState("processing");
+  const [runningBulkOrderAction, setRunningBulkOrderAction] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [refunds, setRefunds] = useState([]);
   const [users, setUsers] = useState([]);
+  const [userAuditLog, setUserAuditLog] = useState([]);
+  const [adminRoleRequests, setAdminRoleRequests] = useState([]);
+  const [usersSearch, setUsersSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [userStatusFilter, setUserStatusFilter] = useState("all");
+  const [usersPage, setUsersPage] = useState(1);
+  const [selectedUsers, setSelectedUsers] = useState({});
+  const [bulkUserAction, setBulkUserAction] = useState("suspend");
+  const [bulkUserReason, setBulkUserReason] = useState("");
+  const [userSummary, setUserSummary] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserDraft, setEditUserDraft] = useState(null);
+  const [loadingUserSummary, setLoadingUserSummary] = useState(false);
+  const [loadingUserOrders, setLoadingUserOrders] = useState(false);
+  const [userOrders, setUserOrders] = useState([]);
+  const [userOrdersPage, setUserOrdersPage] = useState(1);
+  const [userOrdersTotalPages, setUserOrdersTotalPages] = useState(1);
   const [messages, setMessages] = useState([]);
+  //  ADDED FEEDBACK STATE
+  const [feedback, setFeedback] = useState([]);
+  const [feedbackSearch, setFeedbackSearch] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [messageSearch, setMessageSearch] = useState("");
+  const [messageStatusFilter, setMessageStatusFilter] = useState("active");
+  const [messagePage, setMessagePage] = useState(1);
+  const [reviewSearch, setReviewSearch] = useState("");
+  const [reviewRatingFilter, setReviewRatingFilter] = useState("all");
+  const [reviewDateFilter, setReviewDateFilter] = useState("all");
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [dashboardRange, setDashboardRange] = useState("30d");
+  const [inventorySearch, setInventorySearch] = useState("");
   const [savingStockId, setSavingStockId] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
+  const [exportingOrdersCsv, setExportingOrdersCsv] = useState(false);
+  const [exportingUsersCsv, setExportingUsersCsv] = useState(false);
+  const [exportingProductsCsv, setExportingProductsCsv] = useState(false);
   const [savingRefundId, setSavingRefundId] = useState(null);
+  const [savingUserId, setSavingUserId] = useState(null);
+  const [savingUserRoleId, setSavingUserRoleId] = useState(null);
+  const [savingUserProfileId, setSavingUserProfileId] = useState(null);
+  const [runningBulkUsersAction, setRunningBulkUsersAction] = useState(false);
+  const [reviewingRoleRequestId, setReviewingRoleRequestId] = useState(null);
+  const [actionMenuUserId, setActionMenuUserId] = useState(null);
   const [stockDraft, setStockDraft] = useState({});
+  const [incomingProductId, setIncomingProductId] = useState("");
+  const [incomingSize, setIncomingSize] = useState("");
+  const [incomingQty, setIncomingQty] = useState("1");
+  const [incomingNote, setIncomingNote] = useState("");
+  const [processingIncoming, setProcessingIncoming] = useState(false);
   const [orderStatusDraft, setOrderStatusDraft] = useState({});
   const [refundStatusDraft, setRefundStatusDraft] = useState({});
   const [refundAdminNoteDraft, setRefundAdminNoteDraft] = useState({});
   const [refundInstructionLinkDraft, setRefundInstructionLinkDraft] = useState({});
+  const [refundAmountDraft, setRefundAmountDraft] = useState({});
+  const [refundReferenceDraft, setRefundReferenceDraft] = useState({});
+  const [expandedRefunds, setExpandedRefunds] = useState({});
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [submittingProduct, setSubmittingProduct] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState(null);
   const [productDraft, setProductDraft] = useState({
-    sku: "", name: "", category_id: 0, price: "", original_price: "", stock: 0,
-    description: "", sizes: [], colors: ["", ""], imageFiles: [null, null, null],
+    sku: "", name: "", category_id: 0, price: "", original_price: "", onSale: false, stock: 0,
+    description: "", sizes: [], sizeStocks: {}, colors: ["", ""], imageFiles: [null, null, null],
   });
   const [editingProductId, setEditingProductId] = useState(null);
   const [editDraft, setEditDraft] = useState(null);
@@ -41,7 +107,19 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [reportsRes, productsRes, ordersRes, refundsRes, usersRes, messagesRes, reviewsRes, categoriesRes] = await Promise.all([
+      const [
+        reportsRes,
+        productsRes,
+        ordersRes,
+        refundsRes,
+        usersRes,
+        messagesRes,
+        reviewsRes,
+        feedbackRes, //  ADDED
+        categoriesRes,
+        auditRes,
+        roleReqRes
+      ] = await Promise.all([
         api.get("/api/admin/reports"),
         api.get("/api/admin/products"),
         api.get("/api/admin/orders"),
@@ -49,7 +127,10 @@ export default function AdminPage() {
         api.get("/api/admin/users"),
         api.get("/api/admin/messages"),
         api.get("/api/admin/reviews"),
+        api.get("/api/admin/feedback"), //  ADDED
         api.get("/api/admin/categories").catch(() => ({ data: [] })),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+        api.get("/api/admin/admin-role-requests").catch(() => ({ data: [] })),
       ]);
 
       setReports(reportsRes.data || null);
@@ -57,19 +138,27 @@ export default function AdminPage() {
       setOrders(ordersRes.data || []);
       setRefunds(refundsRes.data || []);
       setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
+      setAdminRoleRequests(roleReqRes.data || []);
       setMessages(messagesRes.data || []);
       setReviews(reviewsRes.data || []);
+      setFeedback(feedbackRes.data || []);
+
       const cats = categoriesRes.data || [];
       setCategories(cats);
-      // Set default category_id to first real category
+
       if (cats.length > 0) {
         setProductDraft((prev) => ({ ...prev, category_id: cats[0].id }));
       }
+
       setStockDraft(Object.fromEntries((productsRes.data || []).map((p) => [p.id, p.stock ?? 0])));
       setOrderStatusDraft(Object.fromEntries((ordersRes.data || []).map((o) => [o.id, o.status || "pending"])));
       setRefundStatusDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.status || "pending"])));
       setRefundAdminNoteDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.admin_note || ""])));
       setRefundInstructionLinkDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.instruction_link || ""])));
+      setRefundAmountDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.refund_amount == null ? "" : String(r.refund_amount)])));
+      setRefundReferenceDraft(Object.fromEntries((refundsRes.data || []).map((r) => [r.id, r.refund_reference || ""])));
+
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to fetch admin data");
     } finally {
@@ -81,9 +170,20 @@ export default function AdminPage() {
     loadAll();
   }, []);
 
+  //  FEEDBACK FILTER (LIKE REVIEWS SEARCH)
+  const filteredFeedback = useMemo(() => {
+    return feedback.filter((f) =>
+      (f.name || "").toLowerCase().includes(feedbackSearch.toLowerCase()) ||
+      (f.email || "").toLowerCase().includes(feedbackSearch.toLowerCase()) ||
+      (f.comments || "").toLowerCase().includes(feedbackSearch.toLowerCase())
+    );
+  }, [feedback, feedbackSearch]);
+  
   const updateStock = async (productId) => {
     const value = Number(stockDraft[productId]);
     if (!Number.isInteger(value) || value < 0) return;
+    const current = products.find((p) => Number(p.id) === Number(productId));
+    if (current && Number(current.stock ?? 0) === value) return;
     setSavingStockId(productId);
     try {
       await api.put(`/api/admin/products/${productId}/stock`, { stock: value });
@@ -97,7 +197,9 @@ export default function AdminPage() {
 
   const updateOrderStatus = async (orderId) => {
     const status = orderStatusDraft[orderId];
+    const current = orders.find((o) => Number(o.id) === Number(orderId));
     if (!status) return;
+    if (current && String(current.status || "") === String(status)) return;
     setSavingOrderId(orderId);
     try {
       await api.put(`/api/admin/orders/${orderId}/status`, { status });
@@ -113,14 +215,31 @@ export default function AdminPage() {
     const status = refundStatusDraft[refundId];
     const adminNote = refundAdminNoteDraft[refundId] || "";
     const instructionLink = refundInstructionLinkDraft[refundId] || "";
+    const refundAmount = refundAmountDraft[refundId] || "";
+    const refundReference = refundReferenceDraft[refundId] || "";
     if (!status) return;
 
     setSavingRefundId(refundId);
     try {
-      await api.put(`/api/admin/refunds/${refundId}/status`, { status, adminNote, instructionLink });
+      await api.put(`/api/admin/refunds/${refundId}/status`, {
+        status,
+        adminNote,
+        instructionLink,
+        refundAmount,
+        refundReference,
+      });
       setRefunds((prev) =>
         prev.map((r) =>
-          r.id === refundId ? { ...r, status, admin_note: adminNote, instruction_link: instructionLink } : r
+          r.id === refundId
+            ? {
+                ...r,
+                status,
+                admin_note: adminNote,
+                instruction_link: instructionLink,
+                refund_amount: status === "refunded" ? refundAmount : null,
+                refund_reference: status === "refunded" ? refundReference : null,
+              }
+            : r
         )
       );
     } catch (err) {
@@ -130,15 +249,83 @@ export default function AdminPage() {
     }
   };
 
-  const deleteMessage = async (id) => {
-    if (!window.confirm("Delete this contact message?")) return;
+  const getAllowedRefundStatuses = (currentStatus) => {
+    return REFUND_TRANSITIONS[currentStatus || "pending"] || REFUND_TRANSITIONS.pending;
+  };
+  const toggleRefundExpanded = (refundId) => {
+    setExpandedRefunds((prev) => ({ ...prev, [refundId]: !prev[refundId] }));
+  };
+
+  const deleteMessage = async (message) => {
+    const sender = message?.name || "this sender";
+    const email = message?.email || "unknown email";
+    if (!window.confirm(`Delete message from ${sender} (${email})? This cannot be undone.`)) return;
     try {
-      await api.delete(`/api/admin/messages/${id}`);
-      setMessages((prev) => prev.filter((m) => m.id !== id));
+      await api.delete(`/api/admin/messages/${message.id}`);
+      setMessages((prev) => prev.filter((m) => m.id !== message.id));
+      setSelectedMessage((prev) => (prev && prev.id === message.id ? null : prev));
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete message");
     }
   };
+
+  const updateMessageStatus = async (id, status) => {
+    try {
+      await api.put(`/api/admin/messages/${id}/status`, { status });
+      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
+      setSelectedMessage((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update message status");
+    }
+  };
+
+  const openMessage = (message) => {
+    if ((message.status || "unread") === "unread") {
+      updateMessageStatus(message.id, "read");
+    }
+    setSelectedMessage(message);
+  };
+
+  const closeMessageModal = () => {
+    setSelectedMessage(null);
+  };
+
+  const replyToMessage = (message) => {
+    const email = String(message?.email || "").trim();
+    if (!email) {
+      alert("No email found for this message.");
+      return;
+    }
+    const subject = encodeURIComponent("Regarding your message to OSAI");
+    window.location.href = `mailto:${email}?subject=${subject}`;
+  };
+
+  useEffect(() => {
+    setMessagePage(1);
+  }, [messageSearch, messageStatusFilter]);
+
+  useEffect(() => {
+    setOrdersPage(1);
+  }, [orderSearch, orderStatusFilter, orderDateFilter, orderSortBy]);
+
+  useEffect(() => {
+    setUsersPage(1);
+  }, [usersSearch, userRoleFilter, userStatusFilter]);
+
+  useEffect(() => {
+    const closeMenu = () => setActionMenuUserId(null);
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setActionMenuUserId(null);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("scroll", closeMenu, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("scroll", closeMenu, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   const deleteReview = async (id) => {
     if (!window.confirm("Delete this review?")) return;
@@ -147,6 +334,16 @@ export default function AdminPage() {
       setReviews((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete review");
+    }
+  };
+
+  const deleteFeedback = async (id) => {
+    if (!window.confirm("Delete this feedback entry?")) return;
+    try {
+      await api.delete(`/api/admin/feedback/${id}`);
+      setFeedback((prev) => prev.filter((f) => f.id !== id));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to delete feedback");
     }
   };
 
@@ -164,6 +361,452 @@ export default function AdminPage() {
     }
   };
 
+  const updateUserSuspension = async (targetUser, suspended) => {
+    if (Number(targetUser?.id) === Number(user?.id)) {
+      alert("You cannot change your own admin account status.");
+      return;
+    }
+    const reason = suspended
+      ? (window.prompt("Reason for suspension (optional):", "") || "")
+      : "";
+    setSavingUserId(targetUser.id);
+    try {
+      await api.put(`/api/admin/users/${targetUser.id}/suspend`, { suspended, reason });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUser.id
+            ? {
+                ...u,
+                is_suspended: suspended ? 1 : 0,
+                suspended_at: suspended ? new Date().toISOString() : null,
+                suspension_reason: suspended ? (reason || "Suspended by admin") : null,
+              }
+            : u
+        )
+      );
+      const auditRes = await api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] }));
+      setUserAuditLog(auditRes.data || []);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update user suspension");
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
+  const updateUserRole = async (targetUser, makeAdmin) => {
+    const actionText = makeAdmin ? "promote to admin" : "remove admin access";
+    const typed = window.prompt(`Type ADMIN to confirm you want to ${actionText} for ${targetUser?.email || "this user"}.`, "");
+    if (typed !== "ADMIN") return;
+
+    setSavingUserRoleId(targetUser.id);
+    try {
+      await api.put(`/api/admin/users/${targetUser.id}/role`, { isAdmin: makeAdmin });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === targetUser.id ? { ...u, is_admin: makeAdmin ? 1 : 0 } : u))
+      );
+      const auditRes = await api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] }));
+      setUserAuditLog(auditRes.data || []);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update user role");
+    } finally {
+      setSavingUserRoleId(null);
+    }
+  };
+
+  const reviewAdminRoleRequest = async (requestId, decision) => {
+    if (!["approved", "rejected"].includes(decision)) return;
+    setReviewingRoleRequestId(requestId);
+    try {
+      await api.put(`/api/admin/admin-role-requests/${requestId}`, { decision });
+      const [requestsRes, usersRes, auditRes] = await Promise.all([
+        api.get("/api/admin/admin-role-requests").catch(() => ({ data: [] })),
+        api.get("/api/admin/users").catch(() => ({ data: [] })),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+      ]);
+      setAdminRoleRequests(requestsRes.data || []);
+      setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to process admin request");
+    } finally {
+      setReviewingRoleRequestId(null);
+    }
+  };
+
+  const toggleOrderSelection = (orderId) => {
+    setSelectedOrders((prev) => ({ ...prev, [orderId]: !prev[orderId] }));
+  };
+
+  const selectedOrderIds = useMemo(
+    () => Object.keys(selectedOrders).filter((id) => selectedOrders[id]).map((id) => Number(id)),
+    [selectedOrders]
+  );
+
+  const runBulkOrderStatus = async () => {
+    if (!selectedOrderIds.length) {
+      alert("Select at least one order first.");
+      return;
+    }
+    if (!window.confirm(`Update ${selectedOrderIds.length} selected orders to ${bulkOrderStatus}?`)) return;
+    setRunningBulkOrderAction(true);
+    try {
+      await api.post("/api/admin/orders/bulk-status", { orderIds: selectedOrderIds, status: bulkOrderStatus });
+      setOrders((prev) =>
+        prev.map((o) => (selectedOrderIds.includes(Number(o.id)) ? { ...o, status: bulkOrderStatus } : o))
+      );
+      setOrderStatusDraft((prev) => {
+        const next = { ...prev };
+        for (const id of selectedOrderIds) next[id] = bulkOrderStatus;
+        return next;
+      });
+      setSelectedOrders({});
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to bulk update orders");
+    } finally {
+      setRunningBulkOrderAction(false);
+    }
+  };
+
+  const getApiErrorMessage = async (err, fallbackMessage) => {
+    const data = err?.response?.data;
+    if (data instanceof Blob) {
+      try {
+        const text = await data.text();
+        const parsed = JSON.parse(text);
+        if (parsed?.message) return String(parsed.message);
+        return text || fallbackMessage;
+      } catch (_) {
+        return fallbackMessage;
+      }
+    }
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed?.message) return String(parsed.message);
+      } catch (_) {}
+      return data || fallbackMessage;
+    }
+    if (data?.message) return String(data.message);
+    return err?.message || fallbackMessage;
+  };
+
+  const exportOrdersCsv = async () => {
+    setExportingOrdersCsv(true);
+    try {
+      const res = await api.get("/api/admin/orders/export.csv", {
+        responseType: "blob",
+        params: {
+          q: orderSearch,
+          status: orderStatusFilter,
+          date: orderDateFilter,
+          sort: orderSortBy,
+        },
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+
+      const disposition = String(res.headers?.["content-disposition"] || "");
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const fallback = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = match?.[1] || fallback;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      alert(await getApiErrorMessage(err, "Failed to export orders CSV"));
+    } finally {
+      setExportingOrdersCsv(false);
+    }
+  };
+
+  const exportDashboardOrdersCsv = async () => {
+    const date = dashboardRange === "7d" ? "7d" : dashboardRange === "30d" ? "30d" : "all";
+    setExportingOrdersCsv(true);
+    try {
+      const res = await api.get("/api/admin/orders/export.csv", {
+        responseType: "blob",
+        params: {
+          q: "",
+          status: "all",
+          date,
+          sort: "newest",
+        },
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.download = `dashboard-orders-${date}-${stamp}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      alert(await getApiErrorMessage(err, "Failed to export orders CSV"));
+    } finally {
+      setExportingOrdersCsv(false);
+    }
+  };
+
+  const exportUsersCsv = async () => {
+    setExportingUsersCsv(true);
+    try {
+      const res = await api.get("/api/admin/users/export.csv", {
+        responseType: "blob",
+        params: {
+          q: usersSearch,
+          role: userRoleFilter,
+          status: userStatusFilter,
+        },
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+
+      const disposition = String(res.headers?.["content-disposition"] || "");
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const fallback = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = match?.[1] || fallback;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      alert(await getApiErrorMessage(err, "Failed to export users CSV"));
+    } finally {
+      setExportingUsersCsv(false);
+    }
+  };
+
+  const exportProductsCsv = async () => {
+    setExportingProductsCsv(true);
+    try {
+      const res = await api.get("/api/admin/products/export.csv", {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+
+      const disposition = String(res.headers?.["content-disposition"] || "");
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const fallback = `products-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = match?.[1] || fallback;
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      alert(await getApiErrorMessage(err, "Failed to export products CSV"));
+    } finally {
+      setExportingProductsCsv(false);
+    }
+  };
+
+  const openOrderDetails = async (orderId) => {
+    setLoadingOrderDetails(true);
+    try {
+      const res = await api.get(`/api/admin/orders/${orderId}/details`);
+      setSelectedOrderDetails(res.data || null);
+      return true;
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to load order details");
+      return false;
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
+  const closeOrderDetails = () => setSelectedOrderDetails(null);
+
+  const openReviewModal = (review) => setSelectedReview(review);
+  const closeReviewModal = () => setSelectedReview(null);
+  const openFeedbackModal = (feedbackItem) => setSelectedFeedback(feedbackItem);
+  const closeFeedbackModal = () => setSelectedFeedback(null);
+
+  const toggleUserSelection = (targetId) => {
+    setSelectedUsers((prev) => ({ ...prev, [targetId]: !prev[targetId] }));
+  };
+
+  const selectedUserIds = useMemo(
+    () => Object.keys(selectedUsers).filter((id) => selectedUsers[id]).map((id) => Number(id)),
+    [selectedUsers]
+  );
+
+  const runBulkUserAction = async () => {
+    if (!selectedUserIds.length) {
+      alert("Select at least one user first.");
+      return;
+    }
+    if (!window.confirm(`Run ${bulkUserAction} for ${selectedUserIds.length} users?`)) return;
+    setRunningBulkUsersAction(true);
+    try {
+      await api.post("/api/admin/users/bulk-action", {
+        userIds: selectedUserIds,
+        action: bulkUserAction,
+        reason: bulkUserReason,
+      });
+      const [usersRes, auditRes] = await Promise.all([
+        api.get("/api/admin/users"),
+        api.get("/api/admin/users/audit-log?limit=12").catch(() => ({ data: [] })),
+      ]);
+      setUsers(usersRes.data || []);
+      setUserAuditLog(auditRes.data || []);
+      setSelectedUsers({});
+      setBulkUserReason("");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Bulk action failed");
+    } finally {
+      setRunningBulkUsersAction(false);
+    }
+  };
+
+  const openUserSummary = async (targetUser) => {
+    const targetId = Number(targetUser?.id);
+    if (!Number.isInteger(targetId) || targetId <= 0) return;
+
+    setLoadingUserSummary(true);
+    setLoadingUserOrders(true);
+    setUserOrdersPage(1);
+    try {
+      const [summaryRes, ordersRes] = await Promise.all([
+        api.get(`/api/admin/users/${targetId}/summary`),
+        api.get(`/api/admin/users/${targetId}/orders`, { params: { page: 1, pageSize: 10 } }),
+      ]);
+      setUserSummary(summaryRes.data || null);
+      setUserOrders(ordersRes.data?.rows || []);
+      setUserOrdersTotalPages(Math.max(1, Number(ordersRes.data?.pagination?.totalPages || 1)));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to load user summary");
+    } finally {
+      setLoadingUserSummary(false);
+      setLoadingUserOrders(false);
+    }
+  };
+
+  const loadUserOrdersPage = async (targetUserId, page) => {
+    const parsedPage = Number.parseInt(String(page || "1"), 10);
+    const normalizedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    setLoadingUserOrders(true);
+    try {
+      const res = await api.get(`/api/admin/users/${targetUserId}/orders`, {
+        params: { page: normalizedPage, pageSize: 10 },
+      });
+      setUserOrders(res.data?.rows || []);
+      setUserOrdersPage(normalizedPage);
+      setUserOrdersTotalPages(Math.max(1, Number(res.data?.pagination?.totalPages || 1)));
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to load user order history");
+    } finally {
+      setLoadingUserOrders(false);
+    }
+  };
+
+  const openOrderDetailsFromUserSummary = async (orderId) => {
+    const opened = await openOrderDetails(orderId);
+    if (opened) closeUserSummary();
+  };
+
+  const closeUserSummary = () => {
+    setUserSummary(null);
+    setUserOrders([]);
+    setUserOrdersPage(1);
+    setUserOrdersTotalPages(1);
+  };
+
+  const openUserEditor = (targetUser) => {
+    setEditingUser(targetUser);
+    setEditUserDraft({
+      name: targetUser?.name || "",
+      email: targetUser?.email || "",
+      phone: targetUser?.phone || "",
+      address_line1: targetUser?.address_line1 || "",
+      address_line2: targetUser?.address_line2 || "",
+      city: targetUser?.city || "",
+      postcode: targetUser?.postcode || "",
+    });
+  };
+
+  const closeUserEditor = () => {
+    setEditingUser(null);
+    setEditUserDraft(null);
+  };
+
+  const saveUserEditor = async () => {
+    if (!editingUser || !editUserDraft) return;
+    setSavingUserProfileId(editingUser.id);
+    try {
+      const res = await api.put(`/api/admin/users/${editingUser.id}/profile`, editUserDraft);
+      const updated = res.data?.user || {};
+      setUsers((prev) =>
+        prev.map((u) =>
+          Number(u.id) === Number(editingUser.id)
+            ? {
+                ...u,
+                name: updated.name ?? u.name,
+                email: updated.email ?? u.email,
+                phone: updated.phone ?? u.phone,
+                address_line1: updated.address_line1 ?? u.address_line1,
+                address_line2: updated.address_line2 ?? u.address_line2,
+                city: updated.city ?? u.city,
+                postcode: updated.postcode ?? u.postcode,
+              }
+            : u
+        )
+      );
+      closeUserEditor();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update user details");
+    } finally {
+      setSavingUserProfileId(null);
+    }
+  };
+
+  const processIncomingStock = async () => {
+    const productId = Number(incomingProductId);
+    const quantity = Number(incomingQty);
+    if (!Number.isInteger(productId) || productId <= 0) {
+      alert("Select a product for incoming stock.");
+      return;
+    }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      alert("Incoming quantity must be a positive integer.");
+      return;
+    }
+    setProcessingIncoming(true);
+    try {
+      await api.post(`/api/admin/products/${productId}/incoming`, {
+        quantity,
+        size: incomingSize || null,
+        note: incomingNote || null,
+      });
+      const res = await api.get("/api/admin/products");
+      setProducts(res.data || []);
+      setStockDraft(Object.fromEntries((res.data || []).map((p) => [p.id, p.stock ?? 0])));
+      setIncomingQty("1");
+      setIncomingNote("");
+      setIncomingSize("");
+      await loadAll();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to process incoming stock");
+    } finally {
+      setProcessingIncoming(false);
+    }
+  };
+
   const startEdit = (p) => {
     setEditingProductId(p.id);
     setEditDraft({
@@ -175,6 +818,9 @@ export default function AdminPage() {
       stock: p.stock != null ? String(p.stock) : "0",
       description: p.description || "",
       sizes: Array.isArray(p.sizes) ? [...p.sizes] : [],
+      sizeStocks: Object.fromEntries(
+        (Array.isArray(p.sizeStocks) ? p.sizeStocks : []).map((x) => [x.size, String(x.stock ?? 0)])
+      ),
       colors: Array.isArray(p.colors) && p.colors.length ? [...p.colors] : ["", ""],
       images: Array.isArray(p.images) ? [...p.images] : [],
       newImageFiles: [null, null, null],
@@ -193,6 +839,9 @@ export default function AdminPage() {
       sizes: prev.sizes.includes(size)
         ? prev.sizes.filter((s) => s !== size)
         : [...prev.sizes, size],
+      sizeStocks: prev.sizes.includes(size)
+        ? Object.fromEntries(Object.entries(prev.sizeStocks || {}).filter(([k]) => k !== size))
+        : { ...(prev.sizeStocks || {}), [size]: String(prev.stock || "0") },
     }));
   };
 
@@ -226,6 +875,7 @@ export default function AdminPage() {
         stock: Number(editDraft.stock) || 0,
         description: editDraft.description.trim(),
         sizes: editDraft.sizes,
+        sizeStocks: editDraft.sizeStocks || {},
         colors: (editDraft.colors || []).filter((c) => c.trim()),
         images: finalImages,
       };
@@ -266,11 +916,14 @@ export default function AdminPage() {
       sizes: prev.sizes.includes(size)
         ? prev.sizes.filter((s) => s !== size)
         : [...prev.sizes, size],
+      sizeStocks: prev.sizes.includes(size)
+        ? Object.fromEntries(Object.entries(prev.sizeStocks || {}).filter(([k]) => k !== size))
+        : { ...(prev.sizeStocks || {}), [size]: String(prev.stock || "0") },
     }));
   };
 
   const addProduct = async () => {
-    const { sku, name, category_id, price, stock, description, sizes, colors, imageFiles } = productDraft;
+    const { sku, name, category_id, price, stock, description, sizes, sizeStocks, colors, imageFiles } = productDraft;
     if (!sku.trim() || !name.trim() || !price) {
       alert("SKU, Name, and Price are required.");
       return;
@@ -297,16 +950,17 @@ export default function AdminPage() {
         name: name.trim(),
         category_id: Number(category_id),
         price: Number(price),
-        original_price: productDraft.original_price ? Number(productDraft.original_price) : null,
+        original_price: productDraft.onSale && productDraft.original_price ? Number(productDraft.original_price) : null,
         stock: Number(stock) || 0,
         description: description.trim(),
         sizes,
+        sizeStocks: sizeStocks || {},
         colors: colors.filter((c) => c.trim()),
         images: uploadedUrls,
       });
       setProductDraft({
-        sku: "", name: "", category_id: categories[0]?.id || 0, price: "", original_price: "", stock: 0,
-        description: "", sizes: [], colors: ["", ""], imageFiles: [null, null, null],
+        sku: "", name: "", category_id: categories[0]?.id || 0, price: "", original_price: "", onSale: false, stock: 0,
+        description: "", sizes: [], sizeStocks: {}, colors: ["", ""], imageFiles: [null, null, null],
       });
       setShowAddProduct(false);
       const res = await api.get("/api/admin/products");
@@ -346,6 +1000,7 @@ export default function AdminPage() {
       { label: "Low Stock", value: reports?.lowStockCount ?? 0, tab: "stockAlerts" },
       { label: "Pending Refunds", value: reports?.pendingRefundRequests ?? 0, tab: "refunds" },
       { label: "Messages", value: messages.length, tab: "contacts" },
+      { label: "Feedback", value: feedback.length, tab: "feedback" },
       { label: "Reviews", value: reviews.length, tab: "reviews" },
     ];
   }, [messages.length, orders.length, products.length, refunds.length, reports, reviews.length]);
@@ -362,6 +1017,21 @@ export default function AdminPage() {
         return stock > 0 && stock <= LOW_STOCK_LIMIT;
       }),
     [products, LOW_STOCK_LIMIT]
+  );
+
+  const filteredInventoryProducts = useMemo(() => {
+    const q = inventorySearch.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) =>
+      String(p.sku || "").toLowerCase().includes(q) ||
+      String(p.name || "").toLowerCase().includes(q) ||
+      String(p.category || "").toLowerCase().includes(q)
+    );
+  }, [products, inventorySearch]);
+
+  const selectedIncomingProduct = useMemo(
+    () => products.find((p) => Number(p.id) === Number(incomingProductId)) || null,
+    [products, incomingProductId]
   );
 
   const inRange = (dateValue, rangeKey) => {
@@ -396,8 +1066,13 @@ export default function AdminPage() {
     [rangeOrders]
   );
 
+  const stockFlow7d = useMemo(() => {
+    return Array.isArray(reports?.productFlow7d) ? reports.productFlow7d : [];
+  }, [reports]);
+
   const needsActionItems = useMemo(() => {
     const pendingRefunds = refunds.filter((r) => (r.status || "pending") === "pending").length;
+    const unreadMessages = messages.filter((m) => (m.status || "unread") === "unread").length;
     return [
       {
         label: "Out of stock products",
@@ -419,12 +1094,12 @@ export default function AdminPage() {
       },
       {
         label: "Unread contact messages",
-        value: messages.length,
+        value: unreadMessages,
         tab: "contacts",
-        tone: messages.length > 0 ? "info" : "secondary",
+        tone: unreadMessages > 0 ? "info" : "secondary",
       },
     ];
-  }, [messages.length, outOfStockProducts.length, lowStockProducts.length, refunds]);
+  }, [messages, outOfStockProducts.length, lowStockProducts.length, refunds]);
 
   const recentActivity = useMemo(() => {
     const orderItems = orders.map((o) => ({
@@ -452,6 +1127,161 @@ export default function AdminPage() {
       .slice(0, 8);
   }, [orders, refunds, messages]);
 
+  const filteredMessages = useMemo(() => {
+    const q = messageSearch.trim().toLowerCase();
+    return messages.filter((m) => {
+      const status = (m.status || "unread").toLowerCase();
+      if (messageStatusFilter === "active" && status === "archived") return false;
+      if (messageStatusFilter === "archived" && status !== "archived") return false;
+      if (!["all", "active", "archived"].includes(messageStatusFilter) && status !== messageStatusFilter) {
+        return false;
+      }
+      if (!q) return true;
+
+      return (
+        String(m.name || "").toLowerCase().includes(q) ||
+        String(m.email || "").toLowerCase().includes(q) ||
+        String(m.message || "").toLowerCase().includes(q)
+      );
+    });
+  }, [messages, messageSearch, messageStatusFilter]);
+
+  const messagePageSize = 10;
+  const messageTotalPages = Math.max(1, Math.ceil(filteredMessages.length / messagePageSize));
+  const safeMessagePage = Math.min(messagePage, messageTotalPages);
+  const pagedMessages = useMemo(() => {
+    const start = (safeMessagePage - 1) * messagePageSize;
+    return filteredMessages.slice(start, start + messagePageSize);
+  }, [filteredMessages, safeMessagePage]);
+
+  const archivedMessagesCount = useMemo(
+    () => messages.filter((m) => (m.status || "unread").toLowerCase() === "archived").length,
+    [messages]
+  );
+  const activeMessagesCount = useMemo(
+    () => messages.filter((m) => (m.status || "unread").toLowerCase() !== "archived").length,
+    [messages]
+  );
+
+  const filteredUsers = useMemo(() => {
+    const q = usersSearch.trim().toLowerCase();
+    return users.filter((u) => {
+      const role = Number(u.is_admin) === 1 ? "admin" : "customer";
+      const status = Number(u.is_suspended) === 1 ? "suspended" : "active";
+      if (userRoleFilter !== "all" && role !== userRoleFilter) return false;
+      if (userStatusFilter !== "all" && status !== userStatusFilter) return false;
+      if (!q) return true;
+      return (
+        String(u.name || "").toLowerCase().includes(q) ||
+        String(u.email || "").toLowerCase().includes(q) ||
+        String(u.id || "").toLowerCase().includes(q)
+      );
+    });
+  }, [users, usersSearch, userRoleFilter, userStatusFilter]);
+
+  const usersPageSize = 10;
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPageSize));
+  const safeUsersPage = Math.min(usersPage, usersTotalPages);
+  const pagedUsers = useMemo(() => {
+    const start = (safeUsersPage - 1) * usersPageSize;
+    return filteredUsers.slice(start, start + usersPageSize);
+  }, [filteredUsers, safeUsersPage]);
+
+  const allPagedUsersSelected = useMemo(
+    () => pagedUsers.length > 0 && pagedUsers.every((u) => selectedUsers[u.id]),
+    [pagedUsers, selectedUsers]
+  );
+
+  const filteredOrders = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase();
+    const now = Date.now();
+    return orders.filter((o) => {
+      const status = String(o.status || "pending").toLowerCase();
+      if (orderStatusFilter !== "all" && status !== orderStatusFilter) return false;
+
+      if (orderDateFilter !== "all") {
+        const created = o.created_at ? new Date(o.created_at).getTime() : NaN;
+        if (!Number.isFinite(created)) return false;
+        const days = orderDateFilter === "7d" ? 7 : orderDateFilter === "30d" ? 30 : 90;
+        if (now - created > days * 24 * 60 * 60 * 1000) return false;
+      }
+
+      if (!q) return true;
+      return (
+        String(o.id || "").toLowerCase().includes(q) ||
+        String(o.name || "").toLowerCase().includes(q) ||
+        String(o.email || "").toLowerCase().includes(q)
+      );
+    });
+  }, [orders, orderSearch, orderStatusFilter, orderDateFilter]);
+
+  const sortedOrders = useMemo(() => {
+    const arr = [...filteredOrders];
+    if (orderSortBy === "newest") {
+      arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (orderSortBy === "oldest") {
+      arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    } else if (orderSortBy === "highest") {
+      arr.sort((a, b) => Number(b.total_price || 0) - Number(a.total_price || 0));
+    } else if (orderSortBy === "pending_first") {
+      arr.sort((a, b) => {
+        const ap = String(a.status || "") === "pending" ? 0 : 1;
+        const bp = String(b.status || "") === "pending" ? 0 : 1;
+        return ap - bp || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+    return arr;
+  }, [filteredOrders, orderSortBy]);
+
+  const ordersPageSize = 10;
+  const ordersTotalPages = Math.max(1, Math.ceil(sortedOrders.length / ordersPageSize));
+  const safeOrdersPage = Math.min(ordersPage, ordersTotalPages);
+  const pagedOrders = useMemo(() => {
+    const start = (safeOrdersPage - 1) * ordersPageSize;
+    return sortedOrders.slice(start, start + ordersPageSize);
+  }, [sortedOrders, safeOrdersPage]);
+
+  const allPagedOrdersSelected = useMemo(
+    () => pagedOrders.length > 0 && pagedOrders.every((o) => selectedOrders[o.id]),
+    [pagedOrders, selectedOrders]
+  );
+
+  const productLookup = useMemo(() => {
+    const map = new Map();
+    for (const p of products) {
+      map.set(String(p.id), p);
+      if (p.sku) map.set(String(p.sku), p);
+    }
+    return map;
+  }, [products]);
+
+  const getReviewProduct = (review) => productLookup.get(String(review?.product_id)) || null;
+
+  const filteredReviews = useMemo(() => {
+    const q = reviewSearch.trim().toLowerCase();
+    const now = Date.now();
+    return reviews.filter((r) => {
+      if (reviewRatingFilter !== "all" && Number(r.rating) !== Number(reviewRatingFilter)) return false;
+
+      if (reviewDateFilter !== "all") {
+        const created = r.created_at ? new Date(r.created_at).getTime() : NaN;
+        if (!Number.isFinite(created)) return false;
+        const days = reviewDateFilter === "7d" ? 7 : reviewDateFilter === "30d" ? 30 : 90;
+        if (now - created > days * 24 * 60 * 60 * 1000) return false;
+      }
+
+      if (!q) return true;
+      const product = getReviewProduct(r);
+      return (
+        String(r.reviewer_name || "").toLowerCase().includes(q) ||
+        String(r.comment || "").toLowerCase().includes(q) ||
+        String(r.product_id || "").toLowerCase().includes(q) ||
+        String(product?.name || "").toLowerCase().includes(q) ||
+        String(product?.sku || "").toLowerCase().includes(q)
+      );
+    });
+  }, [reviews, reviewSearch, reviewRatingFilter, reviewDateFilter, productLookup]);
+
   const tabs = [
     { key: "dashboard", label: "Dashboard",        icon: "bi-speedometer2" },
     { key: "products",  label: "Products",          icon: "bi-box-seam" },
@@ -460,9 +1290,23 @@ export default function AdminPage() {
     { key: "orders",    label: "Orders",            icon: "bi-bag-check" },
     { key: "refunds",   label: "Refunds",           icon: "bi-arrow-counterclockwise" },
     { key: "reviews",   label: "Reviews",           icon: "bi-star" },
+    { key: "feedback",  label: "Feedback",          icon: "bi-chat-left-text" },
     { key: "contacts",  label: "Contact Messages",  icon: "bi-envelope" },
-    { key: "users",     label: "Users",             icon: "bi-people" },
+    { key: "users",     label: "Users",             icon: "bi-people" }
   ];
+
+  const overviewCardStyle = {
+    border: "1px solid var(--line)",
+    borderRadius: "var(--radius)",
+    minHeight: 104,
+    width: "100%",
+    background: "rgba(255,255,255,0.01)",
+    padding: 12,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    textAlign: "left",
+  };
 
   if (loading) {
     return (
@@ -541,41 +1385,83 @@ export default function AdminPage() {
                 <div className="card-body">
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <h4 className="osai-admin-section-title mb-0">Overview</h4>
-                    <div className="btn-group btn-group-sm" role="group" aria-label="Dashboard range">
-                      {[
-                        { key: "7d", label: "7D" },
-                        { key: "30d", label: "30D" },
-                        { key: "all", label: "All" },
-                      ].map((r) => (
-                        <button
-                          key={r.key}
-                          type="button"
-                          className={`btn ${dashboardRange === r.key ? "btn-dark" : "btn-outline-secondary"}`}
-                          onClick={() => setDashboardRange(r.key)}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
+                    <div className="d-flex flex-wrap align-items-center gap-2">
+                      <div className="btn-group btn-group-sm" role="group" aria-label="Dashboard range">
+                        {[
+                          { key: "7d", label: "7D" },
+                          { key: "30d", label: "30D" },
+                          { key: "all", label: "All" },
+                        ].map((r) => (
+                          <button
+                            key={r.key}
+                            type="button"
+                            className={`btn ${dashboardRange === r.key ? "btn-dark" : "btn-outline-secondary"}`}
+                            onClick={() => setDashboardRange(r.key)}
+                          >
+                            {r.label}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={exportDashboardOrdersCsv}
+                        disabled={exportingOrdersCsv}
+                      >
+                        {exportingOrdersCsv ? "Exporting..." : "Export Orders CSV"}
+                      </button>
                     </div>
                   </div>
                   <div className="row g-2">
-                    <div className="col-md-4">
-                      <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
+                    <div className="col-lg-3 col-md-6">
+                      <button
+                        type="button"
+                        className="btn p-0"
+                        style={overviewCardStyle}
+                        onClick={() => setActiveTab("orders")}
+                        title="Open orders"
+                      >
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Orders</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeOrders.length}</div>
-                      </div>
+                      </button>
                     </div>
-                    <div className="col-md-4">
-                      <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
+                    <div className="col-lg-3 col-md-6">
+                      <button
+                        type="button"
+                        className="btn p-0"
+                        style={overviewCardStyle}
+                        onClick={() => setActiveTab("refunds")}
+                        title="Open refunds"
+                      >
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Refund Requests</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>{rangeRefunds.length}</div>
-                      </div>
+                      </button>
                     </div>
-                    <div className="col-md-4">
-                      <div className="p-3" style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)" }}>
+                    <div className="col-lg-3 col-md-6">
+                      <button
+                        type="button"
+                        className="btn p-0"
+                        style={overviewCardStyle}
+                        onClick={() => setActiveTab("orders")}
+                        title="Open orders and revenue data"
+                      >
                         <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Revenue</div>
                         <div style={{ fontSize: 24, fontWeight: 700 }}>GBP {rangeRevenue.toFixed(2)}</div>
-                      </div>
+                      </button>
+                    </div>
+                    <div className="col-lg-3 col-md-6">
+                      <button
+                        type="button"
+                        className="btn p-0"
+                        style={overviewCardStyle}
+                        onClick={() => setActiveTab("inventory")}
+                        title="Open inventory stock flow context"
+                      >
+                        <div style={{ color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em" }}>Stock Flow (7D)</div>
+                        <div style={{ fontSize: 15, fontWeight: 700 }}>
+                          +{Number(reports?.totalIncomingUnits7d || 0)} / -{Number(reports?.totalOutgoingUnits7d || 0)}
+                        </div>
+                      </button>
                     </div>
                   </div>
                   <div className="mt-2" style={{ color: "var(--sub)", fontSize: 12 }}>
@@ -645,12 +1531,21 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Product Management</h4>
-                  <button
-                    className="btn btn-dark btn-sm"
-                    onClick={() => setShowAddProduct((prev) => !prev)}
-                  >
-                    {showAddProduct ? <><i className="bi bi-x-lg me-1" />Cancel</> : <><i className="bi bi-plus-lg me-1" />Add Product</>}
-                  </button>
+                  <div className="d-flex align-items-center gap-2">
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={exportProductsCsv}
+                      disabled={exportingProductsCsv}
+                    >
+                      {exportingProductsCsv ? "Exporting..." : "Export CSV"}
+                    </button>
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() => setShowAddProduct((prev) => !prev)}
+                    >
+                      {showAddProduct ? <><i className="bi bi-x-lg me-1" />Cancel</> : <><i className="bi bi-plus-lg me-1" />Add Product</>}
+                    </button>
+                  </div>
                 </div>
 
                 {showAddProduct && (
@@ -684,7 +1579,7 @@ export default function AdminPage() {
                           value={productDraft.category_id}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, category_id: Number(e.target.value) }))}
                         >
-                          {categories.map((c) => (
+                          {categories.filter(c => ["Mens","Womens","Kids"].includes(c.name)).map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
                         </select>
@@ -692,38 +1587,83 @@ export default function AdminPage() {
                       <div className="col-md-3">
                         <label className="form-label">Price (GBP) *</label>
                         <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
+                          type="number" min="0.01" step="0.01"
                           className="form-control form-control-sm"
                           placeholder="29.99"
                           value={productDraft.price}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, price: e.target.value }))}
                         />
                       </div>
-                      <div className="col-md-3">
-                        <label className="form-label">Original Price <small style={{ color: "var(--muted)" }}>(sale items)</small></label>
-                        <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          className="form-control form-control-sm"
-                          placeholder="49.99"
-                          value={productDraft.original_price}
-                          onChange={(e) => setProductDraft((prev) => ({ ...prev, original_price: e.target.value }))}
-                        />
-                      </div>
                       <div className="col-md-2">
                         <label className="form-label">Stock</label>
                         <input
-                          type="number"
-                          min="0"
+                          type="number" min="0"
                           className="form-control form-control-sm"
                           placeholder="0"
                           value={productDraft.stock}
                           onChange={(e) => setProductDraft((prev) => ({ ...prev, stock: e.target.value }))}
                         />
                       </div>
+
+                      {/* On Sale toggle */}
+                      <div className="col-12">
+                        <div
+                          onClick={() => setProductDraft((prev) => ({ ...prev, onSale: !prev.onSale, original_price: "" }))}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 12, cursor: "pointer",
+                            padding: "10px 16px", borderRadius: 6,
+                            border: `1px solid ${productDraft.onSale ? "#e53935" : "rgba(255,255,255,0.12)"}`,
+                            background: productDraft.onSale ? "rgba(229,57,53,0.1)" : "rgba(255,255,255,0.03)",
+                            userSelect: "none",
+                          }}
+                        >
+                          <div style={{
+                            width: 36, height: 20, borderRadius: 10, position: "relative",
+                            background: productDraft.onSale ? "#e53935" : "rgba(255,255,255,0.15)",
+                            transition: "background 0.2s",
+                            flexShrink: 0,
+                          }}>
+                            <div style={{
+                              position: "absolute", top: 3, left: productDraft.onSale ? 19 : 3,
+                              width: 14, height: 14, borderRadius: "50%", background: "#fff",
+                              transition: "left 0.2s",
+                            }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: productDraft.onSale ? "#fff" : "#aaa" }}>
+                              On Sale
+                            </div>
+                            <div style={{ fontSize: 11, color: "#666", marginTop: 1 }}>
+                              Product will appear on the Sale page
+                            </div>
+                          </div>
+                          {productDraft.onSale && (
+                            <span style={{
+                              marginLeft: 4, background: "#e53935", color: "#fff",
+                              fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, letterSpacing: "0.08em",
+                            }}>SALE</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Original price — only shown when On Sale is active */}
+                      {productDraft.onSale && (
+                        <div className="col-md-4">
+                          <label className="form-label">
+                            Original Price <small style={{ color: "var(--muted)" }}>(before sale)</small>
+                          </label>
+                          <input
+                            type="number" min="0.01" step="0.01"
+                            className="form-control form-control-sm"
+                            placeholder="49.99"
+                            value={productDraft.original_price}
+                            onChange={(e) => setProductDraft((prev) => ({ ...prev, original_price: e.target.value }))}
+                          />
+                          <small style={{ color: "#666", fontSize: 11 }}>
+                            The price before the discount — shown as strikethrough on the product
+                          </small>
+                        </div>
+                      )}
 
                       <div className="col-12">
                         <label className="form-label">Description</label>
@@ -769,6 +1709,30 @@ export default function AdminPage() {
                           ))}
                         </div>
                       </div>
+                      {productDraft.sizes.length > 0 && (
+                        <div className="col-12">
+                          <label className="form-label">Size-level stock</label>
+                          <div className="d-flex flex-wrap gap-2">
+                            {productDraft.sizes.map((size) => (
+                              <div key={`new-size-stock-${size}`} style={{ width: 120 }}>
+                                <small style={{ color: "var(--muted)" }}>{size}</small>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  className="form-control form-control-sm"
+                                  value={productDraft.sizeStocks?.[size] ?? productDraft.stock ?? 0}
+                                  onChange={(e) =>
+                                    setProductDraft((prev) => ({
+                                      ...prev,
+                                      sizeStocks: { ...(prev.sizeStocks || {}), [size]: e.target.value },
+                                    }))
+                                  }
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="col-12 osai-admin-form-section">
                         <label className="form-label">Colors</label>
@@ -893,7 +1857,7 @@ export default function AdminPage() {
                         <label className="form-label">Category *</label>
                         <select className="form-select form-select-sm" value={editDraft.category_id}
                           onChange={(e) => setEditDraft((p) => ({ ...p, category_id: Number(e.target.value) }))}>
-                          {categories.map((c) => (
+                          {categories.filter(c => ["Mens","Womens","Kids"].includes(c.name)).map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                           ))}
                         </select>
@@ -948,6 +1912,30 @@ export default function AdminPage() {
                           ))}
                         </div>
                       </div>
+                      {editDraft.sizes.length > 0 && (
+                        <div className="col-12">
+                          <label className="form-label">Size-level stock</label>
+                          <div className="d-flex flex-wrap gap-2">
+                            {editDraft.sizes.map((size) => (
+                              <div key={`edit-size-stock-${size}`} style={{ width: 120 }}>
+                                <small style={{ color: "var(--muted)" }}>{size}</small>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  className="form-control form-control-sm"
+                                  value={editDraft.sizeStocks?.[size] ?? editDraft.stock ?? 0}
+                                  onChange={(e) =>
+                                    setEditDraft((prev) => ({
+                                      ...prev,
+                                      sizeStocks: { ...(prev.sizeStocks || {}), [size]: e.target.value },
+                                    }))
+                                  }
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="col-12 osai-admin-form-section">
                         <label className="form-label">Colors</label>
                         <div className="d-flex flex-wrap gap-2 align-items-center">
@@ -1091,7 +2079,80 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Inventory</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{products.length} products</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredInventoryProducts.length} products</span>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 320 }}
+                    value={inventorySearch}
+                    onChange={(e) => setInventorySearch(e.target.value)}
+                    placeholder="Search SKU, name, category"
+                  />
+                </div>
+                <div className="card border-0 mb-3" style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <div className="card-body">
+                    <div className="d-flex flex-wrap align-items-end gap-2">
+                      <div style={{ minWidth: 180 }}>
+                        <label className="form-label" style={{ fontSize: 12, color: "var(--sub)" }}>Incoming product</label>
+                        <select
+                          className="form-select form-select-sm"
+                          value={incomingProductId}
+                          onChange={(e) => {
+                            setIncomingProductId(e.target.value);
+                            setIncomingSize("");
+                          }}
+                        >
+                          <option value="">Select product</option>
+                          {products.map((p) => (
+                            <option key={`incoming-${p.id}`} value={p.id}>
+                              {p.sku || p.id} - {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ minWidth: 150 }}>
+                        <label className="form-label" style={{ fontSize: 12, color: "var(--sub)" }}>Size (optional)</label>
+                        <select
+                          className="form-select form-select-sm"
+                          value={incomingSize}
+                          onChange={(e) => setIncomingSize(e.target.value)}
+                          disabled={!selectedIncomingProduct || !Array.isArray(selectedIncomingProduct.sizes) || selectedIncomingProduct.sizes.length === 0}
+                        >
+                          <option value="">No size</option>
+                          {(selectedIncomingProduct?.sizes || []).map((size) => (
+                            <option key={`incoming-size-${size}`} value={size}>{size}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ width: 120 }}>
+                        <label className="form-label" style={{ fontSize: 12, color: "var(--sub)" }}>Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          className="form-control form-control-sm"
+                          value={incomingQty}
+                          onChange={(e) => setIncomingQty(e.target.value)}
+                        />
+                      </div>
+                      <div style={{ minWidth: 220, flex: "1 1 220px" }}>
+                        <label className="form-label" style={{ fontSize: 12, color: "var(--sub)" }}>Note</label>
+                        <input
+                          className="form-control form-control-sm"
+                          placeholder="e.g. supplier restock shipment"
+                          value={incomingNote}
+                          onChange={(e) => setIncomingNote(e.target.value)}
+                        />
+                      </div>
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={processIncomingStock}
+                        disabled={processingIncoming}
+                      >
+                        {processingIncoming ? "Processing..." : "Process Incoming"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
@@ -1107,7 +2168,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map((p) => (
+                      {filteredInventoryProducts.map((p) => (
                         <tr key={p.id}>
                           <td>{p.id}</td>
                           <td>{p.sku || "-"}</td>
@@ -1129,13 +2190,20 @@ export default function AdminPage() {
                             <button
                               className="btn btn-sm btn-dark"
                               onClick={() => updateStock(p.id)}
-                              disabled={savingStockId === p.id}
+                              disabled={savingStockId === p.id || Number(stockDraft[p.id] ?? 0) === Number(p.stock ?? 0)}
                             >
                               {savingStockId === p.id ? "Saving..." : "Save"}
                             </button>
                           </td>
                         </tr>
                       ))}
+                      {filteredInventoryProducts.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            No inventory items match your search.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1158,6 +2226,7 @@ export default function AdminPage() {
                       <thead className="table-light">
                         <tr>
                           <th>ID</th>
+                          <th>Image</th>
                           <th>SKU</th>
                           <th>Name</th>
                           <th>Category</th>
@@ -1170,8 +2239,42 @@ export default function AdminPage() {
                         {outOfStockProducts.map((p) => (
                           <tr key={p.id}>
                             <td>{p.id}</td>
+                            <td>
+                              {Array.isArray(p.images) && p.images[0] ? (
+                                <img
+                                  src={p.images[0]}
+                                  alt={p.name || `Product ${p.id}`}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.03)",
+                                  }}
+                                />
+                              )}
+                            </td>
                             <td>{p.sku || "-"}</td>
-                            <td>{p.name}</td>
+                            <td>
+                              <a
+                                href={`/product/${encodeURIComponent(p.id)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "var(--text)", textDecoration: "underline", textUnderlineOffset: 3 }}
+                              >
+                                {p.name}
+                              </a>
+                            </td>
                             <td>{p.category || "-"}</td>
                             <td>£{Number(p.price || 0).toFixed(2)}</td>
                             <td style={{ width: 120 }}>
@@ -1198,7 +2301,7 @@ export default function AdminPage() {
                         ))}
                         {outOfStockProducts.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            <td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>
                               No out-of-stock products.
                             </td>
                           </tr>
@@ -1222,6 +2325,7 @@ export default function AdminPage() {
                       <thead className="table-light">
                         <tr>
                           <th>ID</th>
+                          <th>Image</th>
                           <th>SKU</th>
                           <th>Name</th>
                           <th>Category</th>
@@ -1234,8 +2338,42 @@ export default function AdminPage() {
                         {lowStockProducts.map((p) => (
                           <tr key={p.id}>
                             <td>{p.id}</td>
+                            <td>
+                              {Array.isArray(p.images) && p.images[0] ? (
+                                <img
+                                  src={p.images[0]}
+                                  alt={p.name || `Product ${p.id}`}
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.03)",
+                                  }}
+                                />
+                              )}
+                            </td>
                             <td>{p.sku || "-"}</td>
-                            <td>{p.name}</td>
+                            <td>
+                              <a
+                                href={`/product/${encodeURIComponent(p.id)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "var(--text)", textDecoration: "underline", textUnderlineOffset: 3 }}
+                              >
+                                {p.name}
+                              </a>
+                            </td>
                             <td>{p.category || "-"}</td>
                             <td>£{Number(p.price || 0).toFixed(2)}</td>
                             <td style={{ width: 120 }}>
@@ -1262,7 +2400,7 @@ export default function AdminPage() {
                         ))}
                         {lowStockProducts.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            <td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>
                               No low-stock products.
                             </td>
                           </tr>
@@ -1280,12 +2418,105 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Orders</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{orders.length} orders</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredOrders.length} orders</span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={exportOrdersCsv}
+                      disabled={exportingOrdersCsv}
+                    >
+                      {exportingOrdersCsv ? "Exporting..." : "Export CSV"}
+                    </button>
+                  </div>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Search order id, customer, email"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={orderStatusFilter}
+                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 170 }}
+                    value={orderDateFilter}
+                    onChange={(e) => setOrderDateFilter(e.target.value)}
+                  >
+                    <option value="all">All time</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={orderSortBy}
+                    onChange={(e) => setOrderSortBy(e.target.value)}
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="highest">Highest value</option>
+                    <option value="pending_first">Pending first</option>
+                  </select>
+                </div>
+                <div
+                  className="d-flex gap-2 flex-wrap align-items-center p-2 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{selectedOrderIds.length} selected</span>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={bulkOrderStatus}
+                    onChange={(e) => setBulkOrderStatus(e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <button
+                    className="btn btn-sm btn-outline-light"
+                    onClick={runBulkOrderStatus}
+                    disabled={runningBulkOrderAction || selectedOrderIds.length === 0}
+                  >
+                    {runningBulkOrderAction ? "Running..." : "Run Bulk Update"}
+                  </button>
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
                     <thead className="table-light">
                       <tr>
+                        <th style={{ width: 42 }}>
+                          <input
+                            type="checkbox"
+                            checked={allPagedOrdersSelected}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedOrders((prev) => {
+                                const next = { ...prev };
+                                for (const row of pagedOrders) next[row.id] = checked;
+                                return next;
+                              });
+                            }}
+                          />
+                        </th>
                         <th>ID</th>
                         <th>Customer</th>
                         <th>Email</th>
@@ -1293,16 +2524,24 @@ export default function AdminPage() {
                         <th>Current Status</th>
                         <th style={{ minWidth: 170 }}>Update Status</th>
                         <th>Date</th>
+                        <th>Details</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((o) => (
+                      {pagedOrders.map((o) => (
                         <tr key={o.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedOrders[o.id]}
+                              onChange={() => toggleOrderSelection(o.id)}
+                            />
+                          </td>
                           <td>#{o.id}</td>
                           <td>{o.name}</td>
                           <td style={{ color: "var(--sub)" }}>{o.email}</td>
-                          <td>£{Number(o.total_price || 0).toFixed(2)}</td>
+                          <td>GBP {Number(o.total_price || 0).toFixed(2)}</td>
                           <td>
                             <span className={`osai-status osai-status-${orderStatusDraft[o.id] || "pending"}`}>
                               {orderStatusDraft[o.id] || "pending"}
@@ -1325,25 +2564,53 @@ export default function AdminPage() {
                             </select>
                           </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
-                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}
+                          </td>
+                          <td>
+                            <button className="btn btn-sm btn-outline-light" onClick={() => openOrderDetails(o.id)}>
+                              View
+                            </button>
                           </td>
                           <td>
                             <button
                               className="btn btn-sm btn-dark"
                               onClick={() => updateOrderStatus(o.id)}
-                              disabled={savingOrderId === o.id}
+                              disabled={savingOrderId === o.id || String(orderStatusDraft[o.id] || "") === String(o.status || "")}
                             >
                               {savingOrderId === o.id ? "Saving..." : "Save"}
                             </button>
                           </td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
-                        <tr><td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>No orders yet.</td></tr>
+                      {pagedOrders.length === 0 && (
+                        <tr><td colSpan={10} className="text-center" style={{ color: "var(--sub)" }}>No orders yet.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
+                {filteredOrders.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      Page {safeOrdersPage} of {ordersTotalPages}
+                    </span>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeOrdersPage <= 1}
+                        onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeOrdersPage >= ordersTotalPages}
+                        onClick={() => setOrdersPage((p) => Math.min(ordersTotalPages, p + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1355,90 +2622,154 @@ export default function AdminPage() {
                   <h4 className="osai-admin-section-title">Refund Requests</h4>
                   <span style={{ color: "var(--sub)", fontSize: 12 }}>{refunds.length} requests</span>
                 </div>
-                <div className="table-responsive">
+                <div>
                   <table className="table table-sm align-middle">
                     <thead className="table-light">
                       <tr>
                         <th>ID</th>
                         <th>User</th>
-                        <th>Email</th>
                         <th>Order</th>
                         <th>Reason</th>
-                        <th style={{ minWidth: 170 }}>Status</th>
-                        <th>Admin Note</th>
-                        <th>Instructions Link / QR URL</th>
+                        <th style={{ minWidth: 180 }}>Status</th>
                         <th>Date</th>
+                        <th>Details</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {refunds.map((r) => (
-                        <tr key={r.id}>
-                          <td>#{r.id}</td>
-                          <td>{r.user_name || "-"}</td>
-                          <td style={{ color: "var(--sub)" }}>{r.user_email || "-"}</td>
-                          <td>#{r.order_id}</td>
-                          <td style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {r.reason}
-                          </td>
-                          <td style={{ minWidth: 190 }}>
-                            <div className="d-flex flex-column gap-2">
+                      {refunds.flatMap((r) => {
+                        const isOpen = !!expandedRefunds[r.id];
+                        return [
+                          <tr key={`refund-row-${r.id}`}>
+                            <td>#{r.id}</td>
+                            <td>
+                              <div style={{ lineHeight: 1.2 }}>
+                                <div>{r.user_name || "-"}</div>
+                                <small style={{ color: "var(--sub)" }}>{r.user_email || "-"}</small>
+                              </div>
+                            </td>
+                            <td>#{r.order_id}</td>
+                            <td style={{ maxWidth: 260 }}>
+                              <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.reason || ""}>
+                                {r.reason || "-"}
+                              </div>
+                            </td>
+                            <td style={{ minWidth: 180 }}>
                               <span className={`osai-status osai-status-${refundStatusDraft[r.id] || "pending"}`}>
                                 {refundStatusDraft[r.id] || "pending"}
                               </span>
-                              <select
-                                className="form-select form-select-sm"
-                                style={{ minWidth: 170, color: "var(--text)", backgroundColor: "var(--bg-surface)" }}
-                                value={refundStatusDraft[r.id] || "pending"}
-                                onChange={(e) =>
-                                  setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
-                                }
+                            </td>
+                            <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                              {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-outline-light"
+                                onClick={() => toggleRefundExpanded(r.id)}
                               >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="processing">Processing</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="refunded">Refunded</option>
-                              </select>
-                            </div>
-                          </td>
-                          <td style={{ minWidth: 220 }}>
-                            <input
-                              className="form-control form-control-sm"
-                              placeholder="Optional note for customer"
-                              value={refundAdminNoteDraft[r.id] || ""}
-                              onChange={(e) =>
-                                setRefundAdminNoteDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
-                              }
-                            />
-                          </td>
-                          <td style={{ minWidth: 220 }}>
-                            <input
-                              className="form-control form-control-sm"
-                              placeholder="https://... (return label/QR)"
-                              value={refundInstructionLinkDraft[r.id] || ""}
-                              onChange={(e) =>
-                                setRefundInstructionLinkDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
-                              }
-                            />
-                          </td>
-                          <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
-                            {r.created_at ? new Date(r.created_at).toLocaleDateString() : "-"}
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-dark"
-                              onClick={() => updateRefundStatus(r.id)}
-                              disabled={savingRefundId === r.id}
-                            >
-                              {savingRefundId === r.id ? "Saving..." : "Save"}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                                {isOpen ? "Hide" : "View"}
+                              </button>
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-dark"
+                                onClick={() => updateRefundStatus(r.id)}
+                                disabled={savingRefundId === r.id}
+                              >
+                                {savingRefundId === r.id ? "Saving..." : "Save"}
+                              </button>
+                            </td>
+                          </tr>,
+                          isOpen ? (
+                            <tr key={`refund-expand-${r.id}`}>
+                              <td colSpan={8}>
+                                <div
+                                  className="p-3 rounded-2"
+                                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}
+                                >
+                                  <div className="row g-3">
+                                    <div className="col-12">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Reason</label>
+                                      <div style={{ color: "var(--text)", fontSize: 14 }}>{r.reason || "-"}</div>
+                                    </div>
+                                    <div className="col-12 col-md-6 col-xl-3">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Status</label>
+                                      <select
+                                        className="form-select form-select-sm"
+                                        style={{ color: "var(--text)", backgroundColor: "var(--bg-surface)" }}
+                                        value={refundStatusDraft[r.id] || "pending"}
+                                        onChange={(e) =>
+                                          setRefundStatusDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                        }
+                                      >
+                                        {["pending", "approved", "processing", "rejected", "refunded"].map((nextStatus) => (
+                                          <option
+                                            key={nextStatus}
+                                            value={nextStatus}
+                                            disabled={!getAllowedRefundStatuses(r.status || "pending").has(nextStatus)}
+                                          >
+                                            {nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="col-12 col-md-6 col-xl-3">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Refund Amount</label>
+                                      <input
+                                        className="form-control form-control-sm"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={refundAmountDraft[r.id] || ""}
+                                        onChange={(e) =>
+                                          setRefundAmountDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                        }
+                                      />
+                                    </div>
+                                    <div className="col-12 col-md-6 col-xl-3">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Refund Reference</label>
+                                      <input
+                                        className="form-control form-control-sm"
+                                        placeholder="Payment ref/txn id"
+                                        value={refundReferenceDraft[r.id] || ""}
+                                        onChange={(e) =>
+                                          setRefundReferenceDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                        }
+                                      />
+                                    </div>
+                                    <div className="col-12 col-md-6 col-xl-3">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Instructions Link / URL</label>
+                                      <input
+                                        className="form-control form-control-sm"
+                                        placeholder="https://... (return label/QR)"
+                                        value={refundInstructionLinkDraft[r.id] || ""}
+                                        onChange={(e) =>
+                                          setRefundInstructionLinkDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                        }
+                                      />
+                                    </div>
+                                    <div className="col-12">
+                                      <label style={{ color: "var(--sub)", fontSize: 12 }}>Admin Note</label>
+                                      <input
+                                        className="form-control form-control-sm"
+                                        placeholder="Optional note for customer"
+                                        value={refundAdminNoteDraft[r.id] || ""}
+                                        onChange={(e) =>
+                                          setRefundAdminNoteDraft((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : null,
+                        ];
+                      })}
                       {refunds.length === 0 && (
                         <tr>
-                          <td colSpan={10} className="text-center" style={{ color: "var(--sub)" }}>
+                          <td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>
                             No refund requests yet.
                           </td>
                         </tr>
@@ -1455,7 +2786,40 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Customer Reviews</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{reviews.length} reviews</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredReviews.length} reviews</span>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={reviewSearch}
+                    onChange={(e) => setReviewSearch(e.target.value)}
+                    placeholder="Search reviewer, product, comment"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 160 }}
+                    value={reviewRatingFilter}
+                    onChange={(e) => setReviewRatingFilter(e.target.value)}
+                  >
+                    <option value="all">All ratings</option>
+                    <option value="5">5 stars</option>
+                    <option value="4">4 stars</option>
+                    <option value="3">3 stars</option>
+                    <option value="2">2 stars</option>
+                    <option value="1">1 star</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 170 }}
+                    value={reviewDateFilter}
+                    onChange={(e) => setReviewDateFilter(e.target.value)}
+                  >
+                    <option value="all">All time</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                  </select>
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
@@ -1471,10 +2835,44 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {reviews.map((r) => (
+                      {filteredReviews.map((r) => (
                         <tr key={r.id}>
                           <td>{r.id}</td>
-                          <td style={{ color: "var(--sub)" }}>#{r.product_id}</td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              {getReviewProduct(r)?.images?.[0] ? (
+                                <img
+                                  src={getReviewProduct(r).images[0]}
+                                  alt={getReviewProduct(r)?.name || `Product ${r.product_id}`}
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 6,
+                                    border: "1px solid var(--line)",
+                                    background: "rgba(255,255,255,0.04)",
+                                  }}
+                                />
+                              )}
+                              <a
+                                href={`/product/${encodeURIComponent(r.product_id)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "#fff", textDecoration: "underline", textUnderlineOffset: 3 }}
+                              >
+                                #{r.product_id}
+                              </a>
+                            </div>
+                          </td>
                           <td>{r.reviewer_name}</td>
                           <td>
                             <span style={{ color: "#fbbf24", fontFamily: "var(--font-display)", fontWeight: 600 }}>
@@ -1488,14 +2886,109 @@ export default function AdminPage() {
                             {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteReview(r.id)}>
-                              Delete
-                            </button>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button className="btn btn-sm btn-outline-light" onClick={() => openReviewModal(r)}>
+                                View
+                              </button>
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteReview(r.id)}>
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {reviews.length === 0 && (
+                      {filteredReviews.length === 0 && (
                         <tr><td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>No reviews yet.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "feedback" && (
+            <div className="card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="osai-admin-tab-header">
+                  <h4 className="osai-admin-section-title">Feedback</h4>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                    {filteredFeedback.length} entries
+                  </span>
+                </div>
+
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={feedbackSearch}
+                    onChange={(e) => setFeedbackSearch(e.target.value)}
+                    placeholder="Search name, email, comment"
+                  />
+                </div>
+
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredFeedback.map((f) => (
+                        <tr key={f.id}>
+                          <td>{f.id}</td>
+                          <td>{f.name}</td>
+                          <td style={{ color: "var(--sub)" }}>{f.email}</td>
+                          <td>
+                            <span
+                              style={{
+                                color: "#fbbf24",
+                                fontFamily: "var(--font-display)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {"★".repeat(f.rating)}{"☆".repeat(5 - f.rating)}
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              maxWidth: 260,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={f.comments || ""}
+                          >
+                            {f.comments}
+                          </td>
+                          <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                            {f.created_at ? new Date(f.created_at).toLocaleDateString() : "—"}
+                          </td>
+                          <td>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button className="btn btn-sm btn-outline-light" onClick={() => openFeedbackModal(f)}>
+                                View
+                              </button>
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteFeedback(f.id)}>
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredFeedback.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>
+                            No feedback yet.
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
@@ -1509,7 +3002,56 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Contact Messages</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{messages.length} messages</span>
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                    {filteredMessages.length} shown ({messages.length} total)
+                  </span>
+                </div>
+                <div
+                  className="d-flex gap-2 flex-wrap mb-3"
+                  style={{ border: "1px solid var(--line)", borderRadius: "var(--radius)", padding: 8 }}
+                >
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "active" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("active")}
+                  >
+                    Active ({activeMessagesCount})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "archived" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("archived")}
+                  >
+                    Archived ({archivedMessagesCount})
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${messageStatusFilter === "all" ? "btn-dark" : "btn-outline-secondary"}`}
+                    onClick={() => setMessageStatusFilter("all")}
+                  >
+                    All ({messages.length})
+                  </button>
+                </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={messageSearch}
+                    onChange={(e) => setMessageSearch(e.target.value)}
+                    placeholder="Search name, email, message"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={messageStatusFilter}
+                    onChange={(e) => setMessageStatusFilter(e.target.value)}
+                  >
+                    <option value="active">Active (not archived)</option>
+                    <option value="all">All statuses</option>
+                    <option value="unread">Unread</option>
+                    <option value="read">Read</option>
+                    <option value="archived">Archived</option>
+                  </select>
                 </div>
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
@@ -1518,36 +3060,89 @@ export default function AdminPage() {
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Status</th>
                         <th>Message</th>
                         <th>Date</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {messages.map((m) => (
+                      {pagedMessages.map((m) => (
                         <tr key={m.id}>
                           <td>{m.id}</td>
                           <td>{m.name}</td>
                           <td style={{ color: "var(--sub)" }}>{m.email}</td>
-                          <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {m.message}
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            <span className={`osai-status osai-status-${m.status || "unread"}`}>
+                              {m.status || "unread"}
+                            </span>
+                          </td>
+                          <td
+                            style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                            title={m.message || ""}
+                          >
+                            {String(m.message || "").length > 80
+                              ? `${String(m.message || "").slice(0, 80)}...`
+                              : m.message}
                           </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
                             {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(m.id)}>
-                              Delete
-                            </button>
+                            <div className="d-flex gap-2 flex-wrap">
+                              <button className="btn btn-sm btn-outline-light" onClick={() => openMessage(m)}>
+                                View
+                              </button>
+                              {(m.status || "unread") !== "archived" ? (
+                                <>
+                                  <button className="btn btn-sm btn-outline-secondary" onClick={() => updateMessageStatus(m.id, "archived")}>
+                                    Archive
+                                  </button>
+                                  <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(m)}>
+                                    Reply
+                                  </button>
+                                </>
+                              ) : (
+                                <button className="btn btn-sm btn-outline-secondary" onClick={() => updateMessageStatus(m.id, "unread")}>
+                                  Unarchive
+                                </button>
+                              )}
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(m)}>
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {messages.length === 0 && (
-                        <tr><td colSpan={6} className="text-center" style={{ color: "var(--sub)" }}>No messages yet.</td></tr>
+                      {pagedMessages.length === 0 && (
+                        <tr><td colSpan={7} className="text-center" style={{ color: "var(--sub)" }}>No messages yet.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
+                {filteredMessages.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      Page {safeMessagePage} of {messageTotalPages}
+                    </span>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeMessagePage <= 1}
+                        onClick={() => setMessagePage((p) => Math.max(1, p - 1))}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeMessagePage >= messageTotalPages}
+                        onClick={() => setMessagePage((p) => Math.min(messageTotalPages, p + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1557,23 +3152,193 @@ export default function AdminPage() {
               <div className="card-body">
                 <div className="osai-admin-tab-header">
                   <h4 className="osai-admin-section-title">Users</h4>
-                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{users.length} accounts</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>{filteredUsers.length} accounts</span>
+                    <button
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={exportUsersCsv}
+                      disabled={exportingUsersCsv}
+                    >
+                      {exportingUsersCsv ? "Exporting..." : "Export CSV"}
+                    </button>
+                  </div>
                 </div>
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={usersSearch}
+                    onChange={(e) => setUsersSearch(e.target.value)}
+                    placeholder="Search id, name, email"
+                  />
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={userRoleFilter}
+                    onChange={(e) => setUserRoleFilter(e.target.value)}
+                  >
+                    <option value="all">All roles</option>
+                    <option value="customer">Customers</option>
+                    <option value="admin">Admins</option>
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={userStatusFilter}
+                    onChange={(e) => setUserStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All status</option>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+
+                <div
+                  className="p-3 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="mb-0" style={{ fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      Admin Access Requests
+                    </h6>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      {adminRoleRequests.filter((r) => r.status === "pending").length} pending
+                    </span>
+                  </div>
+                  {adminRoleRequests.length === 0 ? (
+                    <div style={{ color: "var(--sub)", fontSize: 13 }}>No admin access requests yet.</div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminRoleRequests.slice(0, 12).map((reqRow) => (
+                            <tr key={`role-req-${reqRow.id}`}>
+                              <td>#{reqRow.id}</td>
+                              <td>{reqRow.name || "-"}</td>
+                              <td style={{ color: "var(--sub)" }}>{reqRow.email || "-"}</td>
+                              <td style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {reqRow.reason || "-"}
+                              </td>
+                              <td>
+                                <span className={`osai-status osai-status-${reqRow.status || "pending"}`}>
+                                  {reqRow.status || "pending"}
+                                </span>
+                              </td>
+                              <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                                {reqRow.created_at ? new Date(reqRow.created_at).toLocaleDateString() : "-"}
+                              </td>
+                              <td>
+                                {reqRow.status === "pending" ? (
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      className="btn btn-sm btn-outline-success"
+                                      onClick={() => reviewAdminRoleRequest(reqRow.id, "approved")}
+                                      disabled={reviewingRoleRequestId === reqRow.id}
+                                    >
+                                      {reviewingRoleRequestId === reqRow.id ? "Saving..." : "Approve"}
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => reviewAdminRoleRequest(reqRow.id, "rejected")}
+                                      disabled={reviewingRoleRequestId === reqRow.id}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                                    {reqRow.reviewed_at ? `Reviewed ${new Date(reqRow.reviewed_at).toLocaleDateString()}` : "Reviewed"}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="d-flex gap-2 flex-wrap align-items-center p-2 rounded mb-3"
+                  style={{ border: "1px solid var(--line)", background: "rgba(255,255,255,0.02)" }}
+                >
+                  <span style={{ color: "var(--sub)", fontSize: 12 }}>{selectedUserIds.length} selected</span>
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ maxWidth: 180 }}
+                    value={bulkUserAction}
+                    onChange={(e) => setBulkUserAction(e.target.value)}
+                  >
+                    <option value="suspend">Suspend</option>
+                    <option value="unsuspend">Unsuspend</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                  <input
+                    className="form-control form-control-sm"
+                    style={{ maxWidth: 280 }}
+                    value={bulkUserReason}
+                    onChange={(e) => setBulkUserReason(e.target.value)}
+                    placeholder="Bulk reason (optional)"
+                  />
+                  <button
+                    className="btn btn-sm btn-outline-light"
+                    onClick={runBulkUserAction}
+                    disabled={runningBulkUsersAction || selectedUserIds.length === 0}
+                  >
+                    {runningBulkUsersAction ? "Running..." : "Run Bulk Action"}
+                  </button>
+                </div>
+
                 <div className="table-responsive">
                   <table className="table table-sm align-middle">
                     <thead className="table-light">
                       <tr>
+                        <th style={{ width: 42 }}>
+                          <input
+                            type="checkbox"
+                            checked={allPagedUsersSelected}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedUsers((prev) => {
+                                const next = { ...prev };
+                                for (const row of pagedUsers) next[row.id] = checked;
+                                return next;
+                              });
+                            }}
+                          />
+                        </th>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Status</th>
                         <th>Joined</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => (
+                      {pagedUsers.map((u) => (
                         <tr key={u.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={!!selectedUsers[u.id]}
+                              onChange={() => toggleUserSelection(u.id)}
+                              disabled={Number(u.id) === Number(user?.id)}
+                            />
+                          </td>
                           <td>{u.id}</td>
                           <td>{u.name}</td>
                           <td style={{ color: "var(--sub)" }}>{u.email}</td>
@@ -1584,31 +3349,690 @@ export default function AdminPage() {
                               <span className="badge text-bg-secondary">Customer</span>
                             )}
                           </td>
+                          <td>
+                            {Number(u.is_suspended) === 1 ? (
+                              <span className="badge text-bg-danger">Suspended</span>
+                            ) : (
+                              <span className="badge text-bg-success">Active</span>
+                            )}
+                          </td>
                           <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
-                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}
                           </td>
                           <td>
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => deleteUser(u.id)}
-                              disabled={Number(u.id) === Number(user?.id)}
-                            >
-                              Delete
-                            </button>
+                            <div className="d-flex gap-2 align-items-center">
+                              <button
+                                className="btn btn-sm btn-outline-light"
+                                onClick={() => openUserSummary(u)}
+                              >
+                                View
+                              </button>
+                              <div style={{ position: "relative" }} onMouseDown={(e) => e.stopPropagation()}>
+                                <button
+                                  className="btn btn-sm btn-outline-secondary"
+                                  onClick={() =>
+                                    setActionMenuUserId((prev) => (prev === u.id ? null : u.id))
+                                  }
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  Actions
+                                </button>
+                                {actionMenuUserId === u.id && (
+                                  <div
+                                    className="p-2 rounded-2"
+                                    style={{
+                                      position: "absolute",
+                                      top: "calc(100% + 6px)",
+                                      right: 0,
+                                      zIndex: 20,
+                                      minWidth: 180,
+                                      background: "var(--bg-surface)",
+                                      border: "1px solid var(--line)",
+                                      boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      className="btn btn-sm btn-outline-light w-100 mb-2"
+                                      onClick={() => {
+                                        openUserEditor(u);
+                                        setActionMenuUserId(null);
+                                      }}
+                                    >
+                                      Edit Details
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-info w-100 mb-2"
+                                      onClick={() => {
+                                        updateUserRole(u, Number(u.is_admin) !== 1);
+                                        setActionMenuUserId(null);
+                                      }}
+                                      disabled={savingUserRoleId === u.id}
+                                    >
+                                      {savingUserRoleId === u.id
+                                        ? "Saving..."
+                                        : Number(u.is_admin) === 1
+                                          ? "Remove Admin"
+                                          : "Make Admin"}
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-warning w-100 mb-2"
+                                      onClick={() => {
+                                        updateUserSuspension(u, Number(u.is_suspended) !== 1);
+                                        setActionMenuUserId(null);
+                                      }}
+                                      disabled={Number(u.id) === Number(user?.id) || savingUserId === u.id}
+                                    >
+                                      {savingUserId === u.id
+                                        ? "Saving..."
+                                        : Number(u.is_suspended) === 1
+                                          ? "Unsuspend"
+                                          : "Suspend"}
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger w-100"
+                                      onClick={() => {
+                                        deleteUser(u.id);
+                                        setActionMenuUserId(null);
+                                      }}
+                                      disabled={Number(u.id) === Number(user?.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       ))}
-                      {users.length === 0 && (
-                        <tr><td colSpan={6} className="text-center" style={{ color: "var(--sub)" }}>No users found.</td></tr>
+                      {pagedUsers.length === 0 && (
+                        <tr><td colSpan={8} className="text-center" style={{ color: "var(--sub)" }}>No users found.</td></tr>
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {filteredUsers.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      Page {safeUsersPage} of {usersTotalPages}
+                    </span>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeUsersPage <= 1}
+                        onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={safeUsersPage >= usersTotalPages}
+                        onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <div className="osai-admin-tab-header" style={{ marginBottom: 10 }}>
+                    <h5 className="osai-admin-section-title" style={{ fontSize: 16 }}>Admin Audit Log</h5>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>When</th>
+                          <th>Admin</th>
+                          <th>Action</th>
+                          <th>Target</th>
+                          <th>Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userAuditLog.map((a) => (
+                          <tr key={a.id}>
+                            <td style={{ color: "var(--sub)", whiteSpace: "nowrap" }}>
+                              {a.created_at ? new Date(a.created_at).toLocaleString() : "-"}
+                            </td>
+                            <td>{a.admin_name || "Admin"}</td>
+                            <td>{a.action}</td>
+                            <td>{a.target_type}{a.target_id ? ` #${a.target_id}` : ""}</td>
+                            <td style={{ maxWidth: 360, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {a.details || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                        {userAuditLog.length === 0 && (
+                          <tr><td colSpan={5} className="text-center" style={{ color: "var(--sub)" }}>No admin actions yet.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </section>
       </div>
+
+      {selectedOrderDetails && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeOrderDetails}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(900px, 96vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">
+                  Order #{selectedOrderDetails.order?.id}
+                </h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeOrderDetails}>
+                  Close
+                </button>
+              </div>
+              {loadingOrderDetails ? (
+                <div style={{ color: "var(--sub)" }}>Loading...</div>
+              ) : (
+                <>
+                  <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                    <div><strong style={{ color: "var(--text)" }}>Customer:</strong> {selectedOrderDetails.order?.name || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Email:</strong> {selectedOrderDetails.order?.email || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Status:</strong> {selectedOrderDetails.order?.status || "-"}</div>
+                    <div><strong style={{ color: "var(--text)" }}>Total:</strong> GBP {Number(selectedOrderDetails.order?.total_price || 0).toFixed(2)}</div>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Product</th>
+                          <th>SKU</th>
+                          <th>Qty</th>
+                          <th>Price Each</th>
+                          <th>Line Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(selectedOrderDetails.items || []).map((it) => (
+                          <tr key={it.id}>
+                            <td>
+                              <div className="d-flex align-items-center gap-2">
+                                {it.product_image ? (
+                                  <img
+                                    src={it.product_image}
+                                    alt={it.product_name || `Product ${it.product_id}`}
+                                    style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)" }}
+                                  />
+                                ) : null}
+                                <span>{it.product_name || `#${it.product_id}`}</span>
+                              </div>
+                            </td>
+                            <td>{it.sku || "-"}</td>
+                            <td>{it.quantity}</td>
+                            <td>GBP {Number(it.price_each || 0).toFixed(2)}</td>
+                            <td>GBP {(Number(it.price_each || 0) * Number(it.quantity || 0)).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        {(!selectedOrderDetails.items || selectedOrderDetails.items.length === 0) && (
+                          <tr><td colSpan={5} className="text-center" style={{ color: "var(--sub)" }}>No order items found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userSummary && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeUserSummary}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">User Summary #{userSummary.user?.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserSummary}>
+                  Close
+                </button>
+              </div>
+              {loadingUserSummary ? (
+                <div style={{ color: "var(--sub)" }}>Loading...</div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Name</div>
+                      <div>{userSummary.user?.name || "-"}</div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Email</div>
+                      <div>{userSummary.user?.email || "-"}</div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Orders</div>
+                      <div>{Number(userSummary.orders?.total_orders || 0)}</div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Total Spend</div>
+                      <div>GBP {Number(userSummary.orders?.total_spend || 0).toFixed(2)}</div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Refund Requests</div>
+                      <div>{Number(userSummary.refunds?.total_refunds || 0)}</div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Pending Refunds</div>
+                      <div>{Number(userSummary.refunds?.pending_refunds || 0)}</div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <div style={{ color: "var(--sub)", fontSize: 12 }}>Contact Messages</div>
+                      <div>{Number(userSummary.messages?.total_messages || 0)}</div>
+                    </div>
+                  </div>
+
+                  <div className="border rounded p-2" style={{ borderColor: "var(--line)", background: "rgba(255,255,255,0.02)" }}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h6 className="mb-0" style={{ color: "var(--text)" }}>Order History</h6>
+                      <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                        Page {userOrdersPage} of {userOrdersTotalPages}
+                      </span>
+                    </div>
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Order</th>
+                            <th>Status</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Date</th>
+                            <th>View</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {loadingUserOrders ? (
+                            <tr><td colSpan={6} style={{ color: "var(--sub)" }}>Loading order history...</td></tr>
+                          ) : userOrders.length === 0 ? (
+                            <tr><td colSpan={6} style={{ color: "var(--sub)" }}>No orders found for this user.</td></tr>
+                          ) : (
+                            userOrders.map((o) => (
+                              <tr key={`u-order-${o.id}`}>
+                                <td>#{o.id}</td>
+                                <td>
+                                  <span className={`osai-status osai-status-${o.status || "pending"}`}>
+                                    {o.status || "pending"}
+                                  </span>
+                                </td>
+                                <td>{Number(o.item_count || 0)}</td>
+                                <td>GBP {Number(o.total_price || 0).toFixed(2)}</td>
+                                <td>{o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}</td>
+                                <td>
+                                  <button
+                                    className="btn btn-sm btn-outline-light"
+                                    onClick={() => openOrderDetailsFromUserSummary(o.id)}
+                                  >
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="d-flex justify-content-end gap-2 mt-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={loadingUserOrders || userOrdersPage <= 1}
+                        onClick={() => loadUserOrdersPage(userSummary.user?.id, userOrdersPage - 1)}
+                      >
+                        Prev
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        disabled={loadingUserOrders || userOrdersPage >= userOrdersTotalPages}
+                        onClick={() => loadUserOrdersPage(userSummary.user?.id, userOrdersPage + 1)}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingUser && editUserDraft && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeUserEditor}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Edit User #{editingUser.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserEditor}>
+                  Close
+                </button>
+              </div>
+
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Name</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.name}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Email</label>
+                  <input
+                    className="form-control"
+                    type="email"
+                    value={editUserDraft.email}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, email: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Phone</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.phone}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Postcode</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.postcode}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, postcode: e.target.value }))}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Address Line 1</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.address_line1}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, address_line1: e.target.value }))}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>Address Line 2</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.address_line2}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, address_line2: e.target.value }))}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label" style={{ color: "var(--sub)", fontSize: 12 }}>City</label>
+                  <input
+                    className="form-control"
+                    value={editUserDraft.city}
+                    onChange={(e) => setEditUserDraft((p) => ({ ...p, city: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeUserEditor}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-sm btn-light"
+                  onClick={saveUserEditor}
+                  disabled={savingUserProfileId === editingUser.id}
+                >
+                  {savingUserProfileId === editingUser.id ? "Saving..." : "Save"}
+                </button>
+              </div>
+                </div>
+              </div>
+
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <div className="osai-admin-tab-header">
+                    <h4 className="osai-admin-section-title">Stock Movement (Last 7 Days)</h4>
+                    <span style={{ color: "var(--sub)", fontSize: 12 }}>
+                      +{Number(reports?.totalIncomingUnits7d || 0)} incoming / -{Number(reports?.totalOutgoingUnits7d || 0)} outgoing
+                    </span>
+                  </div>
+                  {stockFlow7d.length === 0 ? (
+                    <p className="mb-0" style={{ color: "var(--sub)", fontSize: 13 }}>
+                      No stock movements recorded yet.
+                    </p>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle">
+                        <thead className="table-light">
+                          <tr>
+                            <th>SKU</th>
+                            <th>Product</th>
+                            <th>Incoming</th>
+                            <th>Outgoing</th>
+                            <th>Net</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockFlow7d.map((row) => (
+                            <tr key={`flow-${row.product_id}`}>
+                              <td>{row.sku || "-"}</td>
+                              <td>{row.name || `#${row.product_id}`}</td>
+                              <td style={{ color: "#34d399", fontWeight: 700 }}>+{Number(row.incoming_units || 0)}</td>
+                              <td style={{ color: "#f87171", fontWeight: 700 }}>-{Number(row.outgoing_units || 0)}</td>
+                              <td style={{ fontWeight: 700 }}>{Number(row.net_units || 0)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+      {selectedReview && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 1999 }}
+          onClick={closeReviewModal}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(760px, 94vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Review #{selectedReview.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeReviewModal}>
+                  Close
+                </button>
+              </div>
+              <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                <div><strong style={{ color: "var(--text)" }}>Product:</strong> #{selectedReview.product_id}</div>
+                <div><strong style={{ color: "var(--text)" }}>Reviewer:</strong> {selectedReview.reviewer_name || "-"}</div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Rating:</strong>{" "}
+                  <span style={{ color: "#fbbf24" }}>
+                    {"★".repeat(Number(selectedReview.rating || 0))}
+                    {"☆".repeat(Math.max(0, 5 - Number(selectedReview.rating || 0)))}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Date:</strong>{" "}
+                  {selectedReview.created_at ? new Date(selectedReview.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+              <div
+                className="p-3 rounded-2"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--line)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  maxHeight: "45vh",
+                  overflowY: "auto",
+                }}
+              >
+                {selectedReview.comment || "(No comment content)"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedFeedback && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 2000 }}
+          onClick={closeFeedbackModal}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(720px, 92vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Feedback #{selectedFeedback.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeFeedbackModal}>Close</button>
+              </div>
+              <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                <div><strong style={{ color: "var(--text)" }}>Name:</strong> {selectedFeedback.name || "-"}</div>
+                <div><strong style={{ color: "var(--text)" }}>Email:</strong> {selectedFeedback.email || "-"}</div>
+                <div><strong style={{ color: "var(--text)" }}>Rating:</strong>{" "}
+                  <span style={{ color: "#fbbf24" }}>
+                    {"★".repeat(Number(selectedFeedback.rating || 0))}
+                    {"☆".repeat(Math.max(0, 5 - Number(selectedFeedback.rating || 0)))}
+                  </span>
+                </div>
+                <div><strong style={{ color: "var(--text)" }}>Date:</strong>{" "}
+                  {selectedFeedback.created_at ? new Date(selectedFeedback.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+              <div
+                className="p-3 rounded-2"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--line)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  maxHeight: "45vh",
+                  overflowY: "auto",
+                }}
+              >
+                {selectedFeedback.comments || "(No comment content)"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedMessage && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{ background: "rgba(0,0,0,0.7)", zIndex: 2000 }}
+          onClick={closeMessageModal}
+        >
+          <div
+            className="card border-0 shadow-sm"
+            style={{ width: "min(720px, 92vw)", background: "var(--bg-surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 osai-admin-section-title">Message #{selectedMessage.id}</h5>
+                <button className="btn btn-sm btn-outline-secondary" onClick={closeMessageModal}>
+                  Close
+                </button>
+              </div>
+
+              <div className="mb-3" style={{ color: "var(--sub)", fontSize: 13 }}>
+                <div><strong style={{ color: "var(--text)" }}>From:</strong> {selectedMessage.name || "-"}</div>
+                <div><strong style={{ color: "var(--text)" }}>Email:</strong> {selectedMessage.email || "-"}</div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Status:</strong>{" "}
+                  <span className={`osai-status osai-status-${selectedMessage.status || "unread"}`}>
+                    {selectedMessage.status || "unread"}
+                  </span>
+                </div>
+                <div>
+                  <strong style={{ color: "var(--text)" }}>Date:</strong>{" "}
+                  {selectedMessage.created_at ? new Date(selectedMessage.created_at).toLocaleString() : "-"}
+                </div>
+              </div>
+
+              <div
+                className="p-3 rounded-2"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--line)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  maxHeight: "45vh",
+                  overflowY: "auto",
+                }}
+              >
+                {selectedMessage.message || "(No message content)"}
+              </div>
+
+              <div className="d-flex gap-2 mt-3 flex-wrap">
+                {(selectedMessage.status || "unread") !== "archived" ? (
+                  <button className="btn btn-sm btn-outline-info" onClick={() => replyToMessage(selectedMessage)}>
+                    Reply via Email
+                  </button>
+                ) : null}
+                {(selectedMessage.status || "unread") !== "archived" ? (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => updateMessageStatus(selectedMessage.id, "archived")}
+                  >
+                    Archive
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => updateMessageStatus(selectedMessage.id, "unread")}
+                  >
+                    Unarchive
+                  </button>
+                )}
+                <button className="btn btn-sm btn-outline-danger" onClick={() => deleteMessage(selectedMessage)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

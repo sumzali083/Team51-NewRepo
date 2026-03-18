@@ -79,7 +79,7 @@ const CheckoutPage = () => {
       (!form.address.trim() || !form.city.trim() || !form.postcode.trim());
 
     if (missingBase || missingShip) {
-      setCheckoutError("Please complete all required shipping details.");
+      setCheckoutError("Please complete all required delivery details.");
       return;
     }
 
@@ -196,7 +196,7 @@ const CheckoutPage = () => {
 
       <div className="co-steps">
         <div className={`co-step ${step >= 1 ? "active" : ""}`}>
-          <span className="co-step-num">1</span> Shipping
+          <span className="co-step-num">1</span> Delivery
         </div>
         <div className="co-step-divider" />
         <div className={`co-step ${step >= 2 ? "active" : ""}`}>
@@ -208,17 +208,20 @@ const CheckoutPage = () => {
         <div className="co-left">
           {step === 1 && (
             <form onSubmit={handleShippingNext} noValidate>
-              <h2 className="co-section-heading">Shipping Details</h2>
+              <h2 className="co-section-heading">Delivery Details</h2>
 
               <div className="co-toggle-row">
-                {["SHIP", "PICK UP"].map((type) => (
+                {[
+                  { value: "SHIP", label: "Delivery" },
+                  { value: "PICK UP", label: "Collection" },
+                ].map(({ value, label }) => (
                   <button
-                    key={type}
+                    key={value}
                     type="button"
-                    className={`co-toggle ${deliveryType === type ? "co-toggle-active" : ""}`}
-                    onClick={() => setDeliveryType(type)}
+                    className={`co-toggle ${deliveryType === value ? "co-toggle-active" : ""}`}
+                    onClick={() => setDeliveryType(value)}
                   >
-                    {type}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -282,7 +285,7 @@ const CheckoutPage = () => {
 
               <div className="co-summary-pill">
                 <span style={{ color: "#888", fontSize: 12 }}>
-                  {deliveryType === "PICK UP" ? "Pickup by" : "Shipping to"}
+                  {deliveryType === "PICK UP" ? "Collection for" : "Deliver to"}
                 </span>
                 <span style={{ color: "#fff", fontSize: 13 }}>
                   {form.firstName} {form.lastName}
@@ -351,6 +354,8 @@ const CheckoutPage = () => {
                 const img = item.image || (item.images && item.images[0]) || "/images/placeholder.jpg";
                 const priceNum = Number(item.price || 0);
                 const qtyNum = Number(item.quantity || 0);
+                const origPrice = item.originalPrice ? Number(item.originalPrice) : null;
+                const discountPct = origPrice ? Math.round((1 - priceNum / origPrice) * 100) : null;
 
                 return (
                   <div className="co-item" key={item.id + (item.size || "") + (item.color || "")}>
@@ -368,9 +373,27 @@ const CheckoutPage = () => {
                     <div className="co-item-info">
                       <p className="co-item-name">{item.name}</p>
                       {item.size && <p className="co-item-meta">Size: {item.size}</p>}
-                      {item.color && <p className="co-item-meta">Color: {item.color}</p>}
+                      {item.color && <p className="co-item-meta">Colour: {item.color}</p>}
                     </div>
-                    <span className="co-item-price">£{(priceNum * qtyNum).toFixed(2)}</span>
+                    {origPrice ? (
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ color: "#888", fontSize: 11, textDecoration: "line-through" }}>
+                          £{(origPrice * qtyNum).toFixed(2)}
+                        </div>
+                        <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                          £{(priceNum * qtyNum).toFixed(2)}
+                        </div>
+                        <div style={{
+                          background: "#e53935", color: "#fff",
+                          fontSize: 10, fontWeight: 700, padding: "1px 5px",
+                          borderRadius: 3, letterSpacing: "0.04em", display: "inline-block", marginTop: 2,
+                        }}>
+                          -{discountPct}%
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="co-item-price">£{(priceNum * qtyNum).toFixed(2)}</span>
+                    )}
                   </div>
                 );
               })
@@ -384,7 +407,7 @@ const CheckoutPage = () => {
             <span>£{subtotal.toFixed(2)}</span>
           </div>
           <div className="co-price-row">
-            <span>Shipping</span>
+            <span>Delivery</span>
             <span>{shipping === 0 ? "-" : `£${shipping.toFixed(2)}`}</span>
           </div>
 

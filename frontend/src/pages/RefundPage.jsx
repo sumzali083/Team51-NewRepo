@@ -31,9 +31,9 @@ function Dropdown({ value, onChange, options }) {
         }}
       >
         <span style={{ color: selected ? "#fff" : "#666" }}>
-          {selected ? selected.label : "Select…"}
+          {selected ? selected.label : "Select..."}
         </span>
-        <span style={{ color: "#666", fontSize: 10, marginLeft: 8 }}>▼</span>
+        <span style={{ color: "#666", fontSize: 10, marginLeft: 8 }}>v</span>
       </button>
       {open && (
         <div style={{
@@ -74,6 +74,7 @@ function Dropdown({ value, onChange, options }) {
 const STATUS_STYLES = {
   pending:  { background: "rgba(251,191,36,0.12)",  color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)"  },
   approved: { background: "rgba(52,211,153,0.12)",  color: "#34d399", border: "1px solid rgba(52,211,153,0.3)"  },
+  processing: { background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" },
   refunded: { background: "rgba(52,211,153,0.12)",  color: "#34d399", border: "1px solid rgba(52,211,153,0.3)"  },
   rejected: { background: "rgba(248,113,113,0.12)", color: "#f87171", border: "1px solid rgba(248,113,113,0.3)" },
 };
@@ -214,7 +215,7 @@ export default function RefundPage() {
         Refund Requests
       </h1>
       <p style={{ color: "#888", fontSize: 13, marginBottom: 40 }}>
-        Submit a refund request for a recent order. We aim to respond within 2–3 business days.
+        Submit a refund request for a recent order. We aim to respond within 2-3 business days.
       </p>
 
       {/* Alerts */}
@@ -242,7 +243,7 @@ export default function RefundPage() {
               <Dropdown
                 value={form.orderId}
                 onChange={(v) => setForm((prev) => ({ ...prev, orderId: v, productId: "" }))}
-                options={orders.map((o) => ({ value: o.id, label: `#${o.id} — £${Number(o.total_price || 0).toFixed(2)}` }))}
+                options={orders.map((o) => ({ value: o.id, label: `#${o.id} - GBP ${Number(o.total_price || 0).toFixed(2)}` }))}
               />
             </div>
 
@@ -255,7 +256,7 @@ export default function RefundPage() {
                   { value: "", label: "Whole order" },
                   ...selectedOrderItems.map((item) => ({
                     value: item.product_id,
-                    label: `${item.name} (×${item.quantity})`,
+                    label: `${item.name} (x${item.quantity})`,
                   })),
                 ]}
               />
@@ -303,7 +304,7 @@ export default function RefundPage() {
               transition: "opacity 0.15s",
             }}
           >
-            {submitting ? "Submitting…" : "Submit Request"}
+            {submitting ? "Submitting..." : "Submit Request"}
           </button>
         </form>
       </div>
@@ -330,7 +331,7 @@ export default function RefundPage() {
                     <span style={{ color: "#555", fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "0.1em" }}>
                       REQUEST #{r.id}
                     </span>
-                    <span style={{ color: "#666", fontSize: 11 }}>·</span>
+                    <span style={{ color: "#666", fontSize: 11 }}>-</span>
                     <span style={{ color: "#888", fontSize: 12 }}>Order #{r.order_id}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -341,7 +342,7 @@ export default function RefundPage() {
                   </div>
                 </div>
 
-                <p style={{ color: "#ccc", fontSize: 14, margin: 0, marginBottom: r.admin_note || r.instruction_link ? 10 : 0 }}>
+                <p style={{ color: "#ccc", fontSize: 14, margin: 0, marginBottom: (r.admin_note || r.instruction_link || r.refund_amount || r.refund_reference || r.resolved_at) ? 10 : 0 }}>
                   {r.reason}
                 </p>
 
@@ -357,8 +358,33 @@ export default function RefundPage() {
                       <div>
                         <span style={{ color: "#555", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 2 }}>Instructions</span>
                         <a href={r.instruction_link} target="_blank" rel="noreferrer" style={{ color: "#fff", fontSize: 13, textDecoration: "underline", textUnderlineOffset: 3 }}>
-                          View instructions →
+                          View instructions {"->"}
                         </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(r.status === "refunded" || r.refund_amount || r.refund_reference || r.resolved_at) && (
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 10, marginTop: 10, display: "flex", flexWrap: "wrap", gap: 16 }}>
+                    {r.refund_amount != null && r.refund_amount !== "" && (
+                      <div>
+                        <span style={{ color: "#555", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 2 }}>Refund amount</span>
+                        <span style={{ color: "#aaa", fontSize: 13 }}>GBP {Number(r.refund_amount).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {r.refund_reference && (
+                      <div>
+                        <span style={{ color: "#555", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 2 }}>Refund reference</span>
+                        <span style={{ color: "#aaa", fontSize: 13 }}>{r.refund_reference}</span>
+                      </div>
+                    )}
+                    {r.resolved_at && (
+                      <div>
+                        <span style={{ color: "#555", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 2 }}>Resolved</span>
+                        <span style={{ color: "#aaa", fontSize: 13 }}>
+                          {new Date(r.resolved_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
                       </div>
                     )}
                   </div>

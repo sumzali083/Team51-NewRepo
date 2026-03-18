@@ -10,6 +10,13 @@ const ALLOWED_STATUSES = new Set([
   "rejected",
   "refunded",
 ]);
+const REFUND_TRANSITIONS = {
+  pending: new Set(["approved", "rejected"]),
+  approved: new Set(["processing", "rejected"]),
+  processing: new Set(["refunded", "rejected"]),
+  rejected: new Set([]),
+  refunded: new Set([]),
+};
 
 let ensureTablePromise = null;
 
@@ -50,6 +57,50 @@ async function ensureRefundsTable() {
     } catch (err) {
       if (err?.code !== "ER_DUP_FIELDNAME") throw err;
     }
+
+    try {
+      await db.query(
+        "ALTER TABLE refund_requests ADD COLUMN refund_amount DECIMAL(10,2) NULL AFTER instruction_link"
+      );
+    } catch (err) {
+      if (err?.code !== "ER_DUP_FIELDNAME") throw err;
+    }
+
+    try {
+      await db.query(
+        "ALTER TABLE refund_requests ADD COLUMN refund_reference VARCHAR(120) NULL AFTER refund_amount"
+      );
+    } catch (err) {
+      if (err?.code !== "ER_DUP_FIELDNAME") throw err;
+    }
+
+    try {
+      await db.query(
+        "ALTER TABLE refund_requests ADD COLUMN resolved_at DATETIME NULL AFTER updated_at"
+      );
+    } catch (err) {
+      if (err?.code !== "ER_DUP_FIELDNAME") throw err;
+    }
+
+    await db.query(
+      `CREATE TABLE IF NOT EXISTS refund_events (
+        id INT NOT NULL AUTO_INCREMENT,
+        refund_request_id INT NOT NULL,
+        actor_role VARCHAR(20) NOT NULL,
+        actor_id INT NULL,
+        event_type VARCHAR(40) NOT NULL,
+        from_status VARCHAR(20) NULL,
+        to_status VARCHAR(20) NULL,
+        note VARCHAR(500) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_refund_events_request (refund_request_id),
+        KEY idx_refund_events_created_at (created_at),
+        CONSTRAINT fk_refund_events_request
+          FOREIGN KEY (refund_request_id) REFERENCES refund_requests(id)
+          ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
+    );
   })();
 
   return ensureTablePromise;
@@ -63,6 +114,38 @@ async function getRefundColumns() {
     if (err?.code === "ER_NO_SUCH_TABLE") return null;
     throw err;
   }
+}
+
+function canTransitionRefundStatus(currentStatus, nextStatus) {
+  if (!currentStatus || currentStatus === nextStatus) return true;
+  const allowedNext = REFUND_TRANSITIONS[currentStatus];
+  if (!allowedNext) return false;
+  return allowedNext.has(nextStatus);
+}
+
+async function appendRefundEvent({
+  refundRequestId,
+  actorRole,
+  actorId = null,
+  eventType,
+  fromStatus = null,
+  toStatus = null,
+  note = null,
+}) {
+  await db.query(
+    `INSERT INTO refund_events
+      (refund_request_id, actor_role, actor_id, event_type, from_status, to_status, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      refundRequestId,
+      String(actorRole || "").slice(0, 20),
+      actorId == null ? null : Number(actorId),
+      String(eventType || "").slice(0, 40),
+      fromStatus ? String(fromStatus).slice(0, 20) : null,
+      toStatus ? String(toStatus).slice(0, 20) : null,
+      note ? String(note).slice(0, 500) : null,
+    ]
+  );
 }
 
 async function resolveOrderItemId(orderId, productId) {
@@ -87,6 +170,15 @@ router.get("/my", requireAuth, async (req, res) => {
     const instructionExpr = cols.has("instruction_link")
       ? "rr.instruction_link"
       : "NULL AS instruction_link";
+    const amountExpr = cols.has("refund_amount")
+      ? "rr.refund_amount"
+      : "NULL AS refund_amount";
+    const referenceExpr = cols.has("refund_reference")
+      ? "rr.refund_reference"
+      : "NULL AS refund_reference";
+    const resolvedAtExpr = cols.has("resolved_at")
+      ? "rr.resolved_at"
+      : "NULL AS resolved_at";
     const [rows] = await db.query(
       `SELECT
         rr.id,
@@ -97,8 +189,11 @@ router.get("/my", requireAuth, async (req, res) => {
         rr.status,
         rr.admin_note,
         ${instructionExpr},
+        ${amountExpr},
+        ${referenceExpr},
         rr.created_at,
-        rr.updated_at
+        rr.updated_at,
+        ${resolvedAtExpr}
       FROM refund_requests rr
       WHERE rr.user_id = ?
       ORDER BY rr.created_at DESC`,
@@ -171,6 +266,15 @@ router.post("/", requireAuth, async (req, res) => {
       ]
     );
 
+    await appendRefundEvent({
+      refundRequestId: result.insertId,
+      actorRole: "customer",
+      actorId: userId,
+      eventType: "created",
+      toStatus: "pending",
+      note: reason,
+    });
+
     return res.status(201).json({
       message: "Refund request submitted",
       refundId: result.insertId,
@@ -184,4 +288,11 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = { router, ensureRefundsTable, ALLOWED_STATUSES, getRefundColumns };
+module.exports = {
+  router,
+  ensureRefundsTable,
+  ALLOWED_STATUSES,
+  getRefundColumns,
+  canTransitionRefundStatus,
+  appendRefundEvent,
+};

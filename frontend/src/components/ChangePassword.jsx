@@ -4,7 +4,7 @@ import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 
 export function ChangePassword() {
-  const { user } = useContext(AuthContext);
+  const { user, checkAuth } = useContext(AuthContext);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -56,6 +56,7 @@ export function ChangePassword() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");
+      await checkAuth();
     } catch (err) {
       console.error("Change password error:", err);
       const msg =

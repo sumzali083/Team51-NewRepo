@@ -3,6 +3,33 @@ const express = require("express");
 const db = require("../config/db"); // mysql2/promise pool
 
 const router = express.Router();
+let _hasProductSizeStock = null;
+
+async function hasProductSizeStockCol() {
+  if (_hasProductSizeStock !== null) return _hasProductSizeStock;
+  const [rows] = await db.query(
+    `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_sizes' AND COLUMN_NAME = 'stock' LIMIT 1`
+  );
+  _hasProductSizeStock = rows.length > 0;
+  return _hasProductSizeStock;
+}
+
+async function ensureProductSizeStockColumn() {
+  const [tableRows] = await db.query("SHOW TABLES LIKE 'product_sizes'");
+  if (!tableRows.length) return;
+  const hasCol = await hasProductSizeStockCol();
+  if (!hasCol) {
+    await db.query("ALTER TABLE product_sizes ADD COLUMN stock INT NOT NULL DEFAULT 0");
+    _hasProductSizeStock = true;
+    await db.query(
+      `UPDATE product_sizes ps
+       JOIN products p ON p.id = ps.product_id
+       SET ps.stock = COALESCE(p.stock, 0)
+       WHERE ps.stock IS NULL OR ps.stock = 0`
+    );
+  }
+}
 
 function splitList(value) {
   if (!value) return [];
@@ -17,7 +44,8 @@ function catFromCategoryName(categoryName) {
   if (s === "mens") return "men";
   if (s === "womens") return "women";
   if (s === "kids") return "kids";
-  if (s === "new arrivals") return "newarrivals";
+  if (s === "new arrivals") return "all";
+  if (s === "all products") return "all";
   if (s === "sale") return "sale";
   return s.replace(/\s+/g, "");
 }
@@ -48,7 +76,9 @@ function buildBaseSelect(includeOriginalPrice) {
     p.description AS \`desc\`,
     GROUP_CONCAT(DISTINCT pi.url ORDER BY pi.sort_order SEPARATOR '||') AS images,
     GROUP_CONCAT(DISTINCT ps.size ORDER BY ps.size SEPARATOR '||') AS sizes,
-    GROUP_CONCAT(DISTINCT pc.color ORDER BY pc.color SEPARATOR '||') AS colors
+    GROUP_CONCAT(DISTINCT CONCAT(ps.size, ':', COALESCE(ps.stock, 0)) ORDER BY ps.size SEPARATOR '||') AS size_stocks,
+    GROUP_CONCAT(DISTINCT pc.color ORDER BY pc.color SEPARATOR '||') AS colors,
+    ROUND((SELECT AVG(r.rating) FROM reviews r WHERE r.product_id = p.id), 1) AS avg_rating
   FROM products p
   JOIN categories c ON p.category_id = c.id
   LEFT JOIN product_images pi ON pi.product_id = p.id
@@ -69,7 +99,16 @@ function buildProductRow(r) {
     desc: r.desc,
     images: splitList(r.images),
     sizes: splitList(r.sizes),
+    sizeStocks: splitList(r.size_stocks).map((entry) => {
+      const idx = entry.lastIndexOf(":");
+      if (idx <= 0) return null;
+      const size = entry.slice(0, idx);
+      const stock = Number(entry.slice(idx + 1));
+      return { size, stock: Number.isFinite(stock) ? stock : 0 };
+    }).filter(Boolean),
     colors: splitList(r.colors),
+    avg_rating: r.avg_rating != null ? Number(r.avg_rating) : null,
+    category: r.category_name,
   };
 }
 
@@ -98,11 +137,10 @@ router.get("/", async (req, res) => {
     where.push("p.original_price IS NOT NULL");
     where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     limitSql = "LIMIT 6";
-  } else if (cat === "newarrivals") {
-    // 6 most recently added products from real categories only (not "New Arrivals" or "Sale" DB categories)
+  } else if (cat === "all") {
+    // All products from real categories (Mens/Womens/Kids), no limit
     where.push("c.name IN ('Mens', 'Womens', 'Kids')");
     orderBy = "ORDER BY p.id DESC";
-    limitSql = "LIMIT 6";
   } else if (cat) {
     // map frontend cat to category names in DB
     if (cat === "men") where.push("c.name = 'Mens'");
@@ -125,6 +163,7 @@ router.get("/", async (req, res) => {
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
   const hasOP = await hasOriginalPriceCol();
+  await ensureProductSizeStockColumn();
   const BASE_SELECT = buildBaseSelect(hasOP);
   const opGroup = hasOP ? "p.original_price," : "";
 
@@ -160,6 +199,7 @@ router.get("/:id", async (req, res) => {
   const param = isNumeric ? Number(raw) : raw;
 
   const hasOP = await hasOriginalPriceCol();
+  await ensureProductSizeStockColumn();
   const BASE_SELECT = buildBaseSelect(hasOP);
   const opGroup = hasOP ? "p.original_price," : "";
 

@@ -13,6 +13,7 @@ function mapBackendWishlistItem(item) {
     product_id: item.product_id,
     name: item.name,
     price: Number(item.price || 0),
+    originalPrice: item.original_price ? Number(item.original_price) : null,
     image,
   };
 }
@@ -108,6 +109,7 @@ export function WishlistProvider({ children }) {
         product_id: product.product_id || product.db_id || null,
         name: product.name,
         price: Number(product.price || 0),
+        originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
         image: product.image || (Array.isArray(product.images) ? product.images[0] : null) || "/images/placeholder.jpg",
       });
     });

@@ -7,7 +7,7 @@ import { AboutPage } from "./pages/AboutPage";
 import { MensPage } from "./pages/MensPage";
 import { WomensPage } from "./pages/WomensPage";
 import { KidsPage } from "./pages/KidsPage";
-import { NewArrivalsPage } from "./pages/NewArrivalsPage";
+import { AllProductsPage } from "./pages/AllProductsPage";
 import { SalePage } from "./pages/SalePage";
 import { ProductPage } from "./ProductPage";
 import { SearchPage } from "./pages/SearchPage";
@@ -29,6 +29,11 @@ import { RequireAdmin } from "./components/RequireAdmin";
 import AdminPage from "./pages/AdminPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import RefundPage from "./pages/RefundPage";
+import AccountPage from "./pages/AccountPage";
+import FAQPage from "./pages/FAQPage";
+import ReturnsPolicyPage from "./pages/ReturnsPolicyPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 
 export default function App() {
   console.log("DEBUG: App.jsx is rendering");
@@ -44,7 +49,8 @@ export default function App() {
                 <Route path="/mens" element={<MensPage />} />
                 <Route path="/womens" element={<WomensPage />} />
                 <Route path="/kids" element={<KidsPage />} />
-                <Route path="/newarrivals" element={<NewArrivalsPage />} />
+                <Route path="/newarrivals" element={<Navigate to="/allproducts" replace />} />
+                <Route path="/allproducts" element={<AllProductsPage />} />
                 <Route path="/sale" element={<SalePage />} />
                 <Route path="/product/:id" element={<ProductPage />} />
                 <Route path="/search" element={<SearchPage />} />
@@ -55,6 +61,11 @@ export default function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/orders" element={<OrderHistoryPage />} />
                 <Route path="/refunds" element={<RefundPage />} />
+                <Route path="/account" element={<AccountPage />} />
+                <Route path="/faq" element={<FAQPage />} />
+                <Route path="/returns-policy" element={<ReturnsPolicyPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

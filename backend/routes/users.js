@@ -10,6 +10,8 @@ const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
 let mailTransporter = null;
+let profileColsEnsured = false;
+let authColsEnsured = false;
 
 function getResetBaseUrl(req) {
   const envUrl = process.env.PASSWORD_RESET_BASE_URL || process.env.FRONTEND_URL;
@@ -56,6 +58,67 @@ async function ensureForgotPasswordTable() {
   );
 }
 
+async function columnExists(tableName, colName) {
+  const [rows] = await db.query(
+    `SELECT 1
+       FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+        AND COLUMN_NAME = ?
+      LIMIT 1`,
+    [tableName, colName]
+  );
+  return rows.length > 0;
+}
+
+async function ensureUserProfileColumns() {
+  if (profileColsEnsured) return;
+
+  const columnsToAdd = [
+    ["phone", "VARCHAR(30) NULL"],
+    ["address_line1", "VARCHAR(255) NULL"],
+    ["address_line2", "VARCHAR(255) NULL"],
+    ["city", "VARCHAR(120) NULL"],
+    ["postcode", "VARCHAR(32) NULL"],
+  ];
+
+  for (const [col, definition] of columnsToAdd) {
+    const exists = await columnExists("users", col);
+    if (!exists) {
+      await db.query(`ALTER TABLE users ADD COLUMN ${col} ${definition}`);
+    }
+  }
+
+  profileColsEnsured = true;
+}
+
+async function ensureAuthColumnsAndTables() {
+  if (authColsEnsured) return;
+
+  const hasMustChangePassword = await columnExists("users", "must_change_password");
+  if (!hasMustChangePassword) {
+    await db.query("ALTER TABLE users ADD COLUMN must_change_password TINYINT(1) NOT NULL DEFAULT 0");
+  }
+
+  await db.query(
+    `CREATE TABLE IF NOT EXISTS admin_role_requests (
+      id INT NOT NULL AUTO_INCREMENT,
+      user_id INT NOT NULL,
+      reason VARCHAR(500) NULL,
+      status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+      reviewed_by INT NULL,
+      reviewed_at DATETIME NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_admin_role_requests_user (user_id),
+      KEY idx_admin_role_requests_status (status),
+      KEY idx_admin_role_requests_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci`
+  );
+
+  authColsEnsured = true;
+}
+
 // Limit login attempts
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -97,6 +160,7 @@ router.post("/register", async (req, res) => {
   }
 
   try {
+    await ensureAuthColumnsAndTables();
     // check if user already exists
     const [existing] = await db.query(
       "SELECT id FROM users WHERE email = ?",
@@ -109,8 +173,8 @@ router.post("/register", async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
 
     const [result] = await db.query(
-      "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-      [name.trim(), email.trim(), hash]
+      "INSERT INTO users (name, email, password_hash, must_change_password) VALUES (?, ?, ?, 0)",
+      [name.trim(), email.trim().toLowerCase(), hash]
     );
 
     return res.status(201).json({
@@ -141,9 +205,10 @@ router.post("/login", loginLimiter, async (req, res) => {
   }
 
   try {
+    await ensureAuthColumnsAndTables();
     const [rows] = await db.query(
-      "SELECT id, name, email, password_hash, is_admin FROM users WHERE email = ?",
-      [email]
+      "SELECT id, name, email, password_hash, is_admin, must_change_password FROM users WHERE email = ?",
+      [email.trim().toLowerCase()]
     );
 
     if (!rows.length) {
@@ -164,6 +229,7 @@ router.post("/login", loginLimiter, async (req, res) => {
       name: user.name,
       email: user.email,
       is_admin: user.is_admin === 1,
+      must_change_password: Number(user.must_change_password) === 1,
     };
 
     return res.json({
@@ -173,6 +239,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         name: user.name,
         email: user.email,
         is_admin: user.is_admin === 1,
+        must_change_password: Number(user.must_change_password) === 1,
       },
     });
   } catch (err) {
@@ -186,11 +253,254 @@ router.post("/login", loginLimiter, async (req, res) => {
  * GET /api/users/me
  * Returns current logged-in user from session
  */
-router.get("/me", (req, res) => {
-  if (req.session && req.session.user) {
-    return res.json({ user: req.session.user });
+router.get("/me", async (req, res) => {
+  if (!(req.session && req.session.userId)) {
+    return res.status(401).json({ message: "Not authenticated" });
   }
-  return res.status(401).json({ message: "Not authenticated" });
+
+  try {
+    await ensureUserProfileColumns();
+    await ensureAuthColumnsAndTables();
+    const [rows] = await db.query(
+      `SELECT id, name, email, is_admin, must_change_password, phone, address_line1, address_line2, city, postcode
+         FROM users
+        WHERE id = ?
+        LIMIT 1`,
+      [req.session.userId]
+    );
+
+    if (!rows.length) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = {
+      id: rows[0].id,
+      name: rows[0].name,
+      email: rows[0].email,
+      is_admin: Number(rows[0].is_admin) === 1,
+      must_change_password: Number(rows[0].must_change_password) === 1,
+      phone: rows[0].phone || "",
+      address_line1: rows[0].address_line1 || "",
+      address_line2: rows[0].address_line2 || "",
+      city: rows[0].city || "",
+      postcode: rows[0].postcode || "",
+    };
+
+    const [requestRows] = await db.query(
+      `SELECT id, status, reason, reviewed_at, created_at
+       FROM admin_role_requests
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [user.id]
+    );
+    user.admin_role_request = requestRows.length ? requestRows[0] : null;
+
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      is_admin: user.is_admin,
+      must_change_password: user.must_change_password,
+    };
+
+    return res.json({ user });
+  } catch (err) {
+    console.error("Error loading user profile:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * PUT /api/users/me
+ * Body: { name, email, phone, address_line1, address_line2, city, postcode }
+ */
+router.put("/me", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  const {
+    name,
+    email,
+    phone = "",
+    address_line1 = "",
+    address_line2 = "",
+    city = "",
+    postcode = "",
+  } = req.body || {};
+
+  const normalizedName = String(name || "").trim();
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedPhone = String(phone || "").trim();
+  const normalizedAddress1 = String(address_line1 || "").trim();
+  const normalizedAddress2 = String(address_line2 || "").trim();
+  const normalizedCity = String(city || "").trim();
+  const normalizedPostcode = String(postcode || "").trim();
+
+  if (!normalizedName || !normalizedEmail) {
+    return res.status(400).json({ message: "Name and email are required" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(normalizedEmail)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
+  if (normalizedName.length > 120) {
+    return res.status(400).json({ message: "Name is too long" });
+  }
+  if (normalizedPhone.length > 30) {
+    return res.status(400).json({ message: "Phone is too long" });
+  }
+  if (
+    normalizedAddress1.length > 255 ||
+    normalizedAddress2.length > 255 ||
+    normalizedCity.length > 120 ||
+    normalizedPostcode.length > 32
+  ) {
+    return res.status(400).json({ message: "One or more fields are too long" });
+  }
+
+  try {
+    await ensureUserProfileColumns();
+
+    const [existing] = await db.query(
+      "SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1",
+      [normalizedEmail, userId]
+    );
+    if (existing.length) {
+      return res.status(409).json({ message: "Email already in use" });
+    }
+
+    await db.query(
+      `UPDATE users
+          SET name = ?, email = ?, phone = ?, address_line1 = ?, address_line2 = ?, city = ?, postcode = ?
+        WHERE id = ?`,
+      [
+        normalizedName,
+        normalizedEmail,
+        normalizedPhone || null,
+        normalizedAddress1 || null,
+        normalizedAddress2 || null,
+        normalizedCity || null,
+        normalizedPostcode || null,
+        userId,
+      ]
+    );
+
+    const updatedUser = {
+      id: userId,
+      name: normalizedName,
+      email: normalizedEmail,
+      is_admin: !!req.session.user?.is_admin,
+      phone: normalizedPhone,
+      address_line1: normalizedAddress1,
+      address_line2: normalizedAddress2,
+      city: normalizedCity,
+      postcode: normalizedPostcode,
+    };
+
+    req.session.user = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      is_admin: updatedUser.is_admin,
+      must_change_password: !!req.session.user?.must_change_password,
+    };
+
+    return res.json({ message: "Profile updated", user: updatedUser });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * DELETE /api/users/me/details
+ * Clears optional personal detail fields for the logged in user.
+ */
+router.delete("/me/details", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  try {
+    await ensureUserProfileColumns();
+    await db.query(
+      `UPDATE users
+          SET phone = NULL, address_line1 = NULL, address_line2 = NULL, city = NULL, postcode = NULL
+        WHERE id = ?`,
+      [userId]
+    );
+    return res.json({ message: "Personal details cleared" });
+  } catch (err) {
+    console.error("Clear profile details error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * POST /api/users/admin-request
+ * Body: { reason }
+ * Create an admin role request for review by an existing admin.
+ */
+router.post("/admin-request", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  const reason = String(req.body?.reason || "").trim();
+  try {
+    await ensureAuthColumnsAndTables();
+
+    const [[userRow]] = await db.query(
+      "SELECT id, is_admin FROM users WHERE id = ? LIMIT 1",
+      [userId]
+    );
+    if (!userRow) return res.status(404).json({ message: "User not found" });
+    if (Number(userRow.is_admin) === 1) {
+      return res.status(400).json({ message: "You already have admin access." });
+    }
+
+    const [[pending]] = await db.query(
+      `SELECT id FROM admin_role_requests
+       WHERE user_id = ? AND status = 'pending'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+    if (pending) {
+      return res.status(409).json({ message: "An admin request is already pending." });
+    }
+
+    const [result] = await db.query(
+      "INSERT INTO admin_role_requests (user_id, reason, status) VALUES (?, ?, 'pending')",
+      [userId, reason ? reason.slice(0, 500) : null]
+    );
+
+    return res.status(201).json({
+      message: "Admin role request submitted.",
+      requestId: result.insertId,
+    });
+  } catch (err) {
+    console.error("Admin request create error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * GET /api/users/admin-request
+ * Returns latest admin role request for current user
+ */
+router.get("/admin-request", requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  try {
+    await ensureAuthColumnsAndTables();
+    const [rows] = await db.query(
+      `SELECT id, status, reason, reviewed_at, created_at
+       FROM admin_role_requests
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+    return res.json({ request: rows.length ? rows[0] : null });
+  } catch (err) {
+    console.error("Admin request fetch error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 /**
@@ -367,6 +677,7 @@ router.post("/change-password", requireAuth, async (req, res) => {
   }
 
   try {
+    await ensureAuthColumnsAndTables();
     const [users] = await db.query(
       "SELECT id, password_hash FROM users WHERE id = ?",
       [userId]
@@ -385,11 +696,18 @@ router.post("/change-password", requireAuth, async (req, res) => {
 
     const newHash = await bcrypt.hash(newPassword, 10);
     await db.query(
-      "UPDATE users SET password_hash = ? WHERE id = ?",
+      "UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?",
       [newHash, user.id]
     );
 
-    return res.json({ message: "Password updated successfully" });
+    if (req.session?.user) {
+      req.session.user.must_change_password = false;
+    }
+
+    return res.json({
+      message: "Password updated successfully",
+      user: req.session?.user || null,
+    });
   } catch (err) {
     console.error("Change password error:", err);
     return res.status(500).json({ message: "Server error" });

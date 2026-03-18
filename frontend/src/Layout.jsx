@@ -69,10 +69,10 @@ export function Layout() {
             <ul className="osai-nav-links">
               {[
                 { to: "/", label: "Home", end: true },
+                { to: "/allproducts", label: "All Products" },
                 { to: "/mens", label: "Mens" },
                 { to: "/womens", label: "Womens" },
                 { to: "/kids", label: "Kids" },
-                { to: "/newarrivals", label: "New Arrivals" },
                 { to: "/sale", label: "Sale" },
                 { to: "/contact", label: "Contact" },
                 { to: "/about", label: "About" },
@@ -93,10 +93,10 @@ export function Layout() {
               <ul className="osai-mobile-menu">
                 {[
                   { to: "/", label: "Home", end: true },
+                  { to: "/allproducts", label: "All Products" },
                   { to: "/mens", label: "Mens" },
                   { to: "/womens", label: "Womens" },
                   { to: "/kids", label: "Kids" },
-                  { to: "/newarrivals", label: "New Arrivals" },
                   { to: "/sale", label: "Sale" },
                   { to: "/contact", label: "Contact" },
                   { to: "/about", label: "About" },
@@ -140,7 +140,7 @@ export function Layout() {
               <NavLink
                 to="/wishlist"
                 className="osai-action-btn"
-                aria-label={`Wishlist (${totalFav} items)`}
+                aria-label={`Favourites (${totalFav} items)`}
               >
                 <i className="bi bi-heart" />
                 {totalFav > 0 && <span className="osai-badge">{totalFav}</span>}
@@ -199,6 +199,10 @@ export function Layout() {
 
                       {/* Menu items */}
                       <div style={{ padding: "6px 0" }}>
+                        <NavLink to="/account" className="osai-dropdown-item">
+                          <i className="bi bi-person-lines-fill" />
+                          My Details
+                        </NavLink>
                         {user.is_admin && (
                           <NavLink to="/admin" className="osai-dropdown-item">
                             <i className="bi bi-speedometer2" />
@@ -269,7 +273,7 @@ export function Layout() {
               <li><NavLink to="/mens">Mens</NavLink></li>
               <li><NavLink to="/womens">Womens</NavLink></li>
               <li><NavLink to="/kids">Kids</NavLink></li>
-              <li><NavLink to="/newarrivals">New Arrivals</NavLink></li>
+              <li><NavLink to="/allproducts">All Products</NavLink></li>
               <li><NavLink to="/sale">Sale</NavLink></li>
             </ul>
           </div>
@@ -284,6 +288,16 @@ export function Layout() {
                 <a href="mailto:OSAI@aston.ac.uk">OSAI@aston.ac.uk</a>
               </li>
               <li>134a Aston Road, Birmingham, UK</li>
+            </ul>
+          </div>
+
+          <div className="osai-footer-col">
+            <h5>Help & Policies</h5>
+            <ul>
+              <li><NavLink to="/faq">FAQs</NavLink></li>
+              <li><NavLink to="/returns-policy">Returns Policy</NavLink></li>
+              <li><NavLink to="/privacy-policy">Privacy Policy</NavLink></li>
+              <li><NavLink to="/terms">Terms & Conditions</NavLink></li>
             </ul>
           </div>
         </div>

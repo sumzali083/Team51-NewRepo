@@ -7,6 +7,7 @@ export function RequireAdmin({ children }) {
 
   if (loading) return <div className="container mt-5">Checking admin access...</div>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password) return <Navigate to="/account/change-password" replace />;
   if (!user.is_admin) return <Navigate to="/" replace />;
 
   return children;

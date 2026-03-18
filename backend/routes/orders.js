@@ -1,7 +1,31 @@
 const express = require("express");
 const db = require("../config/db");
 const { getOrderHistoryForUser } = require("../services/orderHistory");
+const { ensureStockMovementsTable, recordStockMovement } = require("../services/stockMovements");
 const router = express.Router();
+
+let _hasProductSizeStock = null;
+async function ensureProductSizeStockColumn() {
+  const [tableRows] = await db.query("SHOW TABLES LIKE 'product_sizes'");
+  if (!tableRows.length) return;
+  if (_hasProductSizeStock === null) {
+    const [rows] = await db.query(
+      `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_sizes' AND COLUMN_NAME = 'stock' LIMIT 1`
+    );
+    _hasProductSizeStock = rows.length > 0;
+  }
+  if (!_hasProductSizeStock) {
+    await db.query("ALTER TABLE product_sizes ADD COLUMN stock INT NOT NULL DEFAULT 0");
+    _hasProductSizeStock = true;
+    await db.query(
+      `UPDATE product_sizes ps
+       JOIN products p ON p.id = ps.product_id
+       SET ps.stock = COALESCE(p.stock, 0)
+       WHERE ps.stock IS NULL OR ps.stock = 0`
+    );
+  }
+}
 
 /**
  * POST /api/orders/checkout
@@ -31,8 +55,11 @@ router.post("/checkout", async (req, res) => {
       return res.status(401).json({ message: "User does not exist" });
     }
 
+    await ensureProductSizeStockColumn();
+    await ensureStockMovementsTable();
+
     const [cartItems] = await db.query(
-      `SELECT b.id, b.product_id, b.quantity, p.price, p.stock
+      `SELECT b.id, b.product_id, b.quantity, b.size, p.price, p.stock
        FROM basket_items b
        JOIN products p ON b.product_id = p.id
        WHERE b.user_id = ?`,
@@ -46,6 +73,22 @@ router.post("/checkout", async (req, res) => {
         return res.status(400).json({
           message: `Insufficient stock for product ID ${item.product_id}`,
         });
+      }
+      if (item.size) {
+        const [sizeRows] = await db.query(
+          "SELECT stock FROM product_sizes WHERE product_id = ? AND size = ? LIMIT 1",
+          [item.product_id, item.size]
+        );
+        if (!sizeRows.length) {
+          return res.status(400).json({
+            message: `Size ${item.size} is not available for product ID ${item.product_id}`,
+          });
+        }
+        if (Number(sizeRows[0].stock || 0) < Number(item.quantity || 0)) {
+          return res.status(400).json({
+            message: `Insufficient stock for size ${item.size} on product ID ${item.product_id}`,
+          });
+        }
       }
     }
 
@@ -76,6 +119,27 @@ router.post("/checkout", async (req, res) => {
          WHERE id = ?`,
         [item.quantity, item.product_id]
       );
+
+      if (item.size) {
+        await connection.query(
+          `UPDATE product_sizes
+           SET stock = stock - ?
+           WHERE product_id = ? AND size = ?`,
+          [item.quantity, item.product_id, item.size]
+        );
+      }
+
+      await recordStockMovement({
+        conn: connection,
+        productId: item.product_id,
+        size: item.size || null,
+        movementType: "outgoing",
+        quantity: item.quantity,
+        referenceType: "order",
+        referenceId: orderId,
+        note: "Checkout order placement",
+        actorUserId: userId,
+      });
     }
 
     await connection.query("DELETE FROM basket_items WHERE user_id = ?", [userId]);
