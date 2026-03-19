@@ -102,7 +102,7 @@ export default function FeedbackPage() {
         textTransform: "uppercase",
         letterSpacing: "-0.01em",
         lineHeight: 0.92,
-        color: "var(--text-primary)",
+        color: "#000",
         marginBottom: 48,
         textAlign: "center",
       }}>
