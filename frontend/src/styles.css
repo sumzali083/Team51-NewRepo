@@ -1568,7 +1568,7 @@ span.badge.rounded-pill.bg-danger,
 
 [data-theme="light"] .osai-profile-trigger {
   color: #111111;
-  border-color: #e5e5e5;
+  border-color: #111111;
 }
 
 [data-theme="light"] .osai-profile-trigger:hover {
@@ -1578,8 +1578,12 @@ span.badge.rounded-pill.bg-danger,
 
 [data-theme="light"] .osai-profile-avatar,
 [data-theme="light"] .osai-profile-avatar-lg {
-  background: rgba(250,84,0,0.12);
-  border-color: rgba(250,84,0,0.24);
+  background: #FA5400;
+  border-color: #111111;
+  color: #111111;
+}
+
+[data-theme="light"] .osai-profile-trigger-name {
   color: #111111;
 }
 
