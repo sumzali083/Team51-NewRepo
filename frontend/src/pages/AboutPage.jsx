@@ -79,19 +79,30 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section ref={definesUsRef} className="container py-5 mb-5" style={{ backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "0.5rem" }} data-animation="fadeInDown">
-        <h2 className="text-center mb-4">What Defines Us</h2>
-        <div className="row gy-4">
-          {[
-            { title: "Craftsmanship", description: "Every garment is cut, stitched, and finished with meticulous attention to detail." },
-            { title: "Authenticity", description: "We use high-quality fabrics and dependable construction built for daily wear." },
-            { title: "Timelessness", description: "Designed to outlast short trends and remain a core part of your wardrobe." }
-          ].map((item) => (
-            <div key={item.title} className="col-md-4 text-center">
-              <h3 className="h5 fw-light mb-2 about-value-title">{item.title}</h3>
-              <p style={{ color: "#fff" }}>{item.description}</p>
-            </div>
-          ))}
+      <section
+        ref={definesUsRef}
+        className="py-5"
+        style={{
+          background: "var(--bg-story-section, var(--bg-story, var(--bg-main)))",
+          marginLeft: "calc(50% - 50vw)",
+          marginRight: "calc(50% - 50vw)",
+          color: "var(--text)",
+        }}
+      >
+        <div className="container">
+          <h2 className="text-center mb-4">What Defines Us</h2>
+          <div className="row gy-4">
+            {[
+              { title: "Craftsmanship", description: "Every garment is cut, stitched, and finished with meticulous attention to detail." },
+              { title: "Authenticity", description: "We use high-quality fabrics and dependable construction built for daily wear." },
+              { title: "Timelessness", description: "Designed to outlast short trends and remain a core part of your wardrobe." }
+            ].map((item) => (
+              <div key={item.title} className="col-md-4 text-center">
+                <h3 className="h5 fw-light mb-2 about-value-title">{item.title}</h3>
+                <p style={{ color: "var(--text)" }}>{item.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
