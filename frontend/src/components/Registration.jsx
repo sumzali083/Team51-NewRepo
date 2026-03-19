@@ -1,3 +1,4 @@
+// frontend/src/components/Registration.jsx
 import React, { useState } from "react";
 import api from "../api";
 
@@ -174,13 +175,12 @@ export function Registration({ onSuccess }) {
         </div>
 
         <button
+          className="osai-auth-submit-btn"
           type="submit"
           disabled={loading}
           style={{
             width: "100%",
             padding: "14px",
-            background: loading ? "#ccc" : "#fff",
-            color: "#000",
             border: "none",
             borderRadius: 4,
             fontWeight: 700,
@@ -189,10 +189,8 @@ export function Registration({ onSuccess }) {
             textTransform: "uppercase",
             cursor: loading ? "not-allowed" : "pointer",
             marginTop: 8,
-            transition: "background 0.18s ease",
+            transition: "background 0.18s ease, color 0.18s ease",
           }}
-          onMouseEnter={e => { if (!loading) e.target.style.background = "#e0e0e0"; }}
-          onMouseLeave={e => { if (!loading) e.target.style.background = "#fff"; }}
         >
           {loading ? "Creating account…" : "Create Account"}
         </button>
