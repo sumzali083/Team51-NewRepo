@@ -1295,8 +1295,8 @@ span.badge.rounded-pill.bg-danger,
   background: #f1f1f1;
   border: 1px solid #e3e3e3;
   border-radius: 999px;
-  height: 46px;
-  width: 252px;
+  height: 40px;
+  width: 210px;
   padding: 0 14px;
   gap: 10px;
   box-shadow: none;
@@ -1304,7 +1304,7 @@ span.badge.rounded-pill.bg-danger,
 
 [data-theme="light"] .osai-search:focus-within {
   background: #f1f1f1;
-  width: 252px;
+  width: 260px;
   border: 1px solid #e3e3e3;
   box-shadow: none;
 }
@@ -1314,7 +1314,6 @@ span.badge.rounded-pill.bg-danger,
   background-color: transparent !important;
   color: var(--text-primary);
   font-size: 15px;
-  order: 2;
 }
 
 [data-theme="light"] .osai-search input::placeholder {
@@ -1322,7 +1321,6 @@ span.badge.rounded-pill.bg-danger,
 }
 
 [data-theme="light"] .osai-search button {
-  order: 1;
   color: #111111;
   font-size: 20px;
 }
