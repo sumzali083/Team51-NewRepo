@@ -30,7 +30,6 @@ const LABEL = {
 export function Login({ initialEmail = "" }) {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -162,7 +161,7 @@ export function Login({ initialEmail = "" }) {
 
           <input
             id="login-password"
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder="********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -176,24 +175,13 @@ export function Login({ initialEmail = "" }) {
           />
         </div>
 
-          <div style={{marginTop: 6}}>
-            <label style={{fontSize: 12, color: "#aaa"}}>
-              <input
-                type="checkbox"
-                onChange={() => setShowPassword(!showPassword)}
-                /> {" "}
-                Show password
-            </label>
-          </div>
-
         <button
+          className="osai-auth-submit-btn"
           type="submit"
           disabled={loading}
           style={{
             width: "100%",
             padding: "14px",
-            background: loading ? "#ccc" : "#fff",
-            color: "#000",
             border: "none",
             borderRadius: 4,
             fontWeight: 700,
@@ -202,13 +190,7 @@ export function Login({ initialEmail = "" }) {
             textTransform: "uppercase",
             cursor: loading ? "not-allowed" : "pointer",
             marginTop: 8,
-            transition: "background 0.18s ease",
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) e.target.style.background = "#e0e0e0";
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) e.target.style.background = "#fff";
+            transition: "background 0.18s ease, color 0.18s ease",
           }}
         >
           {loading ? "Logging in..." : "Login"}
