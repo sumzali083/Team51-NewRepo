@@ -23,7 +23,7 @@ export default function LoginPage() {
         textTransform: "uppercase",
         letterSpacing: "-0.01em",
         lineHeight: 0.92,
-        color: "#000",
+        color: "var(--text)",
         marginBottom: 40,
         textAlign: "center",
       }}>
