@@ -95,13 +95,13 @@ function isLight(name) {
 function AccordionSection({ title, badge, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+    <div style={{ borderBottom: "1px solid #000" }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
           width: "100%", display: "flex", justifyContent: "space-between",
           alignItems: "center", padding: "15px 0", background: "none",
-          border: "none", cursor: "pointer", color: FILTER_ACCENT,
+          border: "none", cursor: "pointer", color: "#000",
           fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
         }}
       >
@@ -109,13 +109,13 @@ function AccordionSection({ title, badge, children, defaultOpen = false }) {
           {title}
           {badge ? (
             <span style={{
-              background: FILTER_ACCENT, color: "#111", borderRadius: "50%",
+              background: "#000", color: "#fff", borderRadius: "50%",
               width: 18, height: 18, display: "inline-flex", alignItems: "center",
               justifyContent: "center", fontSize: 10, fontWeight: 700,
             }}>{badge}</span>
           ) : null}
         </span>
-        <i className={`bi bi-chevron-${open ? "up" : "down"}`} style={{ fontSize: 11, color: "#555" }} />
+        <i className={`bi bi-chevron-${open ? "up" : "down"}`} style={{ fontSize: 11, color: "#000" }} />
       </button>
       {open && <div style={{ paddingBottom: 16 }}>{children}</div>}
     </div>
@@ -361,22 +361,22 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
   // ── Sidebar content ───────────────────────────────────────────────────
   const sidebarContent = (
     <div style={{
-      background: "#0d0d0d",
-      border: "1px solid rgba(255,255,255,0.08)",
+      background: "#f0f0f0",
+      border: "1px solid #000",
       borderRadius: FILTER_RADIUS,
       padding: "0 18px",
     }}>
       {/* Header */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "15px 0", borderBottom: "1px solid rgba(255,255,255,0.07)",
+        padding: "15px 0", borderBottom: "1px solid #000",
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: FILTER_ACCENT }}>
-          Filters {activeFilters > 0 && <span style={{ color: "#666" }}>({activeFilters})</span>}
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
+          Filters {activeFilters > 0 && <span style={{ color: "#000" }}>({activeFilters})</span>}
         </span>
         {activeFilters > 0 && (
           <button onClick={clearAll} style={{
-            background: "none", border: "none", color: "#666", fontSize: 10,
+            background: "none", border: "none", color: "#000", fontSize: 10,
             cursor: "pointer", letterSpacing: "0.1em", textTransform: "uppercase",
           }}>
             Clear all
@@ -396,9 +396,9 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                 style={{
                   flex: 1, padding: "9px 0", fontSize: 12, fontWeight: 600,
                   letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer",
-                  border: `1px solid ${active ? FILTER_ACCENT : "rgba(255,255,255,0.15)"}`,
-                  background: active ? FILTER_ACCENT : "transparent",
-                  color: active ? "#111" : "#777",
+                  border: `1px solid ${active ? "#FA5400" : "#000"}`,
+                  background: active ? "#FA5400" : "transparent",
+                  color: active ? "#fff" : "#000",
                   borderRadius: FILTER_RADIUS, transition: "all 0.15s",
                 }}
               >
@@ -425,9 +425,9 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "10px 12px", cursor: "pointer", borderRadius: FILTER_RADIUS,
-            border: `1px solid ${saleOnly ? "#e53935" : "rgba(255,255,255,0.12)"}`,
-            background: saleOnly ? "rgba(229,57,53,0.12)" : "transparent",
-            color: saleOnly ? FILTER_ACCENT : "#888",
+            border: `1px solid ${saleOnly ? "#FA5400" : "#000"}`,
+            background: saleOnly ? "#FA5400" : "transparent",
+            color: saleOnly ? "#fff" : "#000",
           }}
         >
           <span style={{ fontSize: 13, fontWeight: saleOnly ? 600 : 400 }}>On Sale Only</span>
@@ -450,9 +450,9 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                 style={{
                   padding: "5px 10px", fontSize: 11, fontWeight: 600,
                   letterSpacing: "0.06em", textTransform: "uppercase",
-                  border: `1px solid ${active ? FILTER_ACCENT : "rgba(255,255,255,0.12)"}`,
-                  background: active ? FILTER_ACCENT : "transparent",
-                  color: active ? "#111" : "#777",
+                  border: `1px solid ${active ? "#FA5400" : "#000"}`,
+                  background: active ? "#FA5400" : "transparent",
+                  color: active ? "#fff" : "#000",
                   borderRadius: FILTER_RADIUS, cursor: "pointer", transition: "all 0.15s",
                 }}
               >
@@ -474,15 +474,15 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
               style={{
                 display: "flex", alignItems: "center", gap: 8,
                 width: "100%", marginBottom: 6, padding: "7px 10px",
-                background: active ? "rgba(255,255,255,0.07)" : "transparent",
-                border: `1px solid ${active ? "rgba(255,255,255,0.2)" : "transparent"}`,
+                  background: active ? "#FA5400" : "transparent",
+                  border: `1px solid ${active ? "#FA5400" : "transparent"}`,
                 borderRadius: FILTER_RADIUS, cursor: "pointer",
                 fontFamily: "var(--font-body)",
               }}
             >
               <span style={{ color: "#f9a825", letterSpacing: 2, fontSize: 13 }}>{"★".repeat(r)}</span>
-              <span style={{ color: "#333", letterSpacing: 2, fontSize: 13 }}>{"★".repeat(4 - r)}</span>
-              <span style={{ color: active ? "#aaa" : "#555", fontSize: 11, fontFamily: "var(--font-body)" }}>&amp; up</span>
+              <span style={{ color: "#d0d0d0", letterSpacing: 2, fontSize: 13 }}>{"★".repeat(4 - r)}</span>
+              <span style={{ color: active ? "#fff" : "#000", fontSize: 11, fontFamily: "var(--font-body)" }}>&amp; up</span>
             </button>
           );
         })}
@@ -491,7 +491,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
       {/* Colour */}
       <AccordionSection title="Colour" badge={selectedColors.length || null}>
         {availableColors.length === 0 ? (
-          <p style={{ color: "#555", fontSize: 12, margin: 0 }}>No colour data available</p>
+          <p style={{ color: "#000", fontSize: 12, margin: 0 }}>No colour data available</p>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {availableColors.map(color => {
@@ -517,16 +517,16 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                     width: 32, height: 32, borderRadius: "50%", display: "block",
                     background: swatchBg,
                     border: active
-                      ? `2px solid ${FILTER_ACCENT}`
+                      ? `2px solid #FA5400`
                       : light
-                        ? "1px solid rgba(255,255,255,0.35)"
-                        : "1px solid rgba(255,255,255,0.12)",
-                    boxShadow: active ? `0 0 0 2px color-mix(in srgb, ${FILTER_ACCENT} 25%, transparent)` : "none",
+                        ? "1px solid #000"
+                        : "1px solid #000",
+                    boxShadow: active ? `0 0 0 2px color-mix(in srgb, #FA5400 25%, transparent)` : "none",
                     transition: "all 0.15s",
                     flexShrink: 0,
                   }} />
                   <span style={{
-                    fontSize: 9, color: active ? FILTER_ACCENT : "#888",
+                    fontSize: 9, color: active ? "#FA5400" : "#000",
                     textAlign: "center", lineHeight: 1.2,
                     fontFamily: "var(--font-body)", letterSpacing: "0.02em",
                     wordBreak: "break-word", maxWidth: 52,
@@ -728,24 +728,24 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
           {/* Sort — desktop */}
           <div style={{ marginTop: 16 }}>
             <div style={{
-              background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.08)",
+              background: "#f0f0f0", border: "1px solid #000",
               borderRadius: FILTER_RADIUS, padding: "0 18px",
             }}>
-              <div style={{ padding: "15px 0 0", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: FILTER_ACCENT }}>
+              <div style={{ padding: "15px 0 0", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
                 Sort By
               </div>
               <div style={{ padding: "10px 0 14px", display: "flex", flexDirection: "column", gap: 2 }}>
                 {SORT_OPTIONS.map(({ value, label }) => (
                   <button key={value} onClick={() => setSortBy(value)}
                     style={{
-                      textAlign: "left", background: sortBy === value ? "rgba(255,255,255,0.06)" : "transparent",
+                      textAlign: "left", background: sortBy === value ? "transparent" : "transparent",
                       border: "none", padding: "7px 0", cursor: "pointer",
-                      color: sortBy === value ? FILTER_ACCENT : "#666",
+                      color: sortBy === value ? "#FA5400" : "#000",
                       fontWeight: sortBy === value ? 600 : 400,
                       fontSize: 12, letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 8,
                     }}
                   >
-                    {sortBy === value && <span style={{ width: 3, height: 12, background: FILTER_ACCENT, borderRadius: 2, display: "inline-block" }} />}
+                    {sortBy === value && <span style={{ width: 3, height: 12, background: "#FA5400", borderRadius: 2, display: "inline-block" }} />}
                     {label}
                   </button>
                 ))}
