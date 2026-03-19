@@ -10,6 +10,7 @@ export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
+  const themeFadeTimerRef = useRef(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +34,14 @@ export function Layout() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    return () => {
+      if (themeFadeTimerRef.current) {
+        clearTimeout(themeFadeTimerRef.current);
+      }
+    };
+  }, []);
   const { user, logout } = useContext(AuthContext);
 
   const handleLogout = async () => {
@@ -55,6 +64,12 @@ export function Layout() {
   const isLightTheme = theme === "light";
 
   const toggleTheme = () => {
+    document.documentElement.classList.add("theme-fade");
+    if (themeFadeTimerRef.current) clearTimeout(themeFadeTimerRef.current);
+    themeFadeTimerRef.current = setTimeout(() => {
+      document.documentElement.classList.remove("theme-fade");
+      themeFadeTimerRef.current = null;
+    }, 520);
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
