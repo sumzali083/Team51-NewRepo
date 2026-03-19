@@ -122,7 +122,7 @@ export function HomePage() {
       <section
         ref={welcomeRef}
         style={{
-        background: "var(--bg-story-section, var(--bg-story, var(--bg-main)))",
+        background: "#f0f0f0",
         width: "100%",
       }}>
         <div style={{
@@ -174,8 +174,8 @@ export function HomePage() {
               transition: "background 0.2s, border-color 0.2s",
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = "var(--text-ghost, #5a5a5a)";
-              e.currentTarget.style.borderColor = "var(--text-ghost, #5a5a5a)";
+              e.currentTarget.style.background = "#FA5400";
+              e.currentTarget.style.borderColor = "#FA5400";
               e.currentTarget.style.color = "#000";
             }}
             onMouseLeave={e => {
