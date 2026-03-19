@@ -584,7 +584,12 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
     <div className="container-fluid" style={{ maxWidth: 1400, margin: "0 auto", padding: "40px 20px 60px" }}>
 
       {/* Page heading */}
-      <div style={{ marginBottom: 28 }}>
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{ marginBottom: 28 }}
+      >
         <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 4 }}>{pageTitle}</h2>
         {!loading && (
           <p style={{ color: countTextColor, fontSize: 13, margin: 0 }}>
@@ -592,7 +597,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
             {activeFilters > 0 ? " — filters applied" : ""}
           </p>
         )}
-      </div>
+      </motion.div>
 
       {cartMsg && (
         <div className={`alert alert-${cartMsgType} mb-3`} role="alert">{cartMsg}</div>
@@ -739,8 +744,11 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
       <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
 
         {/* Desktop sidebar */}
-        <div
+        <motion.div
           className="d-none d-lg-block"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           style={{
             "--filters-sticky-top": `max(calc(var(--nav-h, 80px) + 10px), calc(50vh - ${stickyCenterOffset}px))`,
             width: 260,
@@ -781,7 +789,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Product grid */}
         <div style={{ flex: 1, minWidth: 0 }}>
