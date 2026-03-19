@@ -262,14 +262,11 @@ export default function Cart() {
             </div>
 
             <button
-              className="osai-cta-primary"
+              className="osai-cta-primary osai-checkout-btn"
               style={{
                 width: "100%",
                 justifyContent: "center",
                 cursor: "pointer",
-                background: "#111",
-                color: "#f2f2f2",
-                border: "1px solid rgba(255,255,255,0.08)",
               }}
               onClick={() => navigate("/checkout")}
             >
