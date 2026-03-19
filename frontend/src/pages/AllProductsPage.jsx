@@ -385,6 +385,9 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
   const sidebarSubText = isLightTheme ? "#555" : "#666";
   const filterBtnBorder = isLightTheme ? "rgba(17,17,17,0.2)" : "rgba(255,255,255,0.15)";
   const filterBtnInactiveColor = isLightTheme ? "#555" : "#777";
+  const countTextColor = isLightTheme ? "#555" : "#666";
+  const mobileSortSelectedBg = isLightTheme ? "rgba(17,17,17,0.08)" : "rgba(255,255,255,0.08)";
+  const sortSelectedBg = isLightTheme ? "rgba(17,17,17,0.08)" : "rgba(255,255,255,0.06)";
   const sidebarContent = (
     <div style={{
       background: sidebarBg,
@@ -584,7 +587,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 4 }}>{pageTitle}</h2>
         {!loading && (
-          <p style={{ color: "#666", fontSize: 13, margin: 0 }}>
+          <p style={{ color: countTextColor, fontSize: 13, margin: 0 }}>
             {filtered.length} {filtered.length === 1 ? "product" : "products"}
             {activeFilters > 0 ? " — filters applied" : ""}
           </p>
@@ -638,7 +641,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                 <button key={value} onClick={() => { setSortBy(value); setSortOpen(false); }}
                   style={{
                     width: "100%", textAlign: "left", minHeight: 44,
-                    background: sortBy === value ? "rgba(255,255,255,0.08)" : "transparent",
+                    background: sortBy === value ? mobileSortSelectedBg : "transparent",
                     border: "none", padding: "12px 16px", cursor: "pointer",
                     color: sortBy === value ? FILTER_ACCENT : "#888",
                     fontFamily: "var(--font-body)", fontSize: 13,
@@ -764,7 +767,7 @@ export function FilteredProductPage({ cat = "all", pageTitle = "All Products", s
                 {SORT_OPTIONS.map(({ value, label }) => (
                   <button key={value} onClick={() => setSortBy(value)}
                     style={{
-                      textAlign: "left", background: sortBy === value ? "rgba(255,255,255,0.06)" : "transparent",
+                      textAlign: "left", background: sortBy === value ? sortSelectedBg : "transparent",
                       border: "none", padding: "7px 0", cursor: "pointer",
                       color: sortBy === value ? FILTER_ACCENT : sidebarSubText,
                       fontWeight: sortBy === value ? 600 : 400,
